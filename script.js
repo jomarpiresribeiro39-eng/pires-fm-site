@@ -7,7 +7,7 @@
 //  Se usar MODE="cloud", preencha ARCHIVE_ITEM com o nome do seu
 //  item no Internet Archive (ex: "pires-fm-musicas")
 // ================================================================
-var MODE = "local";
+var MODE = "cloud";
 var ARCHIVE_ITEM = "pires-fm-musicas";
 var STREAM_URL = "";
 // ================================================================
