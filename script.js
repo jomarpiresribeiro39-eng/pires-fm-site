@@ -293,7 +293,9 @@ function loadTrack() {
 
     audio.oncanplay = null;
     audio.onerror = null;
-    audio.pause();
+
+    if (audio.src === url && !audio.ended) return;
+
     audio.src = url;
 
     audio.oncanplay = function() {
@@ -306,10 +308,7 @@ function loadTrack() {
             trackArtistEl.textContent = track.artist;
             renderPlaylist();
             updateCounter();
-        }).catch(function() {
-            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Clique para ouvir</span>';
-            streamStatus.className = 'stream-status error';
-        });
+        }).catch(function() {});
     };
 
     audio.onerror = function() {
@@ -343,14 +342,6 @@ function goNext() {
         currentTrackIndex = getNextIndex();
         loadTrack();
     }
-}
-
-function goPrev() {
-    if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
-    if (audio.currentTime > 3) { audio.currentTime = 0; return; }
-    songsPlayed = Math.max(0, songsPlayed - 1);
-    currentTrackIndex = getPrevIndex();
-    loadTrack();
 }
 
 function setPlayingState(playing) {
@@ -392,25 +383,28 @@ playBtn.addEventListener('click', function(e) {
     e.stopPropagation();
 
     if (isAnnouncing && locucaoAudio) {
-        locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false;
-        audio.volume = savedVolume;
         var np = document.getElementById('nowPlaying');
         if (np) np.classList.remove('announcing');
     }
 
     if (isPlaying) {
-        audio.pause();
+        audio.muted = true;
         setPlayingState(false);
         return;
     }
 
-    currentTrackIndex = getRadioTrackIndex();
-    songsPlayed = 0;
-    loadTrack();
+    audio.muted = false;
+    setPlayingState(true);
 });
 
 nextBtn.addEventListener('click', function(e) { e.preventDefault(); songsPlayed = 0; goNext(); });
-prevBtn.addEventListener('click', function(e) { e.preventDefault(); goPrev(); });
+prevBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+    songsPlayed = Math.max(0, songsPlayed - 1);
+    currentTrackIndex = getPrevIndex();
+    loadTrack();
+});
 
 shuffleBtn.addEventListener('click', function() {
     isShuffled = !isShuffled;
@@ -517,7 +511,7 @@ document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.code === 'Space') { e.preventDefault(); playBtn.click(); }
     else if (e.code === 'ArrowRight') { e.preventDefault(); songsPlayed = 0; goNext(); }
-    else if (e.code === 'ArrowLeft') { e.preventDefault(); goPrev(); }
+    else if (e.code === 'ArrowLeft') { e.preventDefault(); if (audio.currentTime > 3) { audio.currentTime = 0; } else { songsPlayed = Math.max(0, songsPlayed - 1); currentTrackIndex = getPrevIndex(); loadTrack(); } }
 });
 
 buildShuffledOrder();
@@ -528,13 +522,17 @@ updateCounter();
 var autoplayOverlay = document.getElementById('autoplayOverlay');
 var autoplayBtn = document.getElementById('autoplayBtn');
 
+function startRadio() {
+    if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
+    currentTrackIndex = getRadioTrackIndex();
+    songsPlayed = 0;
+    loadTrack();
+}
+
 if (autoplayBtn) {
     autoplayBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
-        currentTrackIndex = getRadioTrackIndex();
-        songsPlayed = 0;
-        loadTrack();
+        startRadio();
     });
 }
 
