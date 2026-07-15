@@ -4,12 +4,18 @@ var LOCUCOES_ARCHIVE = "pires-fm-locucoes";
 
 // ========== BACKGROUND SLIDESHOW ==========
 (function() {
+    var bgEl = document.getElementById('bgSlideshow');
+    if (!bgEl) return;
     var bgImages = ['img/cristo.jpg', 'img/pao_de_acucar.jpg', 'img/ipanema.jpg'];
     var bgIndex = 0;
-    document.body.style.backgroundImage = 'url(' + bgImages[0] + ')';
+    bgEl.style.backgroundImage = 'url(' + bgImages[0] + ')';
     setInterval(function() {
-        bgIndex = (bgIndex + 1) % bgImages.length;
-        document.body.style.backgroundImage = 'url(' + bgImages[bgIndex] + ')';
+        bgEl.style.opacity = '0';
+        setTimeout(function() {
+            bgIndex = (bgIndex + 1) % bgImages.length;
+            bgEl.style.backgroundImage = 'url(' + bgImages[bgIndex] + ')';
+            bgEl.style.opacity = '1';
+        }, 1500);
     }, 8000);
 })();
 
