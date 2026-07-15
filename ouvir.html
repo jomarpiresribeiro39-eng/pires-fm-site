@@ -192,32 +192,13 @@
             margin-bottom: 20px;
         }
 
-        .ctrl-btn {
-            width: 42px; height: 42px;
-            border-radius: 50%;
-            background: var(--card);
-            border: 1px solid rgba(255,255,255,0.08);
-            color: var(--text-muted);
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .ctrl-btn:hover {
-            color: white;
-            background: rgba(255,255,255,0.1);
-        }
-
         .play-btn {
-            width: 70px; height: 70px;
+            width: 80px; height: 80px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             border: none;
             color: white;
-            font-size: 26px;
+            font-size: 30px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -406,9 +387,7 @@
         </div>
 
         <div class="controls">
-            <button class="ctrl-btn" id="prevBtn" title="Anterior"><i class="fas fa-step-backward"></i></button>
             <button class="play-btn" id="playBtn"><i class="fas fa-play" id="playIcon"></i></button>
-            <button class="ctrl-btn" id="nextBtn" title="Próxima"><i class="fas fa-step-forward"></i></button>
         </div>
 
         <div class="volume">
@@ -502,12 +481,11 @@
         var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
         var AVG = 240;
         var LOC_DUR = 12;
-
         var audio = document.getElementById('radioAudio');
         var isPlaying = false;
-        var currentIdx = 0;
+        var currentTrackIdx = -1;
+        var loading = false;
 
-        // Background slideshow
         var bgImgs = ['img/cristo.jpg', 'img/pao_de_acucar.jpg', 'img/ipanema.jpg'];
         var bgIdx = 0;
         document.getElementById('bgImg').style.backgroundImage = 'url(' + bgImgs[0] + ')';
@@ -521,7 +499,6 @@
             }, 2000);
         }, 8000);
 
-        // Clock
         function updateClock() {
             var now = new Date();
             var opts = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -536,26 +513,25 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Radio sync
         function getElapsed() { return (Date.now() - EPOCH) / 1000; }
 
-        function getTrackIndex() {
+        function getCurrentTrack() {
             var cycle = AVG + (LOC_DUR / 3);
             var songNum = Math.floor(getElapsed() / cycle);
-            return songNum % PLAYLIST.length;
-        }
-
-        function getTrackOffset() {
-            var cycle = AVG + (LOC_DUR / 3);
+            var idx = songNum % PLAYLIST.length;
             var timeInCycle = getElapsed() % cycle;
-            if (timeInCycle < AVG) return Math.min(timeInCycle, AVG - 1);
-            return 0;
+            var offset = 0;
+            if (timeInCycle < AVG) {
+                offset = Math.min(timeInCycle, AVG - 1);
+            }
+            return { index: idx, offset: offset };
         }
 
-        function loadTrack() {
-            var track = PLAYLIST[currentIdx];
+        function loadTrack(idx, seekTo) {
+            if (loading) return;
+            loading = true;
+            var track = PLAYLIST[idx];
             var url = 'https://archive.org/download/' + ARCHIVE + '/' + encodeURIComponent(track.file);
-            var seekTo = getTrackOffset();
 
             audio.oncanplay = null;
             audio.onerror = null;
@@ -564,6 +540,7 @@
             audio.oncanplay = function() {
                 audio.oncanplay = null;
                 audio.onerror = null;
+                loading = false;
                 if (seekTo > 0 && seekTo < audio.duration) audio.currentTime = seekTo;
                 audio.play().then(function() {
                     document.getElementById('trackName').textContent = track.song;
@@ -572,16 +549,18 @@
                     document.getElementById('visualizer').classList.add('active');
                     document.getElementById('playIcon').className = 'fas fa-pause';
                     isPlaying = true;
+                    currentTrackIdx = idx;
                     var st = document.getElementById('status');
                     st.innerHTML = '<i class="fas fa-wifi"></i> <span>Tocando ao vivo</span>';
                     st.className = 'status connected';
-                }).catch(function(){});
+                }).catch(function() { loading = false; });
             };
 
             audio.onerror = function() {
                 audio.oncanplay = null;
                 audio.onerror = null;
-                setTimeout(function() { loadTrack(); }, 3000);
+                loading = false;
+                setTimeout(function() { loadTrack(idx, seekTo); }, 3000);
             };
 
             var st = document.getElementById('status');
@@ -589,17 +568,21 @@
             st.className = 'status';
         }
 
-        function goNext() {
-            currentIdx = (currentIdx + 1) % PLAYLIST.length;
-            loadTrack();
+        function syncToLive() {
+            var now = getCurrentTrack();
+            if (now.index !== currentTrackIdx) {
+                loadTrack(now.index, now.offset);
+            } else if (audio.duration && Math.abs(audio.currentTime - now.offset) > 5) {
+                audio.currentTime = now.offset;
+            }
         }
 
-        function goPrev() {
-            currentIdx = (currentIdx - 1 + PLAYLIST.length) % PLAYLIST.length;
-            loadTrack();
-        }
+        setInterval(syncToLive, 10000);
 
-        audio.addEventListener('ended', goNext);
+        audio.addEventListener('ended', function() {
+            var now = getCurrentTrack();
+            loadTrack(now.index, now.offset);
+        });
 
         document.getElementById('playBtn').addEventListener('click', function() {
             if (isPlaying) {
@@ -617,14 +600,12 @@
                 document.getElementById('playIcon').className = 'fas fa-pause';
                 document.getElementById('vinyl').classList.add('spinning');
                 document.getElementById('visualizer').classList.add('active');
+                syncToLive();
                 var st2 = document.getElementById('status');
                 st2.innerHTML = '<i class="fas fa-wifi"></i> <span>Tocando ao vivo</span>';
                 st2.className = 'status connected';
             }
         });
-
-        document.getElementById('nextBtn').addEventListener('click', goNext);
-        document.getElementById('prevBtn').addEventListener('click', goPrev);
 
         document.getElementById('volSlider').addEventListener('input', function(e) {
             audio.volume = e.target.value / 100;
@@ -652,7 +633,6 @@
 
         audio.volume = 0.8;
 
-        // Visualizer animation
         (function animVis() {
             if (isPlaying) {
                 var bars = document.querySelectorAll('.visualizer .bar');
@@ -661,9 +641,8 @@
             requestAnimationFrame(function() { setTimeout(animVis, 120); });
         })();
 
-        // Start
-        currentIdx = getTrackIndex();
-        loadTrack();
+        var now = getCurrentTrack();
+        loadTrack(now.index, now.offset);
 
     })();
     </script>
