@@ -236,6 +236,7 @@ function doHoraCerta(callback) {
     document.getElementById('trackName').textContent = 'Hora Certa - Rio de Janeiro';
     document.getElementById('trackArtist').textContent = 'Pires FM - A hora certa do Rio!';
     if (ss) { ss.innerHTML = '<i class="fas fa-clock"></i> <span>Hora Certa - Pires FM</span>'; ss.className = 'stream-status connected'; }
+    renderPlaylist();
 
     var introFile = horaIntros[Math.floor(Math.random() * horaIntros.length)];
     var outroFile = horaOutros[Math.floor(Math.random() * horaOutros.length)];
@@ -251,12 +252,14 @@ function doHoraCerta(callback) {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
             try { audio.volume = savedVolume; } catch(e) {}
+            renderPlaylist();
             setTimeout(function() { if (callback) callback(); }, 500);
         })
         .catch(function() {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
             try { audio.volume = savedVolume; } catch(e) {}
+            renderPlaylist();
             if (callback) callback();
         });
 }
@@ -321,6 +324,7 @@ function doClima(callback) {
     document.getElementById('trackName').textContent = 'Tempo no Rio de Janeiro';
     document.getElementById('trackArtist').textContent = 'Pires FM - Informacoes do tempo...';
     if (ss) { ss.innerHTML = '<i class="fas fa-cloud-sun"></i> <span>Clima - Pires FM</span>'; ss.className = 'stream-status connected'; }
+    renderPlaylist();
 
     var intros = ['Agora na Pires FM, o tempo no Rio de Janeiro!', 'Informacoes do tempo, aqui na Pires FM!', 'Vamos ao clima do Rio de Janeiro!', 'Pires FM traz o tempo para voce!', 'No ar, as informacoes do tempo no Rio!'];
     var outros = ['Pires FM, a voz do Rio de Janeiro!', 'Fique ligado na Pires FM!', 'Continuamos com a melhor musica!', 'Pires FM, sempre com voce!'];
@@ -330,7 +334,7 @@ function doClima(callback) {
     var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
 
     buscarClima().then(function(c) {
-        if (!c) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} if (callback) callback(); return; }
+        if (!c) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} renderPlaylist(); if (callback) callback(); return; }
         var textoClima = textosClima(c);
         playAudio(introUrl)
             .then(function() { return falarComVoz(textoClima); })
@@ -339,12 +343,14 @@ function doClima(callback) {
                 isAnnouncing = false; locucaoAudio = null;
                 if (np) np.classList.remove('announcing');
                 try { audio.volume = savedVolume; } catch(e) {}
+                renderPlaylist();
                 setTimeout(function() { if (callback) callback(); }, 500);
             })
             .catch(function() {
                 isAnnouncing = false; locucaoAudio = null;
                 if (np) np.classList.remove('announcing');
                 try { audio.volume = savedVolume; } catch(e) {}
+                renderPlaylist();
                 if (callback) callback();
             });
     });
@@ -388,12 +394,13 @@ function doNoticias(callback) {
     document.getElementById('trackName').textContent = 'Noticias em Tempo Real';
     document.getElementById('trackArtist').textContent = 'Pires FM - Ultimas noticias...';
     if (ss) { ss.innerHTML = '<i class="fas fa-newspaper"></i> <span>Noticias - Pires FM</span>'; ss.className = 'stream-status connected'; }
+    renderPlaylist();
 
     var outroFile = 'hora_outro_' + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0') + '.mp3';
     var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
 
     buscarNoticias().then(function(noticias) {
-        if (!noticias || noticias.length === 0) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} if (callback) callback(); return; }
+        if (!noticias || noticias.length === 0) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} renderPlaylist(); if (callback) callback(); return; }
         var noticia = noticias[Math.floor(Math.random() * noticias.length)];
         var introTexts = [
             'Noticia de ultima hora, trazida pela Pires FM!',
@@ -409,12 +416,14 @@ function doNoticias(callback) {
                 isAnnouncing = false; locucaoAudio = null;
                 if (np) np.classList.remove('announcing');
                 try { audio.volume = savedVolume; } catch(e) {}
+                renderPlaylist();
                 setTimeout(function() { if (callback) callback(); }, 500);
             })
             .catch(function() {
                 isAnnouncing = false; locucaoAudio = null;
                 if (np) np.classList.remove('announcing');
                 try { audio.volume = savedVolume; } catch(e) {}
+                renderPlaylist();
                 if (callback) callback();
             });
     });
@@ -432,6 +441,7 @@ function doIdent(callback) {
     document.getElementById('trackName').textContent = 'Identificacao Pires FM';
     document.getElementById('trackArtist').textContent = 'Pires FM - A voz do Rio de Janeiro!';
     if (ss) { ss.innerHTML = '<i class="fas fa-broadcast-tower"></i> <span>Pires FM - A voz do Rio!</span>'; ss.className = 'stream-status connected'; }
+    renderPlaylist();
 
     var frases = [
         'Voce esta ouvindo Pires FM, a voz do Rio de Janeiro!',
@@ -453,12 +463,14 @@ function doIdent(callback) {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
             try { audio.volume = savedVolume; } catch(e) {}
+            renderPlaylist();
             setTimeout(function() { if (callback) callback(); }, 500);
         })
         .catch(function() {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
             try { audio.volume = savedVolume; } catch(e) {}
+            renderPlaylist();
             if (callback) callback();
         });
 }
@@ -486,12 +498,14 @@ function doLocucao(callback) {
         document.getElementById('trackArtist').textContent = 'Pires FM - Locucao profissional...';
         if (ss) { ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Locucao - Pires FM</span>'; ss.className = 'stream-status connected'; }
         try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+        renderPlaylist();
     };
 
     locucaoAudio.onended = function() {
         isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
         try { audio.volume = savedVolume; } catch(e) {}
+        renderPlaylist();
         setTimeout(function() { if (callback) callback(); }, 500);
     };
 
@@ -499,6 +513,7 @@ function doLocucao(callback) {
         isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
         try { audio.volume = savedVolume; } catch(e) {}
+        renderPlaylist();
         if (callback) callback();
     };
 
@@ -508,6 +523,7 @@ function doLocucao(callback) {
         isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
         try { audio.volume = savedVolume; } catch(e) {}
+        renderPlaylist();
         if (callback) callback();
     });
 }
@@ -573,8 +589,9 @@ function renderPlaylist() {
     for (var i = 0; i < playlist.length; i++) {
         var track = playlist[i];
         var isCurrent = i === currentTrackIndex;
-        html += '<tr class="playlist-row ' + (isCurrent ? 'current' : '') + '" data-index="' + i + '">' +
-            '<td class="pl-number">' + (isCurrent && isPlaying ? '<i class="fas fa-volume-up"></i>' : (i + 1)) + '</td>' +
+        var locClass = isCurrent && isAnnouncing ? ' announcing' : '';
+        html += '<tr class="playlist-row ' + (isCurrent ? 'current' : '') + locClass + '" data-index="' + i + '">' +
+            '<td class="pl-number">' + (isCurrent && isPlaying ? '<i class="fas fa-volume-up pulse-icon"></i>' : (isCurrent && isAnnouncing ? '<i class="fas fa-microphone pulse-icon"></i>' : (i + 1))) + '</td>' +
             '<td class="pl-info"><span class="pl-song">' + track.song + '</span><span class="pl-artist">' + track.artist + '</span></td>' +
             '<td class="pl-duration"></td></tr>';
     }
@@ -586,6 +603,14 @@ function renderPlaylist() {
             songsPlayed = 0;
             loadTrack();
         });
+    }
+    scrollToCurrent();
+}
+
+function scrollToCurrent() {
+    var currentRow = playlistBody.querySelector('.playlist-row.current');
+    if (currentRow) {
+        currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
 

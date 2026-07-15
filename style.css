@@ -772,6 +772,30 @@ body {
     background: rgba(230, 57, 70, 0.12);
 }
 
+.playlist-row.current.announcing {
+    background: rgba(230, 57, 70, 0.20);
+    border-left: 3px solid var(--primary);
+}
+
+.playlist-row.current.announcing .pl-song {
+    color: var(--primary);
+}
+
+.playlist-row.current.announcing .pl-artist {
+    color: var(--primary);
+    font-style: italic;
+}
+
+@keyframes pulse-icon {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.pulse-icon {
+    color: var(--primary);
+    animation: pulse-icon 1.2s ease-in-out infinite;
+}
+
 .playlist-row td {
     padding: 12px 18px;
     font-size: 0.88rem;
