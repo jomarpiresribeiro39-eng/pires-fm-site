@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pires FM - Painel Administrativo</title>
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- LOGIN -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <div class="login-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h1>Painel Administrativo</h1>
+            <p>Pires FM</p>
+            <div class="login-form">
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="loginPassword" placeholder="Digite a senha" autocomplete="off">
+                </div>
+                <button id="loginBtn" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+                <p id="loginError" class="login-error"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel" class="admin-panel hidden">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="fas fa-broadcast-tower"></i>
+                <span>Pires FM</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-tab="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-tab="playlist">
+                    <i class="fas fa-music"></i> Playlist
+                </a>
+                <a href="#" class="nav-item" data-tab="locucoes">
+                    <i class="fas fa-microphone"></i> Locuções
+                </a>
+                <a href="#" class="nav-item" data-tab="config">
+                    <i class="fas fa-cog"></i> Configurações
+                </a>
+                <a href="#" class="nav-item" data-tab="logs">
+                    <i class="fas fa-file-alt"></i> Logs
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Site
+                </a>
+                <a href="#" class="nav-item" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2 id="pageTitle">Dashboard</h2>
+                <div class="topbar-right">
+                    <span class="admin-badge"><i class="fas fa-user-shield"></i> Admin</span>
+                </div>
+            </header>
+
+            <!-- DASHBOARD -->
+            <div class="tab-content active" id="tab-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(230,57,70,0.15); color: var(--primary);">
+                            <i class="fas fa-music"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="statTracks">66</h3>
+                            <p>Músicas</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(76,175,80,0.15); color: #4caf50;">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="statLocucoes">52</h3>
+                            <p>Locuções</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(244,162,97,0.15); color: var(--accent);">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="statUptime">--</h3>
+                            <p>Uptime</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(29,53,87,0.15); color: var(--secondary);">
+                            <i class="fas fa-broadcast-tower"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="statStatus">AO VIVO</h3>
+                            <p>Status</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3><i class="fas fa-list-ol"></i> Próximas Músicas</h3>
+                        <div id="nextTracks" class="track-list"></div>
+                    </div>
+                    <div class="info-card">
+                        <h3><i class="fas fa-cog"></i> Sistema</h3>
+                        <div class="sys-info">
+                            <div class="sys-row">
+                                <span>Modo:</span>
+                                <span id="sysMode">Cloud (Internet Archive)</span>
+                            </div>
+                            <div class="sys-row">
+                                <span>Epoch:</span>
+                                <span>01/01/2025 00:00 (BRT)</span>
+                            </div>
+                            <div class="sys-row">
+                                <span>Média por música:</span>
+                                <span>240 segundos</span>
+                            </div>
+                            <div class="sys-row">
+                                <span>Locuções a cada:</span>
+                                <span>3 músicas</span>
+                            </div>
+                            <div class="sys-row">
+                                <span>Backup:</span>
+                                <span>GitHub Pages</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PLAYLIST -->
+            <div class="tab-content" id="tab-playlist">
+                <div class="section-actions">
+                    <h3><i class="fas fa-music"></i> Gerenciar Playlist</h3>
+                    <div class="action-btns">
+                        <button class="btn btn-primary" id="addTrackBtn">
+                            <i class="fas fa-plus"></i> Adicionar Música
+                        </button>
+                        <button class="btn btn-secondary" id="exportPlaylistBtn">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                        <button class="btn btn-secondary" id="importPlaylistBtn">
+                            <i class="fas fa-upload"></i> Importar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="playlist-manage">
+                    <table class="manage-table">
+                        <thead>
+                            <tr>
+                                <th style="width:50px">#</th>
+                                <th style="width:60px">Arquivo</th>
+                                <th>Música</th>
+                                <th>Artista</th>
+                                <th style="width:100px">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="managePlaylistBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- ADD TRACK MODAL -->
+                <div class="modal hidden" id="addTrackModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Adicionar Música</h3>
+                            <button class="modal-close" id="closeModal"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Arquivo MP3</label>
+                                <select id="newTrackFile"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Nome da Música</label>
+                                <input type="text" id="newTrackSong" placeholder="Ex: Mas Que Nada">
+                            </div>
+                            <div class="form-group">
+                                <label>Artista</label>
+                                <input type="text" id="newTrackArtist" placeholder="Ex: Jorge Ben Jor">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="cancelModal">Cancelar</button>
+                            <button class="btn btn-primary" id="saveTrackBtn">
+                                <i class="fas fa-check"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EDIT TRACK MODAL -->
+                <div class="modal hidden" id="editTrackModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Editar Música</h3>
+                            <button class="modal-close" id="closeEditModal"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="editTrackIndex">
+                            <div class="form-group">
+                                <label>Arquivo MP3</label>
+                                <input type="text" id="editTrackFile" readonly class="readonly">
+                            </div>
+                            <div class="form-group">
+                                <label>Nome da Música</label>
+                                <input type="text" id="editTrackSong" placeholder="Nome da música">
+                            </div>
+                            <div class="form-group">
+                                <label>Artista</label>
+                                <input type="text" id="editTrackArtist" placeholder="Nome do artista">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="cancelEditModal">Cancelar</button>
+                            <button class="btn btn-primary" id="saveEditTrackBtn">
+                                <i class="fas fa-check"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOCUÇÕES -->
+            <div class="tab-content" id="tab-locucoes">
+                <div class="section-actions">
+                    <h3><i class="fas fa-microphone"></i> Gerenciar Locuções</h3>
+                    <button class="btn btn-primary" id="testLocucaoBtn">
+                        <i class="fas fa-play"></i> Testar Locução
+                    </button>
+                </div>
+
+                <div class="locucoes-grid">
+                    <div class="loc-card">
+                        <div class="loc-header">
+                            <i class="fas fa-broadcast-tower" style="color: var(--primary);"></i>
+                            <h4>Identificação</h4>
+                            <span class="loc-count" id="locIdentCount">8</span>
+                        </div>
+                        <div class="loc-list" id="locIdentList"></div>
+                    </div>
+                    <div class="loc-card">
+                        <div class="loc-header">
+                            <i class="fas fa-lightbulb" style="color: var(--accent);"></i>
+                            <h4>Curiosidades</h4>
+                            <span class="loc-count" id="locCuriosidadeCount">20</span>
+                        </div>
+                        <div class="loc-list" id="locCuriosidadeList"></div>
+                    </div>
+                    <div class="loc-card">
+                        <div class="loc-header">
+                            <i class="fas fa-newspaper" style="color: #4caf50;"></i>
+                            <h4>Notícias</h4>
+                            <span class="loc-count" id="locNoticiaCount">12</span>
+                        </div>
+                        <div class="loc-list" id="locNoticiaList"></div>
+                    </div>
+                    <div class="loc-card">
+                        <div class="loc-header">
+                            <i class="fas fa-star" style="color: #ff9800;"></i>
+                            <h4>Dicas</h4>
+                            <span class="loc-count" id="locDicaCount">7</span>
+                        </div>
+                        <div class="loc-list" id="locDicaList"></div>
+                    </div>
+                    <div class="loc-card">
+                        <div class="loc-header">
+                            <i class="fas fa-calendar" style="color: var(--secondary);"></i>
+                            <h4>Programação</h4>
+                            <span class="loc-count" id="locProgramacaoCount">5</span>
+                        </div>
+                        <div class="loc-list" id="locProgramacaoList"></div>
+                    </div>
+                    <div class="loc-card">
+                        <div class="loc-header">
+                            <i class="fas fa-clock" style="color: #e91e63;"></i>
+                            <h4>Hora Certa</h4>
+                            <span class="loc-count">5+5</span>
+                        </div>
+                        <div class="loc-list">
+                            <div class="loc-item"><span>5 intros (Edge TTS)</span></div>
+                            <div class="loc-item"><span>5 outros (Edge TTS)</span></div>
+                            <div class="loc-item"><span>Hora por extenso (navegador)</span></div>
+                        </div>
+                    </div>
+                    <div class="loc-card">
+                        <div class="loc-header">
+                            <i class="fas fa-cloud-sun" style="color: #00bcd4;"></i>
+                            <h4>Clima (API)</h4>
+                            <span class="loc-count">AO VIVO</span>
+                        </div>
+                        <div class="loc-list">
+                            <div class="loc-item"><span>Open-Meteo API</span></div>
+                            <div class="loc-item"><span>Cache: 10 minutos</span></div>
+                            <div class="loc-item"><span>Coordenadas: -22.9068, -43.1729</span></div>
+                        </div>
+                    </div>
+                    <div class="loc-card">
+                        <div class="loc-header">
+                            <i class="fas fa-newspaper" style="color: #9c27b0;"></i>
+                            <h4>Notícias (RSS)</h4>
+                            <span class="loc-count">AO VIVO</span>
+                        </div>
+                        <div class="loc-list">
+                            <div class="loc-item"><span>RSS G1 (rss2json)</span></div>
+                            <div class="loc-item"><span>Cache: 15 minutos</span></div>
+                            <div class="loc-item"><span>15 notícias por cache</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card" style="margin-top: 20px;">
+                    <h3><i class="fas fa-info-circle"></i> Distribuição de Locuções</h3>
+                    <div class="dist-bars">
+                        <div class="dist-row">
+                            <span>Hora Certa</span>
+                            <div class="dist-bar"><div class="dist-fill" style="width:15%; background:var(--primary);">15%</div></div>
+                        </div>
+                        <div class="dist-row">
+                            <span>Clima Rio</span>
+                            <div class="dist-bar"><div class="dist-fill" style="width:20%; background:#00bcd4;">20%</div></div>
+                        </div>
+                        <div class="dist-row">
+                            <span>Notícias</span>
+                            <div class="dist-bar"><div class="dist-fill" style="width:20%; background:#9c27b0;">20%</div></div>
+                        </div>
+                        <div class="dist-row">
+                            <span>Identificação</span>
+                            <div class="dist-bar"><div class="dist-fill" style="width:15%; background:#4caf50;">15%</div></div>
+                        </div>
+                        <div class="dist-row">
+                            <span>Pré-gravadas</span>
+                            <div class="dist-bar"><div class="dist-fill" style="width:30%; background:var(--accent);">30%</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONFIG -->
+            <div class="tab-content" id="tab-config">
+                <div class="info-card">
+                    <h3><i class="fas fa-sliders-h"></i> Parâmetros da Rádio</h3>
+                    <div class="config-grid">
+                        <div class="form-group">
+                            <label>Média de segundos por música</label>
+                            <input type="number" id="cfgAvgSong" value="240" min="60" max="600">
+                        </div>
+                        <div class="form-group">
+                            <label>Locuções a cada X músicas</label>
+                            <input type="number" id="cfgLocEvery" value="3" min="1" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label>Duração média da locução (seg)</label>
+                            <input type="number" id="cfgLocDuration" value="12" min="5" max="60">
+                        </div>
+                        <div class="form-group">
+                            <label>Epoch (início da programação)</label>
+                            <input type="datetime-local" id="cfgEpoch" value="2025-01-01T00:00">
+                        </div>
+                        <div class="form-group">
+                            <label>Fuso horário</label>
+                            <select id="cfgTimezone">
+                                <option value="America/Sao_Paulo" selected>São Paulo (BRT)</option>
+                                <option value="America/New_York">Nova York (EST)</option>
+                                <option value="Europe/London">Londres (GMT)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Voz Edge TTS</label>
+                            <select id="cfgVoice">
+                                <option value="pt-BR-FranciscaNeural" selected>Francisca Neural (Feminina)</option>
+                                <option value="pt-BR-AntonioNeural">Antonio Neural (Masculina)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="action-btns" style="margin-top: 20px;">
+                        <button class="btn btn-primary" id="saveConfigBtn">
+                            <i class="fas fa-save"></i> Salvar Configurações
+                        </button>
+                        <button class="btn btn-secondary" id="resetConfigBtn">
+                            <i class="fas fa-undo"></i> Restaurar Padrão
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-card" style="margin-top: 20px;">
+                    <h3><i class="fas fa-key"></i> Alterar Senha</h3>
+                    <div class="config-grid">
+                        <div class="form-group">
+                            <label>Senha Atual</label>
+                            <input type="password" id="cfgOldPass" placeholder="Senha atual">
+                        </div>
+                        <div class="form-group">
+                            <label>Nova Senha</label>
+                            <input type="password" id="cfgNewPass" placeholder="Nova senha">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmar Nova Senha</label>
+                            <input type="password" id="cfgConfirmPass" placeholder="Confirmar nova senha">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="changePassBtn" style="margin-top: 15px;">
+                        <i class="fas fa-key"></i> Alterar Senha
+                    </button>
+                </div>
+            </div>
+
+            <!-- LOGS -->
+            <div class="tab-content" id="tab-logs">
+                <div class="section-actions">
+                    <h3><i class="fas fa-file-alt"></i> Logs do Sistema</h3>
+                    <button class="btn btn-secondary" id="clearLogsBtn">
+                        <i class="fas fa-trash"></i> Limpar Logs
+                    </button>
+                </div>
+                <div class="logs-container" id="logsContainer">
+                    <p class="empty-logs">Nenhum log registrado ainda.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
