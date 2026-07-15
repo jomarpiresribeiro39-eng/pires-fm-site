@@ -576,6 +576,7 @@ var isRepeating = false;
 var shuffledOrder = [];
 var errorRetryCount = 0;
 var MAX_RETRIES = 3;
+var maxDurationTimer = null;
 
 var playBtn = document.getElementById('playBtn');
 var playIcon = document.getElementById('playIcon');
@@ -659,6 +660,8 @@ function loadTrack() {
     audio.oncanplay = null;
     audio.onerror = null;
 
+    if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
+
     if (audio.src === url && !audio.ended) return;
 
     audio.src = url;
@@ -676,6 +679,12 @@ function loadTrack() {
             trackArtistEl.textContent = track.artist;
             renderPlaylist();
             updateCounter();
+            maxDurationTimer = setTimeout(function() {
+                if (audio.src === url && isPlaying && !isAnnouncing) {
+                    console.log('[Pires FM] Mega-mix detectado, avancando para proxima faixa');
+                    goNext();
+                }
+            }, AVG_SONG * 1000);
         }).catch(function() {});
     };
 
@@ -698,6 +707,7 @@ function loadTrack() {
 }
 
 function goNext() {
+    if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
     if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
     songsPlayed++;
     if (songsPlayed >= 3) {
