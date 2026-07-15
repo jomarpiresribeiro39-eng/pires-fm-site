@@ -221,7 +221,6 @@ var isRepeating = false;
 var shuffledOrder = [];
 var errorRetryCount = 0;
 var MAX_RETRIES = 3;
-var radioStarted = false;
 
 var playBtn = document.getElementById('playBtn');
 var playIcon = document.getElementById('playIcon');
@@ -405,21 +404,9 @@ playBtn.addEventListener('click', function(e) {
         return;
     }
 
-    if (!radioStarted) {
-        radioStarted = true;
-        currentTrackIndex = getRadioTrackIndex();
-        songsPlayed = 0;
-        loadTrack();
-        return;
-    }
-
-    audio.play().then(function() {
-        setPlayingState(true);
-    }).catch(function() {
-        setPlayingState(false);
-        streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Clique de novo para ouvir</span>';
-        streamStatus.className = 'stream-status error';
-    });
+    currentTrackIndex = getRadioTrackIndex();
+    songsPlayed = 0;
+    loadTrack();
 });
 
 nextBtn.addEventListener('click', function(e) { e.preventDefault(); songsPlayed = 0; goNext(); });
@@ -545,7 +532,6 @@ if (autoplayBtn) {
     autoplayBtn.addEventListener('click', function(e) {
         e.preventDefault();
         if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
-        radioStarted = true;
         currentTrackIndex = getRadioTrackIndex();
         songsPlayed = 0;
         loadTrack();
