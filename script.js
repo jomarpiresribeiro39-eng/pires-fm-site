@@ -152,10 +152,29 @@ var playlist = [
 // ========== RADIO REAL ==========
 var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
 var AVG_SONG = 240;
+var LOCUCAO_DURATION = 12;
+
+function getElapsedSeconds() {
+    return (Date.now() - EPOCH) / 1000;
+}
 
 function getRadioTrackIndex() {
-    var elapsedSec = (Date.now() - EPOCH) / 1000;
-    return Math.floor(elapsedSec / AVG_SONG) % playlist.length;
+    var totalCycle = AVG_SONG + (LOCUCAO_DURATION / 3);
+    var elapsed = getElapsedSeconds();
+    var songNum = Math.floor(elapsed / totalCycle);
+    var timeInCycle = elapsed - (songNum * totalCycle);
+    var index = songNum % playlist.length;
+    return index;
+}
+
+function getRadioTrackOffset() {
+    var totalCycle = AVG_SONG + (LOCUCAO_DURATION / 3);
+    var elapsed = getElapsedSeconds();
+    var timeInCycle = elapsed % totalCycle;
+    if (timeInCycle < AVG_SONG) {
+        return Math.min(timeInCycle, AVG_SONG - 1);
+    }
+    return 0;
 }
 
 // ========== LOCUCAO ==========
@@ -635,6 +654,7 @@ function loadTrack() {
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
+    var seekTo = getRadioTrackOffset();
 
     audio.oncanplay = null;
     audio.onerror = null;
@@ -647,6 +667,9 @@ function loadTrack() {
         audio.oncanplay = null;
         audio.onerror = null;
         errorRetryCount = 0;
+        if (seekTo > 0 && seekTo < audio.duration) {
+            audio.currentTime = seekTo;
+        }
         audio.play().then(function() {
             setPlayingState(true);
             trackNameEl.textContent = track.song;
