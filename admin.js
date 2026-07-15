@@ -162,12 +162,12 @@ function renderLogs() {
 }
 
 // ========== PLAYLIST ==========
-var PLAYLIST_VERSION = 2;
+var PLAYLIST_VERSION = 3;
 
 function getPlaylist() {
     var data = getStoredData();
-    if (data.playlistVersion !== PLAYLIST_VERSION) {
-        data.playlist = DEFAULT_PLAYLIST;
+    if (!data.playlistVersion || data.playlistVersion < PLAYLIST_VERSION) {
+        data.playlist = DEFAULT_PLAYLIST.slice();
         data.playlistVersion = PLAYLIST_VERSION;
         saveData(data);
     }
