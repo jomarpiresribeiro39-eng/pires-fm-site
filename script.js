@@ -1,11 +1,6 @@
 // ================================================================
 //  Pires FM - Configuracao
-//  MODE = "local"   -> toca musicas do computador (teste)
 //  MODE = "cloud"   -> toca do Internet Archive (24/7 gratis)
-//  MODE = "remote"  -> toca do seu Icecast (servidor proprio)
-//
-//  Se usar MODE="cloud", preencha ARCHIVE_ITEM com o nome do seu
-//  item no Internet Archive (ex: "pires-fm-musicas")
 // ================================================================
 var MODE = "cloud";
 var ARCHIVE_ITEM = "pires-fm-musicas";
@@ -151,44 +146,24 @@ var playlist = [
     { file: "066.mp3", artist: "Telemensagem", song: "Boa Noite (Voz)" }
 ];
 
-// ========== LOCUCAO (Audio Profissional Pre-Gravado) ==========
+// ========== RADIO REAL - Calculo por horario ==========
+var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
+var AVG_SONG = 240;
+
+function getRadioTrackIndex() {
+    var now = Date.now();
+    var elapsedSec = (now - EPOCH) / 1000;
+    var trackIndex = Math.floor(elapsedSec / AVG_SONG) % playlist.length;
+    return trackIndex;
+}
+
+// ========== LOCUCAO ==========
 var songsPlayed = 0;
 var isAnnouncing = false;
 var savedVolume = 0.8;
 var locucaoCount = 0;
 var locucaoAudio = null;
 var lastLocucaoType = '';
-
-var AVG_SONG_DURATION = 230;  // media de 3min50s por musica
-var LOCUCAO_DURATION = 35;    // duracao media da locucao em segundos
-var CYCLE_SIZE = 3;           // a cada 3 musicas, uma locucao
-var CYCLE_DURATION = (AVG_SONG_DURATION * CYCLE_SIZE) + LOCUCAO_DURATION; // 725s por ciclo
-
-function getRadioPosition() {
-    var now = new Date();
-    var rioStr = now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
-    var rio = new Date(rioStr);
-    var midnight = new Date(rio);
-    midnight.setHours(0, 0, 0, 0);
-    var elapsedSec = (rio - midnight) / 1000;
-
-    var totalSlots = playlist.length;
-    var cycleIdx = Math.floor(elapsedSec / CYCLE_DURATION);
-    var posInCycle = elapsedSec % CYCLE_DURATION;
-    var songInCycle = Math.floor(posInCycle / AVG_SONG_DURATION);
-    var posInSong = posInCycle - (songInCycle * AVG_SONG_DURATION);
-    var isLocucaoSlot = songInCycle >= CYCLE_SIZE;
-
-    var trackIndex = cycleIdx * CYCLE_SIZE + songInCycle;
-    trackIndex = trackIndex % totalSlots;
-
-    return {
-        trackIndex: trackIndex,
-        isLocucao: isLocucaoSlot,
-        positionInSong: isLocucaoSlot ? 0 : Math.min(posInSong, AVG_SONG_DURATION - 1),
-        songsPlayed: isLocucaoSlot ? 0 : songInCycle
-    };
-}
 
 var locucoesArquivos = {
     ident: [
@@ -386,13 +361,13 @@ function renderPlaylist() {
 var errorRetryCount = 0;
 var MAX_RETRIES = 3;
 
-function loadAndPlay(seekTo) {
+function loadAndPlay() {
     if (MODE === "remote") {
         loadRemoteStream();
         return;
     }
     if (MODE === "cloud") {
-        loadCloudTrack(seekTo);
+        loadCloudTrack();
         return;
     }
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
@@ -459,7 +434,7 @@ function loadRemoteStream() {
     streamStatus.className = 'stream-status';
 }
 
-function loadCloudTrack(seekTo) {
+function loadCloudTrack() {
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
@@ -471,9 +446,6 @@ function loadCloudTrack(seekTo) {
     audio.oncanplay = function() {
         audio.oncanplay = null;
         errorRetryCount = 0;
-        if (seekTo && seekTo > 0 && audio.duration && seekTo < audio.duration) {
-            audio.currentTime = seekTo;
-        }
         audio.play().then(function() {
             setPlayingState(true);
             trackNameEl.textContent = track.song;
@@ -482,9 +454,8 @@ function loadCloudTrack(seekTo) {
             updateCounter();
         }).catch(function(err) {
             console.error('Cloud play error:', err);
-            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro ao tocar. Tentando novamente...</span>';
+            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro ao tocar. Clique de novo...</span>';
             streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadCloudTrack(seekTo); }, 2000);
         });
     };
 
@@ -494,7 +465,7 @@ function loadCloudTrack(seekTo) {
         if (errorRetryCount < MAX_RETRIES) {
             streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + '/' + MAX_RETRIES + ')</span>';
             streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadCloudTrack(seekTo); }, 3000);
+            setTimeout(function() { loadCloudTrack(); }, 3000);
         } else {
             errorRetryCount = 0;
             playNext();
@@ -566,6 +537,13 @@ function formatTime(s) {
     return m + ':' + (sec < 10 ? '0' : '') + sec;
 }
 
+// ========== INICIAR RADIO EM TEMPO REAL ==========
+function startRadio() {
+    currentTrackIndex = getRadioTrackIndex();
+    songsPlayed = 0;
+    loadCloudTrack();
+}
+
 // ========== EVENTS ==========
 playBtn.addEventListener('click', function(e) {
     e.preventDefault();
@@ -581,18 +559,7 @@ playBtn.addEventListener('click', function(e) {
         audio.pause();
         setPlayingState(false);
     } else {
-        var pos = getRadioPosition();
-        currentTrackIndex = pos.trackIndex;
-        songsPlayed = pos.songsPlayed;
-        if (pos.isLocucao) {
-            doLocucao(function() {
-                var nextPos = getRadioPosition();
-                currentTrackIndex = nextPos.trackIndex;
-                loadCloudTrack(0);
-            });
-        } else {
-            loadCloudTrack(pos.positionInSong);
-        }
+        startRadio();
     }
 });
 
@@ -727,49 +694,14 @@ updateCounter();
 var autoplayOverlay = document.getElementById('autoplayOverlay');
 var autoplayBtn = document.getElementById('autoplayBtn');
 
-function startPlaying() {
-    if (autoplayOverlay && !autoplayOverlay.classList.contains('hidden')) {
-        autoplayOverlay.classList.add('hidden');
-    }
-
-    var pos = getRadioPosition();
-    currentTrackIndex = pos.trackIndex;
-    songsPlayed = pos.songsPlayed;
-
-    if (pos.isLocucao) {
-        isAnnouncing = false;
-        doLocucao(function() {
-            var nextPos = getRadioPosition();
-            currentTrackIndex = nextPos.trackIndex;
-            loadCloudTrack(0);
-        });
-    } else {
-        loadCloudTrack(pos.positionInSong);
-    }
-}
-
 if (autoplayBtn) {
     autoplayBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        startPlaying();
+        if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
+        startRadio();
     });
 }
 
-// Try direct autoplay first (works if user previously interacted with site)
-setTimeout(function() {
-    if (!isPlaying && autoplayOverlay && !autoplayOverlay.classList.contains('hidden')) {
-        startPlaying();
-        var tryPlay = audio.play();
-        if (tryPlay) {
-            tryPlay.then(function() {
-                autoplayOverlay.classList.add('hidden');
-            }).catch(function() {
-                // Autoplay blocked, keep overlay visible
-            });
-        }
-    }
-}, 500);
-
-console.log('%c Pires FM %c ' + playlist.length + ' musicas carregadas ',
+console.log('%c Pires FM %c ' + playlist.length + ' musicas - RADIO EM TEMPO REAL ',
     'background:#e63946;color:white;padding:5px 10px;border-radius:4px 0 0 4px;font-weight:bold',
     'background:#1d3557;color:white;padding:5px 10px;border-radius:0 4px 4px 0');
