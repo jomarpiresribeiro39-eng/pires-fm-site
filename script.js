@@ -9,6 +9,7 @@
 // ================================================================
 var MODE = "cloud";
 var ARCHIVE_ITEM = "pires-fm-musicas";
+var LOCUCOES_ARCHIVE = "pires-fm-locucoes";
 var STREAM_URL = "";
 // ================================================================
 
@@ -150,165 +151,118 @@ var playlist = [
     { file: "066.mp3", artist: "Telemensagem", song: "Boa Noite (Voz)" }
 ];
 
-// ========== LOCUCAO ==========
+// ========== LOCUCAO (Audio Profissional Pre-Gravado) ==========
 var songsPlayed = 0;
 var isAnnouncing = false;
 var savedVolume = 0.8;
 var locucaoCount = 0;
+var locucaoAudio = null;
+var lastLocucaoType = '';
 
-var locucoesTexto = [
-    function() {
-        var h = getRioHour();
-        var saudacao = h >= 5 && h < 12 ? 'Bom dia' : h >= 12 && h < 18 ? 'Boa tarde' : 'Boa noite';
-        var hora = getRioTimeStr();
-        var dias = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado'];
-        var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-        var diaSemana = dias[now.getDay()];
-        var dia = now.getDate();
-        var meses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-        var mes = meses[now.getMonth()];
-        return 'Atencao ouvintes! Sao ' + hora + ' horas, ' + diaSemana + ', ' + dia + ' de ' + mes + '. ' + saudacao + ', Rio de Janeiro! Voce esta ouvindo a Pires FM, a voz do Rio de Janeiro. Agora, vamos continuar com mais musica boa.';
-    },
-    function() {
-        var fatos = [
-            'Que tal uma curiosidade? O Cristo Redentor, uma das Sete Maravilhas do Mundo Moderno, fica no topo do Corcovado, a setecentos e dez metros de altitude.',
-            'Sabe qual e a maior prai urbana do mundo? E a Praya de Copacabana, com seus famosos quatro quilometros de areia. Um icone do Rio de Janeiro.',
-            'O Pao de Acucar e um dos cartoes-postais mais famosos do mundo. Seu teleferico, inaugurado em mil novecentos e doze, leva os visitantes ao topo.',
-            'A Lagoa Rodrigo de Freitas, no coracao da Zona Sul, e um dos pontos mais agradaveis do Rio. Perfeita para caminhadas e contemplar a paisagem.',
-            'O Maracana, o estadio mais famoso do Brasil, ja recebeu mais de duzentas mil pessoas em uma partida. Um templo do futebol no Rio.',
-            'O Jardim Botanico do Rio, fundado em mil oitocentos e oito, abriga mais de oito mil especies de plantas.',
-            'A Lapa, com seus arcos historicos, e o coracao da vida noturna carioca. De samba a eletronica, la voce encontra de tudo.',
-            'O bondinho de Santa Teresa e um dos meios de transporte mais charmosos do mundo. Pela janela, voce ve o Rio de todos os angulos.',
-            'A Baia de Guanabara, uma das mais grandes baia do mundo, banha a cidade do Rio de Janeiro.',
-            'A Floresta da Tijuca, considerada a maior floresta urbana do mundo, fica dentro da cidade do Rio de Janeiro.',
-            'O Rio de Janeiro foi capital do Brasil por quase duzentos anos. Uma cidade que carrega seculos de historia em cada esquina.',
-            'O Arpoador e o melhor lugar da cidade para assistir ao por do sol. Uma tradicao carioca de aplaudir o sol quando se poe.',
-            'O Carnaval do Rio de Janeiro e considerado o maior do mundo. Mais de dois milhoes de pessoas saem as ruas todos os anos.',
-            'A prai de Ipanema, imortalizada na musica de Tom Jobim e Vinicius de Moraes, e um dos destinos mais procurados do Rio.',
-            'O Elevador do Lacer, inaugurado em mil oitocentos e oitenta e cinco, conecta a prai de Flamengo ao bairro da Gloria.',
-            'O Convento de Santo Antonio, no centro do Rio, e um dos mais antigos da cidade, construido no seculo dezessete.',
-            'A Pedra da Gavea, com seus setecentos e quarenta metros, e um dos monolitos costeiros mais impressionantes do mundo.',
-            'O Parque Nacional da Tijuca, no meio da cidade, oferece trilhas, cachoeiras e uma vista incrivel da Baia de Guanabara.',
-            'O Museu de Arte Contemporanea, no aterro do Flamengo, abriga uma das maiores colecoes de arte moderna do Brasil.',
-            'A Estacao Central do Brasil, construida em mil novecentos e dez, e um dos marcos arquitetonicos do Rio de Janeiro.'
-        ];
-        return fatos[Math.floor(Math.random() * fatos.length)];
-    },
-    function() {
-        var noticia = [
-            'Uma noticia para voce que ama o Rio. A cidade segue recebendo milhoes de turistas todos os anos, consolidando-se como um dos destinos mais visitados do planeta.',
-            'Informacao para os ouvintes: o transporte publico do Rio de Janeiro esta expandindo suas linhas, facilitando o deslocamento por toda a cidade.',
-            'Novidade para quem vive no Rio: novos parques e areas de lazer estao sendo inaugurados, tornando a cidade ainda mais agradavel.',
-            'Dica cultural: diversos eventos culturais acontecem por todo o Rio ao longo do ano, desde exposicoes de arte ate shows ao vivo.',
-            'Para voce que gosta de gastronomia, o Rio de Janeiro se consolidou como destino gastronomico de classe mundial.',
-            'Na area da tecnologia, o Rio de Janeiro vem se tornando um polo de inovacao, com hubs de tecnologia e startups crescendo pela cidade.',
-            'Os projetos de preservacao das praias e da fauna marinha do Rio estao em constante evolucao, garantindo a preservacao das belezas naturais.',
-            'O Rio prepara-se para receber mais eventos internacionais, consolidando-se como um dos principais polos de entretenimento da America Latina.',
-            'Os moradores do Rio comemoram a ampliacao de areas verdes na cidade, com novos projetos de reflorestamento urbano.',
-            'A cena musical do Rio continua vibrante, com novos festivais de musica sendo anunciados para este ano.',
-            'O turismo sustentavel cresce no Rio, com comunitarios e pousadas adotando praticas ecologicas.',
-            'Os bondes de Santa Teresa voltam a operar com regularidade, trazendo de volta um transporte historico da cidade.'
-        ];
-        return noticia[Math.floor(Math.random() * noticia.length)];
-    },
-    function() {
-        var h = getRioHour();
-        var prog = schedule[0];
-        for (var i = 0; i < schedule.length; i++) {
-            var sh = parseInt(schedule[i].time.split(' - ')[0].split(':')[0]);
-            var eh = parseInt(schedule[i].time.split(' - ')[1].split(':')[0]);
-            if (h >= sh && h < eh) { prog = schedule[i]; break; }
-        }
-        return 'Lembrete de programacao: no momento, esta no ar o programa ' + prog.name + '! ' + prog.desc + '. Fique ligado na Pires FM para acompanhar toda a nossa grade.';
-    },
-    function() {
-        var dicas = [
-            'Dica do dia: o Rio de Janeiro oferece mais de oitenta praias. Ja visitou todas? A prai de Prainha e um tesouro escondido na Zona Oeste.',
-            'Sabia que o Rio e a cidade com mais helipontos do Brasil? A vista de cima e simplesmente de tirar o folego.',
-            'Curiosidade: o nome Rio de Janeiro veio de um erro de navegacao. Os portugueses acharam que a baia era a boca de um rio.',
-            'O Cristo Redentor ja foi eleito uma das Sete Novas Maravilhas do Mundo. Quarenta metros de altura, no topo do Corcovado.',
-            'A Lapa e conhecida mundialmente por suas noites agitadas. De terca a domingo, os arcos historicos iluminam a vida noturna carioca.',
-            'O Rio de Janeiro tem o maior parque urbano do mundo: a Floresta da Tijuca, com mais de trezentos quilometros quadrados.',
-            'O Rio abriga o maior estadio de futebol do Brasil: o Maracana, com capacidade para mais de setenta mil pessoas.'
-        ];
-        return dicas[Math.floor(Math.random() * dicas.length)];
-    },
-    function() {
-        var mensagens = [
-            'Voce esta ouvindo a Pires FM, a voz do Rio de Janeiro. Fique conosco, tem muito mais musica boa por vir.',
-            'Pires FM, sempre com voce. A melhor musica do Rio e do Brasil, agora no ar.',
-            'Essa e a Pires FM, onde a musica nunca para. Acompanhe nossa programacao completa no site.',
-            'Continuamos na Pires FM, trazendo o melhor da musica brasileira para voce.',
-            'Pires FM, a emissora que toca o coracao do Rio. Fique ligado!',
-            'Agradecemos a sua sintonia na Pires FM. Continue connosco para mais musica e informacoes.',
-            'Pires FM, sua radio online favorita. Compartilhe com seus amigos e curta a musica.'
-        ];
-        return mensagens[Math.floor(Math.random() * mensagens.length)];
-    }
-];
+var locucoesArquivos = {
+    ident: [
+        'ident_01.mp3', 'ident_02.mp3', 'ident_03.mp3', 'ident_04.mp3',
+        'ident_05.mp3', 'ident_06.mp3', 'ident_07.mp3', 'ident_08.mp3'
+    ],
+    curiosidade: [
+        'curiosidade_01.mp3', 'curiosidade_02.mp3', 'curiosidade_03.mp3',
+        'curiosidade_04.mp3', 'curiosidade_05.mp3', 'curiosidade_06.mp3',
+        'curiosidade_07.mp3', 'curiosidade_08.mp3', 'curiosidade_09.mp3',
+        'curiosidade_10.mp3', 'curiosidade_11.mp3', 'curiosidade_12.mp3',
+        'curiosidade_13.mp3', 'curiosidade_14.mp3', 'curiosidade_15.mp3',
+        'curiosidade_16.mp3', 'curiosidade_17.mp3', 'curiosidade_18.mp3',
+        'curiosidade_19.mp3', 'curiosidade_20.mp3'
+    ],
+    noticia: [
+        'noticia_01.mp3', 'noticia_02.mp3', 'noticia_03.mp3', 'noticia_04.mp3',
+        'noticia_05.mp3', 'noticia_06.mp3', 'noticia_07.mp3', 'noticia_08.mp3',
+        'noticia_09.mp3', 'noticia_10.mp3', 'noticia_11.mp3', 'noticia_12.mp3'
+    ],
+    dica: [
+        'dica_01.mp3', 'dica_02.mp3', 'dica_03.mp3', 'dica_04.mp3',
+        'dica_05.mp3', 'dica_06.mp3', 'dica_07.mp3'
+    ],
+    programacao: [
+        'programacao_01.mp3', 'programacao_02.mp3', 'programacao_03.mp3',
+        'programacao_04.mp3', 'programacao_05.mp3'
+    ]
+};
 
-function getFemaleVoice() {
-    var voices = speechSynthesis.getVoices();
-    var ptBR = voices.filter(function(v) { return v.lang.indexOf('pt') === 0 && v.lang.indexOf('BR') >= 0; });
-    if (ptBR.length > 0) {
-        var female = ptBR.find(function(v) {
-            var n = v.name.toLowerCase();
-            return n.indexOf('femin') >= 0 || n.indexOf('female') >= 0 || n.indexOf('helena') >= 0 || n.indexOf('francisca') >= 0 || n.indexOf('vitoria') >= 0;
-        });
-        return female || ptBR[0];
-    }
-    var pt = voices.filter(function(v) { return v.lang.indexOf('pt') === 0; });
-    if (pt.length > 0) return pt[0];
-    return voices.length > 0 ? voices[0] : null;
+function pickLocucao() {
+    var tipos = Object.keys(locucoesArquivos);
+    var tipo;
+    do {
+        tipo = tipos[Math.floor(Math.random() * tipos.length)];
+    } while (tipo === lastLocucaoType && tipos.length > 1);
+    lastLocucaoType = tipo;
+    var arquivos = locucoesArquivos[tipo];
+    var arquivo = arquivos[Math.floor(Math.random() * arquivos.length)];
+    return { tipo: tipo, arquivo: arquivo };
 }
 
-speechSynthesis.onvoiceschanged = function() { speechSynthesis.getVoices(); };
-
 function doLocucao(callback) {
-    speechSynthesis.cancel();
+    if (isAnnouncing) return;
+    isAnnouncing = true;
     locucaoCount++;
-    var idx = Math.floor(Math.random() * locucoesTexto.length);
-    var texto = locucoesTexto[idx]();
-    var utter = new SpeechSynthesisUtterance(texto);
-    var voice = getFemaleVoice();
-    if (voice) utter.voice = voice;
-    utter.lang = 'pt-BR';
-    utter.rate = 0.92;
-    utter.pitch = 1.15;
-    utter.volume = 1.0;
 
-    utter.onstart = function() {
+    var loc = pickLocucao();
+    var url = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(loc.arquivo);
+
+    locucaoAudio = new Audio();
+    locucaoAudio.preload = 'auto';
+
+    var np = document.getElementById('nowPlaying');
+    var ss = document.getElementById('streamStatus');
+
+    locucaoAudio.onplay = function() {
         isAnnouncing = true;
-        var np = document.getElementById('nowPlaying');
         if (np) np.classList.add('announcing');
-        document.getElementById('trackName').textContent = 'Locucao Pires FM';
-        document.getElementById('trackArtist').textContent = 'Sua locutora falando agora...';
-        var ss = document.getElementById('streamStatus');
-        ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Locucao - Pires FM</span>';
-        ss.className = 'stream-status connected';
+        var tipoNomes = {
+            ident: 'Identificacao Pires FM',
+            curiosidade: 'Curiosidade do Rio',
+            noticia: 'Noticia do Rio',
+            dica: 'Dica do Dia',
+            programacao: 'Programacao'
+        };
+        document.getElementById('trackName').textContent = tipoNomes[loc.tipo] || 'Locucao Pires FM';
+        document.getElementById('trackArtist').textContent = 'Pires FM - Locucao profissional...';
+        if (ss) {
+            ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Locucao - Pires FM</span>';
+            ss.className = 'stream-status connected';
+        }
         try {
             savedVolume = audio.volume;
             audio.volume = 0.03;
         } catch(e) {}
     };
 
-    utter.onend = function() {
+    locucaoAudio.onended = function() {
         isAnnouncing = false;
-        var np = document.getElementById('nowPlaying');
+        locucaoAudio = null;
         if (np) np.classList.remove('announcing');
         try { audio.volume = savedVolume; } catch(e) {}
-        setTimeout(function() { if (callback) callback(); }, 800);
+        setTimeout(function() { if (callback) callback(); }, 600);
     };
 
-    utter.onerror = function() {
+    locucaoAudio.onerror = function() {
+        console.error('Erro ao carregar locucao:', loc.arquivo);
         isAnnouncing = false;
-        var np = document.getElementById('nowPlaying');
+        locucaoAudio = null;
         if (np) np.classList.remove('announcing');
         try { audio.volume = savedVolume; } catch(e) {}
         if (callback) callback();
     };
 
-    speechSynthesis.speak(utter);
+    locucaoAudio.src = url;
+    locucaoAudio.load();
+    locucaoAudio.play().catch(function(err) {
+        console.error('Erro ao tocar locucao:', err);
+        isAnnouncing = false;
+        locucaoAudio = null;
+        if (np) np.classList.remove('announcing');
+        try { audio.volume = savedVolume; } catch(e) {}
+        if (callback) callback();
+    });
 }
 
 // ========== AUDIO PLAYER ==========
@@ -480,23 +434,11 @@ function loadCloudTrack() {
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
 
     audio.pause();
-    audio.oncanplay = null;
-    audio.onloadeddata = null;
-    audio.onerror = null;
-    audio.removeAttribute('src');
+    audio.src = url;
     audio.load();
 
-    streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando: ' + track.song + '...</span>';
-    streamStatus.className = 'stream-status';
-
-    var ready = false;
-
-    function onReady() {
-        if (ready) return;
-        ready = true;
+    audio.oncanplay = function() {
         audio.oncanplay = null;
-        audio.onloadeddata = null;
-        audio.onerror = null;
         errorRetryCount = 0;
         audio.play().then(function() {
             setPlayingState(true);
@@ -505,33 +447,28 @@ function loadCloudTrack() {
             renderPlaylist();
             updateCounter();
         }).catch(function(err) {
-            console.error('Play error:', err);
-            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Clique no play para ouvir</span>';
+            console.error('Cloud play error:', err);
+            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro ao tocar. Tentando novamente...</span>';
             streamStatus.className = 'stream-status error';
+            setTimeout(function() { loadCloudTrack(); }, 2000);
         });
-    }
+    };
 
-    setTimeout(function() {
-        audio.src = url;
-        audio.oncanplay = onReady;
-        audio.onloadeddata = onReady;
-        audio.onerror = function(e) {
-            if (ready) return;
-            console.error('Audio error:', track.file, e);
-            errorRetryCount++;
-            if (errorRetryCount < MAX_RETRIES) {
-                streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Tentando novamente... (' + errorRetryCount + '/' + MAX_RETRIES + ')</span>';
-                streamStatus.className = 'stream-status error';
-                setTimeout(function() { loadCloudTrack(); }, 3000);
-            } else {
-                errorRetryCount = 0;
-                streamStatus.innerHTML = '<i class="fas fa-forward"></i> <span>Pulando musica...</span>';
-                streamStatus.className = 'stream-status error';
-                setTimeout(function() { playNext(); }, 1500);
-            }
-        };
-        audio.load();
-    }, 100);
+    audio.onerror = function() {
+        audio.oncanplay = null;
+        errorRetryCount++;
+        if (errorRetryCount < MAX_RETRIES) {
+            streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + '/' + MAX_RETRIES + ')</span>';
+            streamStatus.className = 'stream-status error';
+            setTimeout(function() { loadCloudTrack(); }, 3000);
+        } else {
+            errorRetryCount = 0;
+            playNext();
+        }
+    };
+
+    streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando da nuvem...</span>';
+    streamStatus.className = 'stream-status';
 }
 
 function playNextWithLocucao() {
@@ -550,13 +487,13 @@ function playNextWithLocucao() {
 }
 
 function playNext() {
-    if (isAnnouncing) { speechSynthesis.cancel(); isAnnouncing = false; }
+    if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
     currentTrackIndex = getNextIndex();
     loadAndPlay();
 }
 
 function playPrev() {
-    if (isAnnouncing) { speechSynthesis.cancel(); isAnnouncing = false; }
+    if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
     if (audio.currentTime > 3) { audio.currentTime = 0; return; }
     currentTrackIndex = getPrevIndex();
     loadAndPlay();
@@ -599,8 +536,9 @@ function formatTime(s) {
 playBtn.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (isAnnouncing) {
-        speechSynthesis.cancel();
+    if (isAnnouncing && locucaoAudio) {
+        locucaoAudio.pause();
+        locucaoAudio = null;
         isAnnouncing = false;
         audio.volume = savedVolume;
         document.getElementById('nowPlaying').classList.remove('announcing');
@@ -737,7 +675,6 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ========== INIT ==========
-speechSynthesis.getVoices();
 buildShuffledOrder();
 renderPlaylist();
 updateCounter();
