@@ -416,7 +416,9 @@ playBtn.addEventListener('click', function(e) {
     audio.play().then(function() {
         setPlayingState(true);
     }).catch(function() {
-        loadTrack();
+        setPlayingState(false);
+        streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Clique de novo para ouvir</span>';
+        streamStatus.className = 'stream-status error';
     });
 });
 
