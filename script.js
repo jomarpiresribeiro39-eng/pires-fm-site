@@ -154,6 +154,7 @@ var playlist = [
 var songsPlayed = 0;
 var isAnnouncing = false;
 var savedVolume = 0.8;
+var locucaoCount = 0;
 
 var locucoesTexto = [
     function() {
@@ -183,6 +184,13 @@ var locucoesTexto = [
             'O Rio de Janeiro foi capital do Brasil por quase duzentos anos. Uma cidade que carrega seculos de historia em cada esquina.',
             'O Arpoador e o melhor lugar da cidade para assistir ao por do sol. Uma tradicao carioca de aplaudir o sol quando se poe.',
             'O Carnaval do Rio de Janeiro e considerado o maior do mundo. Mais de dois milhoes de pessoas saem as ruas todos os anos.',
+            'A prai de Ipanema, imortalizada na musica de Tom Jobim e Vinicius de Moraes, e um dos destinos mais procurados do Rio.',
+            'O Elevador do Lacer, inaugurado em mil oitocentos e oitenta e cinco, conecta a prai de Flamengo ao bairro da Gloria.',
+            'O Convento de Santo Antonio, no centro do Rio, e um dos mais antigos da cidade, construido no seculo dezessete.',
+            'A Pedra da Gavea, com seus setecentos e quarenta metros, e um dos monolitos costeiros mais impressionantes do mundo.',
+            'O Parque Nacional da Tijuca, no meio da cidade, oferece trilhas, cachoeiras e uma vista incrivel da Baia de Guanabara.',
+            'O Museu de Arte Contemporanea, no aterro do Flamengo, abriga uma das maiores colecoes de arte moderna do Brasil.',
+            'A Estacao Central do Brasil, construida em mil novecentos e dez, e um dos marcos arquitetonicos do Rio de Janeiro.'
         ];
         return fatos[Math.floor(Math.random() * fatos.length)];
     },
@@ -195,6 +203,11 @@ var locucoesTexto = [
             'Para voce que gosta de gastronomia, o Rio de Janeiro se consolidou como destino gastronomico de classe mundial.',
             'Na area da tecnologia, o Rio de Janeiro vem se tornando um polo de inovacao, com hubs de tecnologia e startups crescendo pela cidade.',
             'Os projetos de preservacao das praias e da fauna marinha do Rio estao em constante evolucao, garantindo a preservacao das belezas naturais.',
+            'O Rio prepara-se para receber mais eventos internacionais, consolidando-se como um dos principais polos de entretenimento da America Latina.',
+            'Os moradores do Rio comemoram a ampliacao de areas verdes na cidade, com novos projetos de reflorestamento urbano.',
+            'A cena musical do Rio continua vibrante, com novos festivais de musica sendo anunciados para este ano.',
+            'O turismo sustentavel cresce no Rio, com comunitarios e pousadas adotando praticas ecologicas.',
+            'Os bondes de Santa Teresa voltam a operar com regularidade, trazendo de volta um transporte historico da cidade.'
         ];
         return noticia[Math.floor(Math.random() * noticia.length)];
     },
@@ -207,6 +220,30 @@ var locucoesTexto = [
             if (h >= sh && h < eh) { prog = schedule[i]; break; }
         }
         return 'Lembrete de programacao: no momento, esta no ar o programa ' + prog.name + '! ' + prog.desc + '. Fique ligado na Pires FM para acompanhar toda a nossa grade.';
+    },
+    function() {
+        var dicas = [
+            'Dica do dia: o Rio de Janeiro oferece mais de oitenta praias. Ja visitou todas? A prai de Prainha e um tesouro escondido na Zona Oeste.',
+            'Sabia que o Rio e a cidade com mais helipontos do Brasil? A vista de cima e simplesmente de tirar o folego.',
+            'Curiosidade: o nome Rio de Janeiro veio de um erro de navegacao. Os portugueses acharam que a baia era a boca de um rio.',
+            'O Cristo Redentor ja foi eleito uma das Sete Novas Maravilhas do Mundo. Quarenta metros de altura, no topo do Corcovado.',
+            'A Lapa e conhecida mundialmente por suas noites agitadas. De terca a domingo, os arcos historicos iluminam a vida noturna carioca.',
+            'O Rio de Janeiro tem o maior parque urbano do mundo: a Floresta da Tijuca, com mais de trezentos quilometros quadrados.',
+            'O Rio abriga o maior estadio de futebol do Brasil: o Maracana, com capacidade para mais de setenta mil pessoas.'
+        ];
+        return dicas[Math.floor(Math.random() * dicas.length)];
+    },
+    function() {
+        var mensagens = [
+            'Voce esta ouvindo a Pires FM, a voz do Rio de Janeiro. Fique conosco, tem muito mais musica boa por vir.',
+            'Pires FM, sempre com voce. A melhor musica do Rio e do Brasil, agora no ar.',
+            'Essa e a Pires FM, onde a musica nunca para. Acompanhe nossa programacao completa no site.',
+            'Continuamos na Pires FM, trazendo o melhor da musica brasileira para voce.',
+            'Pires FM, a emissora que toca o coracao do Rio. Fique ligado!',
+            'Agradecemos a sua sintonia na Pires FM. Continue connosco para mais musica e informacoes.',
+            'Pires FM, sua radio online favorita. Compartilhe com seus amigos e curta a musica.'
+        ];
+        return mensagens[Math.floor(Math.random() * mensagens.length)];
     }
 ];
 
@@ -229,14 +266,15 @@ speechSynthesis.onvoiceschanged = function() { speechSynthesis.getVoices(); };
 
 function doLocucao(callback) {
     speechSynthesis.cancel();
+    locucaoCount++;
     var idx = Math.floor(Math.random() * locucoesTexto.length);
     var texto = locucoesTexto[idx]();
     var utter = new SpeechSynthesisUtterance(texto);
     var voice = getFemaleVoice();
     if (voice) utter.voice = voice;
     utter.lang = 'pt-BR';
-    utter.rate = 0.95;
-    utter.pitch = 1.1;
+    utter.rate = 0.92;
+    utter.pitch = 1.15;
     utter.volume = 1.0;
 
     utter.onstart = function() {
@@ -250,7 +288,7 @@ function doLocucao(callback) {
         ss.className = 'stream-status connected';
         try {
             savedVolume = audio.volume;
-            audio.volume = 0.05;
+            audio.volume = 0.03;
         } catch(e) {}
     };
 
@@ -259,7 +297,7 @@ function doLocucao(callback) {
         var np = document.getElementById('nowPlaying');
         if (np) np.classList.remove('announcing');
         try { audio.volume = savedVolume; } catch(e) {}
-        if (callback) callback();
+        setTimeout(function() { if (callback) callback(); }, 800);
     };
 
     utter.onerror = function() {
