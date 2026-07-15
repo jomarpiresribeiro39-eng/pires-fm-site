@@ -116,6 +116,7 @@ function login() {
 }
 
 function logout() {
+    if (dashboardInterval) { clearInterval(dashboardInterval); dashboardInterval = null; }
     var data = getStoredData();
     data.loggedIn = false;
     saveData(data);
@@ -128,6 +129,8 @@ function showAdminPanel() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminPanel').classList.remove('hidden');
     loadDashboard();
+    if (dashboardInterval) clearInterval(dashboardInterval);
+    dashboardInterval = setInterval(function() { renderNextTracks(); }, 10000);
 }
 
 // ========== LOGS ==========
@@ -323,20 +326,27 @@ function renderNextTracks() {
     var pl = getPlaylist();
     var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
     var AVG_SONG = 240;
+    var LOC_DUR = 12;
+    var LOC_EACH = 3;
+    var cycle = AVG_SONG + (LOC_DUR / LOC_EACH);
     var elapsed = (Date.now() - EPOCH) / 1000;
-    var idx = Math.floor(elapsed / AVG_SONG) % pl.length;
+    var songNum = Math.floor(elapsed / cycle);
+    var idx = songNum % pl.length;
 
     var container = document.getElementById('nextTracks');
     var html = '';
     for (var i = 0; i < 10; i++) {
         var trackIdx = (idx + i) % pl.length;
         var t = pl[trackIdx];
-        html += '<div class="track-item">' +
+        var isCurrent = i === 0;
+        html += '<div class="track-item' + (isCurrent ? ' current' : '') + '">' +
             '<div class="track-num">' + (i + 1) + '</div>' +
             '<div class="track-details">' +
             '<div class="track-song">' + t.song + '</div>' +
             '<div class="track-artist">' + t.artist + '</div>' +
-            '</div></div>';
+            '</div>' +
+            (isCurrent ? '<div class="track-live"><i class="fas fa-volume-up"></i> AO VIVO</div>' : '') +
+            '</div>';
     }
     container.innerHTML = html;
 }
@@ -438,6 +448,8 @@ function switchTab(tabName) {
 }
 
 // ========== INIT ==========
+var dashboardInterval = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     if (isLoggedIn()) {
         showAdminPanel();

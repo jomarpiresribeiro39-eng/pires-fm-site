@@ -406,6 +406,35 @@ body {
     color: var(--text-muted);
 }
 
+.track-item.current {
+    background: rgba(230,57,70,0.08);
+    border-radius: 10px;
+    padding: 12px 10px;
+    margin: -2px 0;
+    border-left: 3px solid var(--primary);
+}
+
+.track-item.current .track-num {
+    background: var(--primary);
+    color: white;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.track-live {
+    font-size: 0.65rem;
+    color: #4caf50;
+    font-weight: 600;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.track-live i {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
 /* SYSTEM INFO */
 .sys-info {
     display: flex;
