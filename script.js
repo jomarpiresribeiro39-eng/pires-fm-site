@@ -153,8 +153,39 @@ var locucoesArquivos = {
     curiosidade: ['curiosidade_01.mp3','curiosidade_02.mp3','curiosidade_03.mp3','curiosidade_04.mp3','curiosidade_05.mp3','curiosidade_06.mp3','curiosidade_07.mp3','curiosidade_08.mp3','curiosidade_09.mp3','curiosidade_10.mp3','curiosidade_11.mp3','curiosidade_12.mp3','curiosidade_13.mp3','curiosidade_14.mp3','curiosidade_15.mp3','curiosidade_16.mp3','curiosidade_17.mp3','curiosidade_18.mp3','curiosidade_19.mp3','curiosidade_20.mp3'],
     noticia: ['noticia_01.mp3','noticia_02.mp3','noticia_03.mp3','noticia_04.mp3','noticia_05.mp3','noticia_06.mp3','noticia_07.mp3','noticia_08.mp3','noticia_09.mp3','noticia_10.mp3','noticia_11.mp3','noticia_12.mp3'],
     dica: ['dica_01.mp3','dica_02.mp3','dica_03.mp3','dica_04.mp3','dica_05.mp3','dica_06.mp3','dica_07.mp3'],
-    programacao: ['programacao_01.mp3','programacao_02.mp3','programacao_03.mp3','programacao_04.mp3','programacao_05.mp3']
+    programacao: ['programacao_01.mp3','programacao_02.mp3','programacao_03.mp3','programacao_04.mp3','programacao_05.mp3'],
+    hora: ['hora_intro_01.mp3','hora_intro_02.mp3','hora_intro_03.mp3','hora_intro_04.mp3','hora_intro_05.mp3','hora_outro_01.mp3','hora_outro_02.mp3','hora_outro_03.mp3','hora_outro_04.mp3','hora_outro_05.mp3']
 };
+
+var horaIntros = ['hora_intro_01.mp3','hora_intro_02.mp3','hora_intro_03.mp3','hora_intro_04.mp3','hora_intro_05.mp3'];
+var horaOutros = ['hora_outro_01.mp3','hora_outro_02.mp3','hora_outro_03.mp3','hora_outro_04.mp3','hora_outro_05.mp3'];
+
+function getHorarioRio() {
+    var now = new Date();
+    var options = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false };
+    var parts = new Intl.DateTimeFormat('pt-BR', options).formatToParts(now);
+    var h = parts.find(function(p) { return p.type === 'hour'; }).value;
+    var m = parts.find(function(p) { return p.type === 'minute'; }).value;
+    return { hora: parseInt(h), minuto: parseInt(m) };
+}
+
+function falarHorario(hora, minuto) {
+    var h = hora;
+    var m = minuto;
+    var texto = '';
+    if (h === 0 && m === 0) { texto = 'meia noite e zero minutos'; }
+    else if (h === 12 && m === 0) { texto = 'meio dia e zero minutos'; }
+    else {
+        var hPorExtenso = ['zero','uma','duas','tres','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove','vinte','vinte e uma','vinte e duas','vinte e tres'];
+        texto = hPorExtenso[h] || h;
+        texto += ' hora' + (h !== 1 ? 's' : '');
+        if (m > 0) {
+            var mPorExtenso = ['zero','um','dois','tres','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove','vinte','vinte e um','vinte e dois','vinte e tres','vinte e quatro','vinte e cinco','vinte e seis','vinte e sete','vinte e oito','vinte e nove','trinta','trinta e um','trinta e dois','trinta e tres','trinta e quatro','trinta e cinco','trinta e seis','trinta e sete','trinta e oito','trinta e nove','quarenta','quarenta e um','quarenta e dois','quarenta e tres','quarenta e quatro','quarenta e cinco','quarenta e seis','quarenta e sete','quarenta e oito','quarenta e nove','cinquenta','cinquenta e um','cinquenta e dois','cinquenta e tres','cinquenta e quatro','cinquenta e cinco'];
+            texto += ' e ' + (mPorExtenso[m] || m) + ' minuto' + (m !== 1 ? 's' : '');
+        }
+    }
+    return texto;
+}
 
 function pickLocucao() {
     var tipos = Object.keys(locucoesArquivos);
@@ -165,7 +196,74 @@ function pickLocucao() {
     return { tipo: tipo, arquivo: arquivos[Math.floor(Math.random() * arquivos.length)] };
 }
 
+function playAudio(url) {
+    return new Promise(function(resolve, reject) {
+        var a = new Audio();
+        a.preload = 'auto';
+        a.onended = function() { resolve(); };
+        a.onerror = function() { reject(); };
+        a.src = url;
+        a.load();
+        a.play().catch(reject);
+    });
+}
+
+function falarComVoz(texto) {
+    return new Promise(function(resolve) {
+        if (!('speechSynthesis' in window)) { resolve(); return; }
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(texto);
+        u.lang = 'pt-BR';
+        u.rate = 0.95;
+        u.pitch = 1.0;
+        u.volume = 1.0;
+        var voices = window.speechSynthesis.getVoices();
+        var ptBr = voices.find(function(v) { return v.lang === 'pt-BR' && v.name.indexOf('Google') === -1; }) || voices.find(function(v) { return v.lang === 'pt-BR'; });
+        if (ptBr) u.voice = ptBr;
+        u.onend = function() { setTimeout(resolve, 200); };
+        u.onerror = function() { resolve(); };
+        window.speechSynthesis.speak(u);
+    });
+}
+
+function doHoraCerta(callback) {
+    if (isAnnouncing) { if (callback) callback(); return; }
+    isAnnouncing = true;
+    var np = document.getElementById('nowPlaying');
+    var ss = document.getElementById('streamStatus');
+
+    try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+    if (np) np.classList.add('announcing');
+    document.getElementById('trackName').textContent = 'Hora Certa - Rio de Janeiro';
+    document.getElementById('trackArtist').textContent = 'Pires FM - A hora certa do Rio!';
+    if (ss) { ss.innerHTML = '<i class="fas fa-clock"></i> <span>Hora Certa - Pires FM</span>'; ss.className = 'stream-status connected'; }
+
+    var introFile = horaIntros[Math.floor(Math.random() * horaIntros.length)];
+    var outroFile = horaOutros[Math.floor(Math.random() * horaOutros.length)];
+    var introUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(introFile);
+    var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
+    var horario = getHorarioRio();
+    var textoHora = falarHorario(horario.hora, horario.minuto);
+
+    playAudio(introUrl)
+        .then(function() { return falarComVoz(textoHora); })
+        .then(function() { return playAudio(outroUrl); })
+        .then(function() {
+            isAnnouncing = false; locucaoAudio = null;
+            if (np) np.classList.remove('announcing');
+            try { audio.volume = savedVolume; } catch(e) {}
+            setTimeout(function() { if (callback) callback(); }, 500);
+        })
+        .catch(function() {
+            isAnnouncing = false; locucaoAudio = null;
+            if (np) np.classList.remove('announcing');
+            try { audio.volume = savedVolume; } catch(e) {}
+            if (callback) callback();
+        });
+}
+
 function doLocucao(callback) {
+    if (Math.random() < 0.25) { doHoraCerta(callback); return; }
     if (isAnnouncing) { if (callback) callback(); return; }
     isAnnouncing = true;
     var loc = pickLocucao();
