@@ -480,11 +480,23 @@ function loadCloudTrack() {
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
 
     audio.pause();
-    audio.src = url;
+    audio.oncanplay = null;
+    audio.onloadeddata = null;
+    audio.onerror = null;
+    audio.removeAttribute('src');
     audio.load();
 
-    audio.oncanplay = function() {
+    streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando: ' + track.song + '...</span>';
+    streamStatus.className = 'stream-status';
+
+    var ready = false;
+
+    function onReady() {
+        if (ready) return;
+        ready = true;
         audio.oncanplay = null;
+        audio.onloadeddata = null;
+        audio.onerror = null;
         errorRetryCount = 0;
         audio.play().then(function() {
             setPlayingState(true);
@@ -493,28 +505,33 @@ function loadCloudTrack() {
             renderPlaylist();
             updateCounter();
         }).catch(function(err) {
-            console.error('Cloud play error:', err);
-            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro ao tocar. Tentando novamente...</span>';
+            console.error('Play error:', err);
+            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Clique no play para ouvir</span>';
             streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadCloudTrack(); }, 2000);
         });
-    };
+    }
 
-    audio.onerror = function() {
-        audio.oncanplay = null;
-        errorRetryCount++;
-        if (errorRetryCount < MAX_RETRIES) {
-            streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + '/' + MAX_RETRIES + ')</span>';
-            streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadCloudTrack(); }, 3000);
-        } else {
-            errorRetryCount = 0;
-            playNext();
-        }
-    };
-
-    streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando da nuvem...</span>';
-    streamStatus.className = 'stream-status';
+    setTimeout(function() {
+        audio.src = url;
+        audio.oncanplay = onReady;
+        audio.onloadeddata = onReady;
+        audio.onerror = function(e) {
+            if (ready) return;
+            console.error('Audio error:', track.file, e);
+            errorRetryCount++;
+            if (errorRetryCount < MAX_RETRIES) {
+                streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Tentando novamente... (' + errorRetryCount + '/' + MAX_RETRIES + ')</span>';
+                streamStatus.className = 'stream-status error';
+                setTimeout(function() { loadCloudTrack(); }, 3000);
+            } else {
+                errorRetryCount = 0;
+                streamStatus.innerHTML = '<i class="fas fa-forward"></i> <span>Pulando musica...</span>';
+                streamStatus.className = 'stream-status error';
+                setTimeout(function() { playNext(); }, 1500);
+            }
+        };
+        audio.load();
+    }, 100);
 }
 
 function playNextWithLocucao() {
