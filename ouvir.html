@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pires FM - Ouça Ao Vivo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #e63946;
+            --primary-dark: #b82e39;
+            --secondary: #1d3557;
+            --accent: #f4a261;
+            --dark: #0a0a1a;
+            --darker: #050510;
+            --card: #111128;
+            --text: #e8e8f0;
+            --text-muted: #8888aa;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--darker);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .bg-img {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-size: cover;
+            background-position: center;
+            z-index: 0;
+            transition: opacity 2s ease;
+        }
+
+        .bg-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: radial-gradient(ellipse at center, rgba(5,5,16,0.6) 0%, rgba(5,5,16,0.85) 100%);
+            z-index: 1;
+        }
+
+        .player {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            width: 100%;
+            max-width: 480px;
+            padding: 30px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(230,57,70,0.15);
+            border: 1px solid rgba(230,57,70,0.3);
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--primary);
+            margin-bottom: 30px;
+        }
+
+        .pulse-dot {
+            width: 8px; height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(230,57,70,0.5); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 8px rgba(230,57,70,0); }
+        }
+
+        .logo {
+            margin-bottom: 25px;
+        }
+
+        .logo h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+        }
+
+        .logo h1 span { color: var(--primary); }
+
+        .logo p {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .clock {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .clock-date {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            text-transform: capitalize;
+        }
+
+        .vinyl-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 22px 28px;
+            margin-bottom: 25px;
+        }
+
+        .vinyl {
+            width: 65px; height: 65px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #111, #222, #111, #222, #111, #222, #111);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .vinyl.spinning { animation: spin 2s linear infinite; }
+
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .vinyl-inner {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: white;
+        }
+
+        .track-info { text-align: left; flex: 1; min-width: 0; }
+
+        .track-label {
+            font-size: 0.65rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 3px;
+        }
+
+        .track-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .ctrl-btn {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .ctrl-btn:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .play-btn {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            color: white;
+            font-size: 26px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 0 40px rgba(230,57,70,0.4);
+        }
+
+        .play-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 60px rgba(230,57,70,0.6);
+        }
+
+        .play-btn i { margin-left: 3px; }
+
+        .volume {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .volume i {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .volume input[type=range] {
+            -webkit-appearance: none;
+            width: 140px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .status {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .status.connected { color: #4caf50; }
+
+        .visualizer {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3px;
+            height: 40px;
+            margin-bottom: 20px;
+        }
+
+        .visualizer .bar {
+            width: 3px;
+            background: linear-gradient(to top, var(--primary), var(--accent));
+            border-radius: 2px;
+            height: 4px;
+            transition: height 0.1s;
+        }
+
+        .visualizer.active .bar {
+            animation: viz 0.5s ease-in-out infinite alternate;
+        }
+
+        .bar:nth-child(1) { animation-delay: 0s; }
+        .bar:nth-child(2) { animation-delay: 0.05s; }
+        .bar:nth-child(3) { animation-delay: 0.1s; }
+        .bar:nth-child(4) { animation-delay: 0.15s; }
+        .bar:nth-child(5) { animation-delay: 0.2s; }
+        .bar:nth-child(6) { animation-delay: 0.25s; }
+        .bar:nth-child(7) { animation-delay: 0.3s; }
+        .bar:nth-child(8) { animation-delay: 0.35s; }
+        .bar:nth-child(9) { animation-delay: 0.4s; }
+        .bar:nth-child(10) { animation-delay: 0.45s; }
+        .bar:nth-child(11) { animation-delay: 0.5s; }
+        .bar:nth-child(12) { animation-delay: 0.55s; }
+        .bar:nth-child(13) { animation-delay: 0.6s; }
+        .bar:nth-child(14) { animation-delay: 0.65s; }
+        .bar:nth-child(15) { animation-delay: 0.7s; }
+
+        @keyframes viz {
+            0% { height: 4px; }
+            100% { height: 35px; }
+        }
+
+        .footer-link {
+            margin-top: 25px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .footer-link a {
+            color: var(--primary);
+            text-decoration: none;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .footer-link a:hover { opacity: 1; }
+
+        @media (max-width: 500px) {
+            .player { padding: 20px 15px; }
+            .logo h1 { font-size: 2rem; }
+            .clock { font-size: 2rem; }
+            .play-btn { width: 60px; height: 60px; font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-img" id="bgImg"></div>
+    <div class="bg-overlay"></div>
+
+    <audio id="radioAudio" preload="auto"></audio>
+
+    <div class="player">
+        <div class="badge">
+            <span class="pulse-dot"></span>
+            <span>AO VIVO</span>
+        </div>
+
+        <div class="logo">
+            <h1>Pires <span>FM</span></h1>
+            <p>A voz do Rio de Janeiro</p>
+        </div>
+
+        <div class="clock" id="clock">00:00:00</div>
+        <div class="clock-date" id="clockDate"></div>
+
+        <div class="vinyl-wrap" id="nowPlaying">
+            <div class="vinyl" id="vinyl">
+                <div class="vinyl-inner"><i class="fas fa-music"></i></div>
+            </div>
+            <div class="track-info">
+                <div class="track-label">Tocando Agora</div>
+                <div class="track-name" id="trackName">Carregando...</div>
+                <div class="track-artist" id="trackArtist">Pires FM</div>
+            </div>
+        </div>
+
+        <div class="visualizer" id="visualizer">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+
+        <div class="controls">
+            <button class="ctrl-btn" id="prevBtn" title="Anterior"><i class="fas fa-step-backward"></i></button>
+            <button class="play-btn" id="playBtn"><i class="fas fa-play" id="playIcon"></i></button>
+            <button class="ctrl-btn" id="nextBtn" title="Próxima"><i class="fas fa-step-forward"></i></button>
+        </div>
+
+        <div class="volume">
+            <i class="fas fa-volume-up" id="volIcon"></i>
+            <input type="range" id="volSlider" min="0" max="100" value="80">
+        </div>
+
+        <div class="status" id="status">
+            <i class="fas fa-wifi"></i>
+            <span>Preparando...</span>
+        </div>
+
+        <div class="footer-link">
+            <a href="index.html">Site completo</a>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var PLAYLIST = [
+            { file: "001.mp3", artist: "Jorge Ben Jor", song: "Mas Que Nada" },
+            { file: "002.mp3", artist: "Tom Jobim", song: "Garota de Ipanema" },
+            { file: "003.mp3", artist: "Caetano Veloso", song: "Apareceu a Flores" },
+            { file: "004.mp3", artist: "Roberto Carlos", song: "Detalhes" },
+            { file: "005.mp3", artist: "Joao Gilberto", song: "Chega de Saudade" },
+            { file: "006.mp3", artist: "MPB4", song: "Cotidiano" },
+            { file: "007.mp3", artist: "Milton Nascimento", song: "Travessia" },
+            { file: "008.mp3", artist: "Elis Regina", song: "Aguas de Marco" },
+            { file: "009.mp3", artist: "Chico Buarque", song: "Construcao" },
+            { file: "010.mp3", artist: "Gal Costa", song: "Divino Maravilhoso" },
+            { file: "011.mp3", artist: "Marisa Monte", song: "Amor I Love You" },
+            { file: "012.mp3", artist: "Djavan", song: "Flor e Beijo" },
+            { file: "013.mp3", artist: "Ivete Sangalo", song: "Sorte Grande" },
+            { file: "014.mp3", artist: "Sergio Mendes", song: "Mas Que Nada" },
+            { file: "015.mp3", artist: "Tim Maia", song: "Volta" },
+            { file: "016.mp3", artist: "Lulu Santos", song: "A Sua" },
+            { file: "017.mp3", artist: "Raul Seixas", song: "Ouro de Tolo" },
+            { file: "018.mp3", artist: "Legiao Urbana", song: "Ainda e Cedo" },
+            { file: "019.mp3", artist: "Barao Vermelho", song: "Pro Dia Nascer Feliz" },
+            { file: "020.mp3", artist: "Os Mutantes", song: "A Minha Menina" },
+            { file: "021.mp3", artist: "Teresa Cristina", song: "Saudade" },
+            { file: "022.mp3", artist: "Seu Jorge", song: "Carolina" },
+            { file: "023.mp3", artist: "Ana Carolina", song: "Garganta" },
+            { file: "024.mp3", artist: "Claudia Leitte", song: "Matimba" },
+            { file: "025.mp3", artist: "Zeca Pagodinho", song: "Deixa a Vida Me Levar" },
+            { file: "026.mp3", artist: "Martinho da Vila", song: "Divina" },
+            { file: "027.mp3", artist: "Alceu Valença", song: "Anunciação" },
+            { file: "028.mp3", artist: "Dominguinhos", song: "Esquinas" },
+            { file: "029.mp3", artist: "Fafá de Belém", song: "Olhos Coloridos" },
+            { file: "030.mp3", artist: "Rosana", song: "Dias Melhores" },
+            { file: "031.mp3", artist: "Sandy", song: "Quando Voce Passa" },
+            { file: "032.mp3", artist: "Jota Quest", song: "So Hoje" },
+            { file: "033.mp3", artist: "Blitz", song: "Vontade de Mim" },
+            { file: "034.mp3", artist: "Kid Abelha", song: "Por Onde Andei" },
+            { file: "035.mp3", artist: "Skank", song: "Vou Deixar" },
+            { file: "036.mp3", artist: "Jota Quest", song: "Dias Melhores" },
+            { file: "037.mp3", artist: "Os Baroes da Pisadinha", song: "Dancando" },
+            { file: "038.mp3", artist: "Joao Lucas & Marcelo", song: "Largado Atras" },
+            { file: "039.mp3", artist: "Gusttavo Lima", song: "Balada" },
+            { file: "040.mp3", artist: "Michel Telo", song: "Ai Se Eu Te Pego" },
+            { file: "041.mp3", artist: "Henrique & Juliano", song: "Cem" },
+            { file: "042.mp3", artist: "Maiara & Maraísa", song: "Bara Bará Bere Berê" },
+            { file: "043.mp3", artist: "Simone & Simaria", song: "Levada da Vida" },
+            { file: "044.mp3", artist: "Bruno & Marrone", song: "Vida Boa" },
+            { file: "045.mp3", artist: "Luan Santana", song: "Sinais" },
+            { file: "046.mp3", artist: "Ana & Jorginho", song: "Te Esperando" },
+            { file: "047.mp3", artist: "Zé Neto & Cristiano", song: "Vai Dar Net" },
+            { file: "048.mp3", artist: "Gusttavo Lima", song: "Bala de Prata" },
+            { file: "049.mp3", artist: "Jorge & Mateus", song: "Praieiro" },
+            { file: "050.mp3", artist: "Avine Vinny", song: "Mil Horas" },
+            { file: "051.mp3", artist: "Belo", song: "Vida Loka" },
+            { file: "052.mp3", artist: "R.E.M.", song: "Losing My Religion" },
+            { file: "053.mp3", artist: "Rachid Taha", song: "Ya Rayah" },
+            { file: "054.mp3", artist: "Rionegro & Solimoes", song: "A Gente Se Entrega" },
+            { file: "055.mp3", artist: "Skank", song: "Tanto (I Want You)" },
+            { file: "056.mp3", artist: "Mauricio Manieri", song: "Te Quero Tanto" },
+            { file: "057.mp3", artist: "Telemensagem", song: "Boa Noite" },
+            { file: "058.mp3", artist: "Vanessa da Mata", song: "Ainda Bem" },
+            { file: "059.mp3", artist: "Vanessa da Mata", song: "Amado" },
+            { file: "060.mp3", artist: "Vanessa da Mata", song: "Boa Sorte / Good Luck" },
+            { file: "061.mp3", artist: "Vanessa da Mata", song: "Gente Feliz" },
+            { file: "062.mp3", artist: "Vanessa da Mata", song: "So Voce e Eu" },
+            { file: "063.mp3", artist: "Elton John", song: "Your Song" },
+            { file: "064.mp3", artist: "Zeca Baleiro", song: "Price Tag" },
+            { file: "065.mp3", artist: "Zeze Di Camargo & Luciano", song: "Pra Mudar a Minha Vida" },
+            { file: "066.mp3", artist: "Telemensagem", song: "Boa Noite (Voz)" }
+        ];
+
+        var ARCHIVE = 'pires-fm-musicas';
+        var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
+        var AVG = 240;
+        var LOC_DUR = 12;
+
+        var audio = document.getElementById('radioAudio');
+        var isPlaying = false;
+        var currentIdx = 0;
+
+        // Background slideshow
+        var bgImgs = ['img/cristo.jpg', 'img/pao_de_acucar.jpg', 'img/ipanema.jpg'];
+        var bgIdx = 0;
+        document.getElementById('bgImg').style.backgroundImage = 'url(' + bgImgs[0] + ')';
+        setInterval(function() {
+            var el = document.getElementById('bgImg');
+            el.style.opacity = '0';
+            setTimeout(function() {
+                bgIdx = (bgIdx + 1) % bgImgs.length;
+                el.style.backgroundImage = 'url(' + bgImgs[bgIdx] + ')';
+                el.style.opacity = '1';
+            }, 2000);
+        }, 8000);
+
+        // Clock
+        function updateClock() {
+            var now = new Date();
+            var opts = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            var parts = new Intl.DateTimeFormat('pt-BR', opts).formatToParts(now);
+            var h = parts.find(function(p){return p.type==='hour'}).value;
+            var m = parts.find(function(p){return p.type==='minute'}).value;
+            var s = parts.find(function(p){return p.type==='second'}).value;
+            document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+            var dopts = { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('clockDate').textContent = new Intl.DateTimeFormat('pt-BR', dopts).format(now);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Radio sync
+        function getElapsed() { return (Date.now() - EPOCH) / 1000; }
+
+        function getTrackIndex() {
+            var cycle = AVG + (LOC_DUR / 3);
+            var songNum = Math.floor(getElapsed() / cycle);
+            return songNum % PLAYLIST.length;
+        }
+
+        function getTrackOffset() {
+            var cycle = AVG + (LOC_DUR / 3);
+            var timeInCycle = getElapsed() % cycle;
+            if (timeInCycle < AVG) return Math.min(timeInCycle, AVG - 1);
+            return 0;
+        }
+
+        function loadTrack() {
+            var track = PLAYLIST[currentIdx];
+            var url = 'https://archive.org/download/' + ARCHIVE + '/' + encodeURIComponent(track.file);
+            var seekTo = getTrackOffset();
+
+            audio.oncanplay = null;
+            audio.onerror = null;
+            audio.src = url;
+
+            audio.oncanplay = function() {
+                audio.oncanplay = null;
+                audio.onerror = null;
+                if (seekTo > 0 && seekTo < audio.duration) audio.currentTime = seekTo;
+                audio.play().then(function() {
+                    document.getElementById('trackName').textContent = track.song;
+                    document.getElementById('trackArtist').textContent = track.artist;
+                    document.getElementById('vinyl').classList.add('spinning');
+                    document.getElementById('visualizer').classList.add('active');
+                    document.getElementById('playIcon').className = 'fas fa-pause';
+                    isPlaying = true;
+                    var st = document.getElementById('status');
+                    st.innerHTML = '<i class="fas fa-wifi"></i> <span>Tocando ao vivo</span>';
+                    st.className = 'status connected';
+                }).catch(function(){});
+            };
+
+            audio.onerror = function() {
+                audio.oncanplay = null;
+                audio.onerror = null;
+                setTimeout(function() { loadTrack(); }, 3000);
+            };
+
+            var st = document.getElementById('status');
+            st.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
+            st.className = 'status';
+        }
+
+        function goNext() {
+            currentIdx = (currentIdx + 1) % PLAYLIST.length;
+            loadTrack();
+        }
+
+        function goPrev() {
+            currentIdx = (currentIdx - 1 + PLAYLIST.length) % PLAYLIST.length;
+            loadTrack();
+        }
+
+        audio.addEventListener('ended', goNext);
+
+        document.getElementById('playBtn').addEventListener('click', function() {
+            if (isPlaying) {
+                audio.muted = true;
+                isPlaying = false;
+                document.getElementById('playIcon').className = 'fas fa-play';
+                document.getElementById('vinyl').classList.remove('spinning');
+                document.getElementById('visualizer').classList.remove('active');
+                var st = document.getElementById('status');
+                st.innerHTML = '<i class="fas fa-pause"></i> <span>Pausado</span>';
+                st.className = 'status';
+            } else {
+                audio.muted = false;
+                isPlaying = true;
+                document.getElementById('playIcon').className = 'fas fa-pause';
+                document.getElementById('vinyl').classList.add('spinning');
+                document.getElementById('visualizer').classList.add('active');
+                var st2 = document.getElementById('status');
+                st2.innerHTML = '<i class="fas fa-wifi"></i> <span>Tocando ao vivo</span>';
+                st2.className = 'status connected';
+            }
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', goNext);
+        document.getElementById('prevBtn').addEventListener('click', goPrev);
+
+        document.getElementById('volSlider').addEventListener('input', function(e) {
+            audio.volume = e.target.value / 100;
+            var icon = document.getElementById('volIcon');
+            var v = parseInt(e.target.value);
+            icon.className = v === 0 ? 'fas fa-volume-mute' : v < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
+        });
+
+        audio.volume = 0.8;
+
+        // Visualizer animation
+        (function animVis() {
+            if (isPlaying) {
+                var bars = document.querySelectorAll('.visualizer .bar');
+                for (var i = 0; i < bars.length; i++) bars[i].style.height = (Math.random() * 30 + 4) + 'px';
+            }
+            requestAnimationFrame(function() { setTimeout(animVis, 120); });
+        })();
+
+        // Start
+        currentIdx = getTrackIndex();
+        loadTrack();
+
+    })();
+    </script>
+</body>
+</html>
