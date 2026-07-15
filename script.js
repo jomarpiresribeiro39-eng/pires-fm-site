@@ -153,8 +153,7 @@ var locucoesArquivos = {
     curiosidade: ['curiosidade_01.mp3','curiosidade_02.mp3','curiosidade_03.mp3','curiosidade_04.mp3','curiosidade_05.mp3','curiosidade_06.mp3','curiosidade_07.mp3','curiosidade_08.mp3','curiosidade_09.mp3','curiosidade_10.mp3','curiosidade_11.mp3','curiosidade_12.mp3','curiosidade_13.mp3','curiosidade_14.mp3','curiosidade_15.mp3','curiosidade_16.mp3','curiosidade_17.mp3','curiosidade_18.mp3','curiosidade_19.mp3','curiosidade_20.mp3'],
     noticia: ['noticia_01.mp3','noticia_02.mp3','noticia_03.mp3','noticia_04.mp3','noticia_05.mp3','noticia_06.mp3','noticia_07.mp3','noticia_08.mp3','noticia_09.mp3','noticia_10.mp3','noticia_11.mp3','noticia_12.mp3'],
     dica: ['dica_01.mp3','dica_02.mp3','dica_03.mp3','dica_04.mp3','dica_05.mp3','dica_06.mp3','dica_07.mp3'],
-    programacao: ['programacao_01.mp3','programacao_02.mp3','programacao_03.mp3','programacao_04.mp3','programacao_05.mp3'],
-    hora: ['hora_intro_01.mp3','hora_intro_02.mp3','hora_intro_03.mp3','hora_intro_04.mp3','hora_intro_05.mp3','hora_outro_01.mp3','hora_outro_02.mp3','hora_outro_03.mp3','hora_outro_04.mp3','hora_outro_05.mp3']
+    programacao: ['programacao_01.mp3','programacao_02.mp3','programacao_03.mp3','programacao_04.mp3','programacao_05.mp3']
 };
 
 var horaIntros = ['hora_intro_01.mp3','hora_intro_02.mp3','hora_intro_03.mp3','hora_intro_04.mp3','hora_intro_05.mp3'];
@@ -262,8 +261,214 @@ function doHoraCerta(callback) {
         });
 }
 
+// ========== CLIMA E NOTICIAS AO VIVO ==========
+var weatherCache = null;
+var weatherCacheTime = 0;
+var weatherCacheDuracao = 600000;
+
+var condicoesPT = {
+    0: 'céu limpo', 1: 'céu quase limpo', 2: 'parcialmente nublado', 3: 'nublado',
+    45: 'neblina', 48: 'neblina com geada', 51: 'garoa leve', 53: 'garoa moderada',
+    55: 'garoa forte', 56: 'garoa gelada leve', 57: 'garoa gelada forte',
+    61: 'chuva leve', 63: 'chuva moderada', 65: 'chuva forte',
+    66: 'chuva gelada leve', 67: 'chuva gelada forte',
+    71: 'neve leve', 73: 'neve moderada', 75: 'neve forte', 77: 'granizo',
+    80: 'pancadas leves', 81: 'pancadas moderadas', 82: 'pancadas fortes',
+    85: 'pancadas de neve leves', 86: 'pancadas de neve fortes',
+    95: 'tempestade', 96: 'tempestade com granizo leve', 99: 'tempestade com granizo forte'
+};
+
+function buscarClima() {
+    var agora = Date.now();
+    if (weatherCache && (agora - weatherCacheTime) < weatherCacheDuracao) {
+        return Promise.resolve(weatherCache);
+    }
+    return fetch('https://api.open-meteo.com/v1/forecast?latitude=-22.9068&longitude=-43.1729&current_weather=true&timezone=America/Sao_Paulo')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var cw = data.currentweather || data.current_weather;
+            var temp = cw.temperature;
+            var code = cw.weathercode || cw.weather_code;
+            var condicao = condicoesPT[code] || 'condições variáveis';
+            var vento = cw.windspeed;
+            var resultado = { temp: temp, condicao: condicao, vento: vento };
+            weatherCache = resultado;
+            weatherCacheTime = agora;
+            return resultado;
+        })
+        .catch(function() { return null; });
+}
+
+function textosClima(c) {
+    var frases = [
+        'O tempo no Rio de Janeiro agora: ' + c.temp + ' graus, ' + c.condicao + ', com vento de ' + c.vento + ' quilometros por hora.',
+        'No Rio de Janeiro, sao ' + c.temp + ' graus. Tempo ' + c.condicao + '. Vento a ' + c.vento + ' km por hora.',
+        'Para quem esta no Rio: ' + c.temp + ' graus, ' + c.condicao + '. Vento de ' + c.vento + ' quilometros por hora.',
+        'Informacoes do clima do Rio de Janeiro: temperatura de ' + c.temp + ' graus, ' + c.condicao + '.',
+        'O Rio de Janeiro esta com ' + c.temp + ' graus e ' + c.condicao + '. Vento a ' + c.vento + ' kmh.'
+    ];
+    return frases[Math.floor(Math.random() * frases.length)];
+}
+
+function doClima(callback) {
+    if (isAnnouncing) { if (callback) callback(); return; }
+    isAnnouncing = true;
+    var np = document.getElementById('nowPlaying');
+    var ss = document.getElementById('streamStatus');
+
+    try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+    if (np) np.classList.add('announcing');
+    document.getElementById('trackName').textContent = 'Tempo no Rio de Janeiro';
+    document.getElementById('trackArtist').textContent = 'Pires FM - Informacoes do tempo...';
+    if (ss) { ss.innerHTML = '<i class="fas fa-cloud-sun"></i> <span>Clima - Pires FM</span>'; ss.className = 'stream-status connected'; }
+
+    var intros = ['Agora na Pires FM, o tempo no Rio de Janeiro!', 'Informacoes do tempo, aqui na Pires FM!', 'Vamos ao clima do Rio de Janeiro!', 'Pires FM traz o tempo para voce!', 'No ar, as informacoes do tempo no Rio!'];
+    var outros = ['Pires FM, a voz do Rio de Janeiro!', 'Fique ligado na Pires FM!', 'Continuamos com a melhor musica!', 'Pires FM, sempre com voce!'];
+    var introFile = 'hora_intro_' + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0') + '.mp3';
+    var outroFile = 'hora_outro_' + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0') + '.mp3';
+    var introUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(introFile);
+    var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
+
+    buscarClima().then(function(c) {
+        if (!c) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} if (callback) callback(); return; }
+        var textoClima = textosClima(c);
+        playAudio(introUrl)
+            .then(function() { return falarComVoz(textoClima); })
+            .then(function() { return playAudio(outroUrl); })
+            .then(function() {
+                isAnnouncing = false; locucaoAudio = null;
+                if (np) np.classList.remove('announcing');
+                try { audio.volume = savedVolume; } catch(e) {}
+                setTimeout(function() { if (callback) callback(); }, 500);
+            })
+            .catch(function() {
+                isAnnouncing = false; locucaoAudio = null;
+                if (np) np.classList.remove('announcing');
+                try { audio.volume = savedVolume; } catch(e) {}
+                if (callback) callback();
+            });
+    });
+}
+
+// ========== NOTICIAS REAIS (RSS) ==========
+var newsCache = null;
+var newsCacheTime = 0;
+var newsCacheDuracao = 900000;
+
+function buscarNoticias() {
+    var agora = Date.now();
+    if (newsCache && (agora - newsCacheTime) < newsCacheDuracao) {
+        return Promise.resolve(newsCache);
+    }
+    var rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://g1.globo.com/rss/g1/';
+    return fetch(rssUrl)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.items && data.items.length > 0) {
+                var noticias = data.items.slice(0, 15).map(function(item) {
+                    return { titulo: item.title, desc: item.description ? item.description.replace(/<[^>]*>/g, '').substring(0, 120) : '' };
+                });
+                newsCache = noticias;
+                newsCacheTime = agora;
+                return noticias;
+            }
+            return null;
+        })
+        .catch(function() { return null; });
+}
+
+function doNoticias(callback) {
+    if (isAnnouncing) { if (callback) callback(); return; }
+    isAnnouncing = true;
+    var np = document.getElementById('nowPlaying');
+    var ss = document.getElementById('streamStatus');
+
+    try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+    if (np) np.classList.add('announcing');
+    document.getElementById('trackName').textContent = 'Noticias em Tempo Real';
+    document.getElementById('trackArtist').textContent = 'Pires FM - Ultimas noticias...';
+    if (ss) { ss.innerHTML = '<i class="fas fa-newspaper"></i> <span>Noticias - Pires FM</span>'; ss.className = 'stream-status connected'; }
+
+    var outroFile = 'hora_outro_' + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0') + '.mp3';
+    var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
+
+    buscarNoticias().then(function(noticias) {
+        if (!noticias || noticias.length === 0) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} if (callback) callback(); return; }
+        var noticia = noticias[Math.floor(Math.random() * noticias.length)];
+        var introTexts = [
+            'Noticia de ultima hora, trazida pela Pires FM!',
+            'Agora na Pires FM, uma noticia importante!',
+            'Informacao importante na Pires FM!',
+            'Pires FM traz as ultimas noticias!'
+        ];
+        var introText = introTexts[Math.floor(Math.random() * introTexts.length)];
+        var textoNoticia = introText + ' ' + noticia.titulo + '. ' + noticia.desc;
+        falarComVoz(textoNoticia)
+            .then(function() { return playAudio(outroUrl); })
+            .then(function() {
+                isAnnouncing = false; locucaoAudio = null;
+                if (np) np.classList.remove('announcing');
+                try { audio.volume = savedVolume; } catch(e) {}
+                setTimeout(function() { if (callback) callback(); }, 500);
+            })
+            .catch(function() {
+                isAnnouncing = false; locucaoAudio = null;
+                if (np) np.classList.remove('announcing');
+                try { audio.volume = savedVolume; } catch(e) {}
+                if (callback) callback();
+            });
+    });
+}
+
+// ========== IDENTIFICACAO DA RADIO ==========
+function doIdent(callback) {
+    if (isAnnouncing) { if (callback) callback(); return; }
+    isAnnouncing = true;
+    var np = document.getElementById('nowPlaying');
+    var ss = document.getElementById('streamStatus');
+
+    try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+    if (np) np.classList.add('announcing');
+    document.getElementById('trackName').textContent = 'Identificacao Pires FM';
+    document.getElementById('trackArtist').textContent = 'Pires FM - A voz do Rio de Janeiro!';
+    if (ss) { ss.innerHTML = '<i class="fas fa-broadcast-tower"></i> <span>Pires FM - A voz do Rio!</span>'; ss.className = 'stream-status connected'; }
+
+    var frases = [
+        'Voce esta ouvindo Pires FM, a voz do Rio de Janeiro!',
+        'Pires FM, a radio que toca o coracao do Rio!',
+        'Aqui e Pires FM, a melhor musica do Rio de Janeiro!',
+        'Pires FM, sempre com voce, a voz do Rio!',
+        'Voce esta sintonizado na Pires FM, a radio do carioca!',
+        'Pires FM, trazendo a melhor musica e informacoes do Rio!',
+        'Essa e Pires FM, a radio oficial do Rio de Janeiro!',
+        'Pires FM, a voz que conecta o Rio!'
+    ];
+    var texto = frases[Math.floor(Math.random() * frases.length)];
+    var outroFile = 'hora_outro_' + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0') + '.mp3';
+    var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
+
+    falarComVoz(texto)
+        .then(function() { return playAudio(outroUrl); })
+        .then(function() {
+            isAnnouncing = false; locucaoAudio = null;
+            if (np) np.classList.remove('announcing');
+            try { audio.volume = savedVolume; } catch(e) {}
+            setTimeout(function() { if (callback) callback(); }, 500);
+        })
+        .catch(function() {
+            isAnnouncing = false; locucaoAudio = null;
+            if (np) np.classList.remove('announcing');
+            try { audio.volume = savedVolume; } catch(e) {}
+            if (callback) callback();
+        });
+}
+
 function doLocucao(callback) {
-    if (Math.random() < 0.25) { doHoraCerta(callback); return; }
+    var rand = Math.random();
+    if (rand < 0.15) { doHoraCerta(callback); return; }
+    if (rand < 0.35) { doClima(callback); return; }
+    if (rand < 0.55) { doNoticias(callback); return; }
+    if (rand < 0.70) { doIdent(callback); return; }
     if (isAnnouncing) { if (callback) callback(); return; }
     isAnnouncing = true;
     var loc = pickLocucao();
@@ -276,7 +481,7 @@ function doLocucao(callback) {
 
     locucaoAudio.onplay = function() {
         if (np) np.classList.add('announcing');
-        var nomes = { ident: 'Identificacao Pires FM', curiosidade: 'Curiosidade do Rio', noticia: 'Noticia do Rio', dica: 'Dica do Dia', programacao: 'Programacao' };
+        var nomes = { ident: 'Identificacao Pires FM', curiosidade: 'Curiosidade do Rio', noticia: 'Noticia do Rio', dica: 'Dica do Dia', programacao: 'Programacao', hora: 'Hora Certa', clima: 'Tempo no Rio', noticias: 'Noticias em Tempo Real' };
         document.getElementById('trackName').textContent = nomes[loc.tipo] || 'Locucao Pires FM';
         document.getElementById('trackArtist').textContent = 'Pires FM - Locucao profissional...';
         if (ss) { ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Locucao - Pires FM</span>'; ss.className = 'stream-status connected'; }
