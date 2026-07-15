@@ -7,7 +7,7 @@
 //  Se usar MODE="cloud", preencha ARCHIVE_ITEM com o nome do seu
 //  item no Internet Archive (ex: "pires-fm-musicas")
 // ================================================================
-var MODE = "cloud";
+var MODE = "local";
 var ARCHIVE_ITEM = "pires-fm-musicas";
 var STREAM_URL = "";
 // ================================================================
@@ -686,6 +686,41 @@ speechSynthesis.getVoices();
 buildShuffledOrder();
 renderPlaylist();
 updateCounter();
+
+// ========== AUTOPLAY ==========
+var autoplayOverlay = document.getElementById('autoplayOverlay');
+var autoplayBtn = document.getElementById('autoplayBtn');
+
+function startPlaying() {
+    if (autoplayOverlay && !autoplayOverlay.classList.contains('hidden')) {
+        autoplayOverlay.classList.add('hidden');
+    }
+    songsPlayed = 0;
+    loadAndPlay();
+}
+
+if (autoplayBtn) {
+    autoplayBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        startPlaying();
+    });
+}
+
+// Try direct autoplay first (works if user previously interacted with site)
+setTimeout(function() {
+    if (!isPlaying && autoplayOverlay && !autoplayOverlay.classList.contains('hidden')) {
+        songsPlayed = 0;
+        loadAndPlay();
+        var tryPlay = audio.play();
+        if (tryPlay) {
+            tryPlay.then(function() {
+                autoplayOverlay.classList.add('hidden');
+            }).catch(function() {
+                // Autoplay blocked, keep overlay visible
+            });
+        }
+    }
+}, 500);
 
 console.log('%c Pires FM %c ' + playlist.length + ' musicas carregadas ',
     'background:#e63946;color:white;padding:5px 10px;border-radius:4px 0 0 4px;font-weight:bold',
