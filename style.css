@@ -21,74 +21,40 @@
 
 html {
     scroll-behavior: smooth;
-    background: transparent;
 }
 
 body {
     font-family: 'Poppins', sans-serif;
-    background: transparent;
-    color: var(--text);
-    overflow-x: hidden;
-}
-
-.bg-slideshow {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -2;
-}
-
-.bg-slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    background-color: var(--darker);
     background-size: cover;
     background-position: center;
-    opacity: 0;
-    animation: bgFade 18s infinite;
+    background-attachment: fixed;
+    color: var(--text);
+    overflow-x: hidden;
+    transition: background-image 1.5s ease-in-out;
 }
 
-.bg-slide-1 {
-    background-image: url('img/cristo.jpg');
-    animation-delay: 0s;
-}
-
-.bg-slide-2 {
-    background-image: url('img/pao_de_acucar.jpg');
-    animation-delay: 6s;
-}
-
-.bg-slide-3 {
-    background-image: url('img/ipanema.jpg');
-    animation-delay: 12s;
-}
-
-@keyframes bgFade {
-    0% { opacity: 0; }
-    5% { opacity: 0.4; }
-    28% { opacity: 0.4; }
-    33% { opacity: 0; }
-    100% { opacity: 0; }
-}
-
-.bg-overlay {
+body::after {
+    content: '';
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
+    z-index: 0;
     background: linear-gradient(
-        135deg,
-        rgba(10, 10, 26, 0.85) 0%,
-        rgba(5, 5, 16, 0.75) 50%,
-        rgba(10, 10, 26, 0.85) 100%
+        180deg,
+        rgba(10, 10, 26, 0.70) 0%,
+        rgba(5, 5, 16, 0.60) 30%,
+        rgba(10, 10, 26, 0.75) 70%,
+        rgba(5, 5, 16, 0.85) 100%
     );
     pointer-events: none;
+}
+
+section, header, footer, .autoplay-overlay, .mobile-nav {
+    position: relative;
+    z-index: 1;
 }
 
 .container {
