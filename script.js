@@ -159,6 +159,37 @@ var locucaoCount = 0;
 var locucaoAudio = null;
 var lastLocucaoType = '';
 
+var AVG_SONG_DURATION = 230;  // media de 3min50s por musica
+var LOCUCAO_DURATION = 35;    // duracao media da locucao em segundos
+var CYCLE_SIZE = 3;           // a cada 3 musicas, uma locucao
+var CYCLE_DURATION = (AVG_SONG_DURATION * CYCLE_SIZE) + LOCUCAO_DURATION; // 725s por ciclo
+
+function getRadioPosition() {
+    var now = new Date();
+    var rioStr = now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+    var rio = new Date(rioStr);
+    var midnight = new Date(rio);
+    midnight.setHours(0, 0, 0, 0);
+    var elapsedSec = (rio - midnight) / 1000;
+
+    var totalSlots = playlist.length;
+    var cycleIdx = Math.floor(elapsedSec / CYCLE_DURATION);
+    var posInCycle = elapsedSec % CYCLE_DURATION;
+    var songInCycle = Math.floor(posInCycle / AVG_SONG_DURATION);
+    var posInSong = posInCycle - (songInCycle * AVG_SONG_DURATION);
+    var isLocucaoSlot = songInCycle >= CYCLE_SIZE;
+
+    var trackIndex = cycleIdx * CYCLE_SIZE + songInCycle;
+    trackIndex = trackIndex % totalSlots;
+
+    return {
+        trackIndex: trackIndex,
+        isLocucao: isLocucaoSlot,
+        positionInSong: isLocucaoSlot ? 0 : Math.min(posInSong, AVG_SONG_DURATION - 1),
+        songsPlayed: isLocucaoSlot ? 0 : songInCycle
+    };
+}
+
 var locucoesArquivos = {
     ident: [
         'ident_01.mp3', 'ident_02.mp3', 'ident_03.mp3', 'ident_04.mp3',
@@ -355,13 +386,13 @@ function renderPlaylist() {
 var errorRetryCount = 0;
 var MAX_RETRIES = 3;
 
-function loadAndPlay() {
+function loadAndPlay(seekTo) {
     if (MODE === "remote") {
         loadRemoteStream();
         return;
     }
     if (MODE === "cloud") {
-        loadCloudTrack();
+        loadCloudTrack(seekTo);
         return;
     }
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
@@ -428,7 +459,7 @@ function loadRemoteStream() {
     streamStatus.className = 'stream-status';
 }
 
-function loadCloudTrack() {
+function loadCloudTrack(seekTo) {
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
@@ -440,6 +471,9 @@ function loadCloudTrack() {
     audio.oncanplay = function() {
         audio.oncanplay = null;
         errorRetryCount = 0;
+        if (seekTo && seekTo > 0 && audio.duration && seekTo < audio.duration) {
+            audio.currentTime = seekTo;
+        }
         audio.play().then(function() {
             setPlayingState(true);
             trackNameEl.textContent = track.song;
@@ -450,7 +484,7 @@ function loadCloudTrack() {
             console.error('Cloud play error:', err);
             streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro ao tocar. Tentando novamente...</span>';
             streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadCloudTrack(); }, 2000);
+            setTimeout(function() { loadCloudTrack(seekTo); }, 2000);
         });
     };
 
@@ -460,7 +494,7 @@ function loadCloudTrack() {
         if (errorRetryCount < MAX_RETRIES) {
             streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + '/' + MAX_RETRIES + ')</span>';
             streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadCloudTrack(); }, 3000);
+            setTimeout(function() { loadCloudTrack(seekTo); }, 3000);
         } else {
             errorRetryCount = 0;
             playNext();
@@ -547,8 +581,18 @@ playBtn.addEventListener('click', function(e) {
         audio.pause();
         setPlayingState(false);
     } else {
-        songsPlayed = 0;
-        loadAndPlay();
+        var pos = getRadioPosition();
+        currentTrackIndex = pos.trackIndex;
+        songsPlayed = pos.songsPlayed;
+        if (pos.isLocucao) {
+            doLocucao(function() {
+                var nextPos = getRadioPosition();
+                currentTrackIndex = nextPos.trackIndex;
+                loadCloudTrack(0);
+            });
+        } else {
+            loadCloudTrack(pos.positionInSong);
+        }
     }
 });
 
@@ -687,8 +731,21 @@ function startPlaying() {
     if (autoplayOverlay && !autoplayOverlay.classList.contains('hidden')) {
         autoplayOverlay.classList.add('hidden');
     }
-    songsPlayed = 0;
-    loadAndPlay();
+
+    var pos = getRadioPosition();
+    currentTrackIndex = pos.trackIndex;
+    songsPlayed = pos.songsPlayed;
+
+    if (pos.isLocucao) {
+        isAnnouncing = false;
+        doLocucao(function() {
+            var nextPos = getRadioPosition();
+            currentTrackIndex = nextPos.trackIndex;
+            loadCloudTrack(0);
+        });
+    } else {
+        loadCloudTrack(pos.positionInSong);
+    }
 }
 
 if (autoplayBtn) {
@@ -701,8 +758,7 @@ if (autoplayBtn) {
 // Try direct autoplay first (works if user previously interacted with site)
 setTimeout(function() {
     if (!isPlaying && autoplayOverlay && !autoplayOverlay.classList.contains('hidden')) {
-        songsPlayed = 0;
-        loadAndPlay();
+        startPlaying();
         var tryPlay = audio.play();
         if (tryPlay) {
             tryPlay.then(function() {
