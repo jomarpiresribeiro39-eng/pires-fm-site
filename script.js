@@ -1,14 +1,7 @@
-// ================================================================
-//  Pires FM - Configuracao
-//  MODE = "cloud"   -> toca do Internet Archive (24/7 gratis)
-// ================================================================
 var MODE = "cloud";
 var ARCHIVE_ITEM = "pires-fm-musicas";
 var LOCUCOES_ARCHIVE = "pires-fm-locucoes";
-var STREAM_URL = "";
-// ================================================================
 
-// ========== CLOCK - Rio de Janeiro ==========
 function updateClock() {
     var now = new Date();
     var opts = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -23,28 +16,24 @@ function getRioHour() {
     return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getHours();
 }
 
-function getRioTimeStr() {
-    return new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false });
-}
-
-// ========== PROGRAMACAO 24/7 ==========
 var schedule = [
-    { time: "00:00 - 02:00", name: "Madrugada Tranquila", desc: "Suaves e relaxantes para a madrugada", icon: "\u{1F319}" },
-    { time: "02:00 - 04:00", name: "Noite Eletronica", desc: "Eletronica e ambient noturno", icon: "\u{1F3A7}" },
-    { time: "04:00 - 06:00", name: "Aurora do Amanhecer", desc: "Classicos e suaves ao amanhecer", icon: "\u{1F305}" },
-    { time: "06:00 - 08:00", name: "Bom Dia Rio!", desc: "Noticias, clima e boa energia", icon: "\u2600\uFE0F" },
-    { time: "08:00 - 10:00", name: "Manha Show", desc: "O melhor da musica brasileira", icon: "\u{1F3B5}" },
-    { time: "10:00 - 12:00", name: "Pires Hits", desc: "Os maiores sucessos do momento", icon: "\u{1F525}" },
-    { time: "12:00 - 14:00", name: "Almoco Cultural", desc: "MPB, Samba e Pagode na hora do almoco", icon: "\u{1F37D}\uFE0F" },
-    { time: "14:00 - 16:00", name: "Tarde de Rock", desc: "Rock nacional e internacional", icon: "\u{1F3B8}" },
-    { time: "16:00 - 18:00", name: "Flashback", desc: "Os classicos de todos os tempos", icon: "\u23EA" },
-    { time: "18:00 - 20:00", name: "Happy Hour", desc: "Sertanejo e Pop para o fim da tarde", icon: "\u{1F389}" },
+    { time: "00:00 - 02:00", name: "Madrugada Tranquila", desc: "Suaves e relaxantes", icon: "\u{1F319}" },
+    { time: "02:00 - 04:00", name: "Noite Eletronica", desc: "Eletronica e ambient", icon: "\u{1F3A7}" },
+    { time: "04:00 - 06:00", name: "Aurora do Amanhecer", desc: "Classicos suaves", icon: "\u{1F305}" },
+    { time: "06:00 - 08:00", name: "Bom Dia Rio!", desc: "Noticias e boa energia", icon: "\u2600\uFE0F" },
+    { time: "08:00 - 10:00", name: "Manha Show", desc: "Musica brasileira", icon: "\u{1F3B5}" },
+    { time: "10:00 - 12:00", name: "Pires Hits", desc: "Maiores sucessos", icon: "\u{1F525}" },
+    { time: "12:00 - 14:00", name: "Almoco Cultural", desc: "MPB, Samba e Pagode", icon: "\u{1F37D}\uFE0F" },
+    { time: "14:00 - 16:00", name: "Tarde de Rock", desc: "Rock nacional e intl.", icon: "\u{1F3B8}" },
+    { time: "16:00 - 18:00", name: "Flashback", desc: "Classicos de todos tempos", icon: "\u23EA" },
+    { time: "18:00 - 20:00", name: "Happy Hour", desc: "Sertanejo e Pop", icon: "\u{1F389}" },
     { time: "20:00 - 22:00", name: "Noite de Samba", desc: "Samba, Pagode e Axe", icon: "\u{1F3B6}" },
-    { time: "22:00 - 00:00", name: "Sessao Especial", desc: "Entrevistas e musica de qualidade", icon: "\u{1F399}\uFE0F" }
+    { time: "22:00 - 00:00", name: "Sessao Especial", desc: "Entrevistas e musica", icon: "\u{1F399}\uFE0F" }
 ];
 
 function renderSchedule() {
     var grid = document.getElementById('scheduleGrid');
+    if (!grid) return;
     var ch = getRioHour();
     grid.innerHTML = schedule.map(function(item) {
         var s = parseInt(item.time.split(' - ')[0].split(':')[0]);
@@ -53,14 +42,12 @@ function renderSchedule() {
         return '<div class="schedule-item ' + (cur ? 'current' : '') + '">' +
             '<div class="schedule-time">' + item.time + '</div>' +
             '<div class="schedule-details"><h4>' + item.icon + ' ' + item.name + '</h4><p>' + item.desc + '</p></div>' +
-            (cur ? '<div class="schedule-live"><i class="fas fa-circle"></i> AO VIVO</div>' : '') +
-            '</div>';
+            (cur ? '<div class="schedule-live"><i class="fas fa-circle"></i> AO VIVO</div>' : '') + '</div>';
     }).join('');
 }
 renderSchedule();
 setInterval(renderSchedule, 60000);
 
-// ========== PARTICLES ==========
 (function() {
     var c = document.getElementById('particles');
     if (!c) return;
@@ -76,7 +63,6 @@ setInterval(renderSchedule, 60000);
     }
 })();
 
-// ========== PLAYLIST ==========
 var playlist = [
     { file: "001.mp3", artist: "Foreigner (cover)", song: "I Want To Know What Love Is" },
     { file: "002.mp3", artist: "Sophie Ellis-Bextor", song: "Murder On The Dancefloor" },
@@ -146,114 +132,68 @@ var playlist = [
     { file: "066.mp3", artist: "Telemensagem", song: "Boa Noite (Voz)" }
 ];
 
-// ========== RADIO REAL - Calculo por horario ==========
+// ========== RADIO REAL ==========
 var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
 var AVG_SONG = 240;
 
 function getRadioTrackIndex() {
-    var now = Date.now();
-    var elapsedSec = (now - EPOCH) / 1000;
-    var trackIndex = Math.floor(elapsedSec / AVG_SONG) % playlist.length;
-    return trackIndex;
+    var elapsedSec = (Date.now() - EPOCH) / 1000;
+    return Math.floor(elapsedSec / AVG_SONG) % playlist.length;
 }
 
 // ========== LOCUCAO ==========
 var songsPlayed = 0;
 var isAnnouncing = false;
 var savedVolume = 0.8;
-var locucaoCount = 0;
 var locucaoAudio = null;
 var lastLocucaoType = '';
 
 var locucoesArquivos = {
-    ident: [
-        'ident_01.mp3', 'ident_02.mp3', 'ident_03.mp3', 'ident_04.mp3',
-        'ident_05.mp3', 'ident_06.mp3', 'ident_07.mp3', 'ident_08.mp3'
-    ],
-    curiosidade: [
-        'curiosidade_01.mp3', 'curiosidade_02.mp3', 'curiosidade_03.mp3',
-        'curiosidade_04.mp3', 'curiosidade_05.mp3', 'curiosidade_06.mp3',
-        'curiosidade_07.mp3', 'curiosidade_08.mp3', 'curiosidade_09.mp3',
-        'curiosidade_10.mp3', 'curiosidade_11.mp3', 'curiosidade_12.mp3',
-        'curiosidade_13.mp3', 'curiosidade_14.mp3', 'curiosidade_15.mp3',
-        'curiosidade_16.mp3', 'curiosidade_17.mp3', 'curiosidade_18.mp3',
-        'curiosidade_19.mp3', 'curiosidade_20.mp3'
-    ],
-    noticia: [
-        'noticia_01.mp3', 'noticia_02.mp3', 'noticia_03.mp3', 'noticia_04.mp3',
-        'noticia_05.mp3', 'noticia_06.mp3', 'noticia_07.mp3', 'noticia_08.mp3',
-        'noticia_09.mp3', 'noticia_10.mp3', 'noticia_11.mp3', 'noticia_12.mp3'
-    ],
-    dica: [
-        'dica_01.mp3', 'dica_02.mp3', 'dica_03.mp3', 'dica_04.mp3',
-        'dica_05.mp3', 'dica_06.mp3', 'dica_07.mp3'
-    ],
-    programacao: [
-        'programacao_01.mp3', 'programacao_02.mp3', 'programacao_03.mp3',
-        'programacao_04.mp3', 'programacao_05.mp3'
-    ]
+    ident: ['ident_01.mp3','ident_02.mp3','ident_03.mp3','ident_04.mp3','ident_05.mp3','ident_06.mp3','ident_07.mp3','ident_08.mp3'],
+    curiosidade: ['curiosidade_01.mp3','curiosidade_02.mp3','curiosidade_03.mp3','curiosidade_04.mp3','curiosidade_05.mp3','curiosidade_06.mp3','curiosidade_07.mp3','curiosidade_08.mp3','curiosidade_09.mp3','curiosidade_10.mp3','curiosidade_11.mp3','curiosidade_12.mp3','curiosidade_13.mp3','curiosidade_14.mp3','curiosidade_15.mp3','curiosidade_16.mp3','curiosidade_17.mp3','curiosidade_18.mp3','curiosidade_19.mp3','curiosidade_20.mp3'],
+    noticia: ['noticia_01.mp3','noticia_02.mp3','noticia_03.mp3','noticia_04.mp3','noticia_05.mp3','noticia_06.mp3','noticia_07.mp3','noticia_08.mp3','noticia_09.mp3','noticia_10.mp3','noticia_11.mp3','noticia_12.mp3'],
+    dica: ['dica_01.mp3','dica_02.mp3','dica_03.mp3','dica_04.mp3','dica_05.mp3','dica_06.mp3','dica_07.mp3'],
+    programacao: ['programacao_01.mp3','programacao_02.mp3','programacao_03.mp3','programacao_04.mp3','programacao_05.mp3']
 };
 
 function pickLocucao() {
     var tipos = Object.keys(locucoesArquivos);
     var tipo;
-    do {
-        tipo = tipos[Math.floor(Math.random() * tipos.length)];
-    } while (tipo === lastLocucaoType && tipos.length > 1);
+    do { tipo = tipos[Math.floor(Math.random() * tipos.length)]; } while (tipo === lastLocucaoType && tipos.length > 1);
     lastLocucaoType = tipo;
     var arquivos = locucoesArquivos[tipo];
-    var arquivo = arquivos[Math.floor(Math.random() * arquivos.length)];
-    return { tipo: tipo, arquivo: arquivo };
+    return { tipo: tipo, arquivo: arquivos[Math.floor(Math.random() * arquivos.length)] };
 }
 
 function doLocucao(callback) {
-    if (isAnnouncing) return;
+    if (isAnnouncing) { if (callback) callback(); return; }
     isAnnouncing = true;
-    locucaoCount++;
-
     var loc = pickLocucao();
     var url = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(loc.arquivo);
 
     locucaoAudio = new Audio();
     locucaoAudio.preload = 'auto';
-
     var np = document.getElementById('nowPlaying');
     var ss = document.getElementById('streamStatus');
 
     locucaoAudio.onplay = function() {
-        isAnnouncing = true;
         if (np) np.classList.add('announcing');
-        var tipoNomes = {
-            ident: 'Identificacao Pires FM',
-            curiosidade: 'Curiosidade do Rio',
-            noticia: 'Noticia do Rio',
-            dica: 'Dica do Dia',
-            programacao: 'Programacao'
-        };
-        document.getElementById('trackName').textContent = tipoNomes[loc.tipo] || 'Locucao Pires FM';
+        var nomes = { ident: 'Identificacao Pires FM', curiosidade: 'Curiosidade do Rio', noticia: 'Noticia do Rio', dica: 'Dica do Dia', programacao: 'Programacao' };
+        document.getElementById('trackName').textContent = nomes[loc.tipo] || 'Locucao Pires FM';
         document.getElementById('trackArtist').textContent = 'Pires FM - Locucao profissional...';
-        if (ss) {
-            ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Locucao - Pires FM</span>';
-            ss.className = 'stream-status connected';
-        }
-        try {
-            savedVolume = audio.volume;
-            audio.volume = 0.03;
-        } catch(e) {}
+        if (ss) { ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Locucao - Pires FM</span>'; ss.className = 'stream-status connected'; }
+        try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
     };
 
     locucaoAudio.onended = function() {
-        isAnnouncing = false;
-        locucaoAudio = null;
+        isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
         try { audio.volume = savedVolume; } catch(e) {}
-        setTimeout(function() { if (callback) callback(); }, 600);
+        setTimeout(function() { if (callback) callback(); }, 500);
     };
 
     locucaoAudio.onerror = function() {
-        console.error('Erro ao carregar locucao:', loc.arquivo);
-        isAnnouncing = false;
-        locucaoAudio = null;
+        isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
         try { audio.volume = savedVolume; } catch(e) {}
         if (callback) callback();
@@ -261,27 +201,27 @@ function doLocucao(callback) {
 
     locucaoAudio.src = url;
     locucaoAudio.load();
-    locucaoAudio.play().catch(function(err) {
-        console.error('Erro ao tocar locucao:', err);
-        isAnnouncing = false;
-        locucaoAudio = null;
+    locucaoAudio.play().catch(function() {
+        isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
         try { audio.volume = savedVolume; } catch(e) {}
         if (callback) callback();
     });
 }
 
-// ========== AUDIO PLAYER ==========
-var audio = document.getElementById('radioAudio');
-if (!audio) {
-    audio = new Audio();
-    audio.id = 'radioAudio';
-}
+// ========== PLAYER ==========
+var audio = document.getElementById('radioAudio') || new Audio();
+audio.id = 'radioAudio';
+audio.preload = 'auto';
+
 var isPlaying = false;
 var currentTrackIndex = 0;
 var isShuffled = false;
 var isRepeating = false;
 var shuffledOrder = [];
+var errorRetryCount = 0;
+var MAX_RETRIES = 3;
+var radioStarted = false;
 
 var playBtn = document.getElementById('playBtn');
 var playIcon = document.getElementById('playIcon');
@@ -305,37 +245,26 @@ var trackCounterEl = document.getElementById('trackCounter');
 var playlistBody = document.getElementById('playlistBody');
 
 audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
-audio.preload = 'auto';
 
-// ========== SHUFFLE ==========
 function buildShuffledOrder() {
     shuffledOrder = [];
     for (var i = 0; i < playlist.length; i++) shuffledOrder.push(i);
     for (var i = shuffledOrder.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
-        var temp = shuffledOrder[i];
-        shuffledOrder[i] = shuffledOrder[j];
-        shuffledOrder[j] = temp;
+        var t = shuffledOrder[i]; shuffledOrder[i] = shuffledOrder[j]; shuffledOrder[j] = t;
     }
 }
 
 function getNextIndex() {
-    if (isShuffled) {
-        var pos = shuffledOrder.indexOf(currentTrackIndex);
-        return shuffledOrder[(pos + 1) % shuffledOrder.length];
-    }
+    if (isShuffled) { var p = shuffledOrder.indexOf(currentTrackIndex); return shuffledOrder[(p + 1) % shuffledOrder.length]; }
     return (currentTrackIndex + 1) % playlist.length;
 }
 
 function getPrevIndex() {
-    if (isShuffled) {
-        var pos = shuffledOrder.indexOf(currentTrackIndex);
-        return shuffledOrder[(pos - 1 + shuffledOrder.length) % shuffledOrder.length];
-    }
+    if (isShuffled) { var p = shuffledOrder.indexOf(currentTrackIndex); return shuffledOrder[(p - 1 + shuffledOrder.length) % shuffledOrder.length]; }
     return (currentTrackIndex - 1 + playlist.length) % playlist.length;
 }
 
-// ========== RENDER PLAYLIST ==========
 function renderPlaylist() {
     if (!playlistBody) return;
     var html = '';
@@ -352,99 +281,25 @@ function renderPlaylist() {
     for (var r = 0; r < rows.length; r++) {
         rows[r].addEventListener('click', function() {
             currentTrackIndex = parseInt(this.dataset.index);
-            loadAndPlay();
+            songsPlayed = 0;
+            loadTrack();
         });
     }
 }
 
-// ========== PLAYER ==========
-var errorRetryCount = 0;
-var MAX_RETRIES = 3;
-
-function loadAndPlay() {
-    if (MODE === "remote") {
-        loadRemoteStream();
-        return;
-    }
-    if (MODE === "cloud") {
-        loadCloudTrack();
-        return;
-    }
-    if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
-    var track = playlist[currentTrackIndex];
-    var url = 'music/' + encodeURIComponent(track.file);
-
-    audio.pause();
-    audio.removeAttribute('src');
-    audio.load();
-    audio.src = url;
-    audio.load();
-
-    audio.oncanplay = function() {
-        audio.oncanplay = null;
-        errorRetryCount = 0;
-        audio.play().then(function() {
-            setPlayingState(true);
-            trackNameEl.textContent = track.song;
-            trackArtistEl.textContent = track.artist;
-            renderPlaylist();
-            updateCounter();
-        }).catch(function(err) {
-            console.error('Play error:', err);
-            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Clique para tentar novamente</span>';
-            streamStatus.className = 'stream-status error';
-        });
-    };
-
-    audio.onerror = function(e) {
-        audio.oncanplay = null;
-        errorRetryCount++;
-        console.error('Audio error:', track.file, 'tentativa ' + errorRetryCount);
-        if (errorRetryCount < MAX_RETRIES) {
-            streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + '/' + MAX_RETRIES + ')</span>';
-            streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadAndPlay(); }, 2000);
-        } else {
-            errorRetryCount = 0;
-            streamStatus.innerHTML = '<i class="fas fa-forward"></i> <span>Pulando musica...</span>';
-            streamStatus.className = 'stream-status error';
-            setTimeout(function() { playNext(); }, 1500);
-        }
-    };
-
-    streamStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Carregando...</span>';
-    streamStatus.className = 'stream-status';
-}
-
-function loadRemoteStream() {
-    audio.pause();
-    audio.src = STREAM_URL;
-    audio.load();
-    audio.play().then(function() {
-        setPlayingState(true);
-        trackNameEl.textContent = 'Pires FM - Ao Vivo';
-        trackArtistEl.textContent = 'Transmissao 24/7 via Icecast';
-    }).catch(function(err) {
-        console.error('Stream error:', err);
-        streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro ao conectar ao stream</span>';
-        streamStatus.className = 'stream-status error';
-        setTimeout(function() { loadRemoteStream(); }, 3000);
-    });
-    streamStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Conectando ao stream...</span>';
-    streamStatus.className = 'stream-status';
-}
-
-function loadCloudTrack() {
+function loadTrack() {
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
 
+    audio.oncanplay = null;
+    audio.onerror = null;
     audio.pause();
     audio.src = url;
-    audio.load();
 
     audio.oncanplay = function() {
         audio.oncanplay = null;
+        audio.onerror = null;
         errorRetryCount = 0;
         audio.play().then(function() {
             setPlayingState(true);
@@ -452,56 +307,51 @@ function loadCloudTrack() {
             trackArtistEl.textContent = track.artist;
             renderPlaylist();
             updateCounter();
-        }).catch(function(err) {
-            console.error('Cloud play error:', err);
-            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro ao tocar. Clique de novo...</span>';
+        }).catch(function() {
+            streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Clique para ouvir</span>';
             streamStatus.className = 'stream-status error';
         });
     };
 
     audio.onerror = function() {
         audio.oncanplay = null;
+        audio.onerror = null;
         errorRetryCount++;
         if (errorRetryCount < MAX_RETRIES) {
-            streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + '/' + MAX_RETRIES + ')</span>';
+            streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + ')</span>';
             streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadCloudTrack(); }, 3000);
+            setTimeout(function() { loadTrack(); }, 2000);
         } else {
             errorRetryCount = 0;
-            playNext();
+            goNext();
         }
     };
 
-    streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando da nuvem...</span>';
+    streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
     streamStatus.className = 'stream-status';
 }
 
-function playNextWithLocucao() {
-    if (isAnnouncing) return;
+function goNext() {
+    if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
     songsPlayed++;
-    if (songsPlayed >= 3 && isPlaying) {
+    if (songsPlayed >= 3) {
         songsPlayed = 0;
         doLocucao(function() {
             currentTrackIndex = getNextIndex();
-            loadAndPlay();
+            loadTrack();
         });
     } else {
         currentTrackIndex = getNextIndex();
-        loadAndPlay();
+        loadTrack();
     }
 }
 
-function playNext() {
-    if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
-    currentTrackIndex = getNextIndex();
-    loadAndPlay();
-}
-
-function playPrev() {
+function goPrev() {
     if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
     if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+    songsPlayed = Math.max(0, songsPlayed - 1);
     currentTrackIndex = getPrevIndex();
-    loadAndPlay();
+    loadTrack();
 }
 
 function setPlayingState(playing) {
@@ -511,15 +361,15 @@ function setPlayingState(playing) {
         playBtn.classList.add('playing');
         streamStatus.innerHTML = '<i class="fas fa-wifi"></i> <span>Tocando agora - Pires FM</span>';
         streamStatus.className = 'stream-status connected';
-        visualizerEl.classList.add('active');
-        vinylEl.classList.add('spinning');
+        if (visualizerEl) visualizerEl.classList.add('active');
+        if (vinylEl) vinylEl.classList.add('spinning');
     } else {
         playIcon.className = 'fas fa-play';
         playBtn.classList.remove('playing');
-        streamStatus.innerHTML = '<i class="fas fa-wifi"></i> <span>Clique no play para ouvir</span>';
+        streamStatus.innerHTML = '<i class="fas fa-wifi"></i> <span>Pausado - Clique para continuar</span>';
         streamStatus.className = 'stream-status';
-        visualizerEl.classList.remove('active');
-        vinylEl.classList.remove('spinning');
+        if (visualizerEl) visualizerEl.classList.remove('active');
+        if (vinylEl) vinylEl.classList.remove('spinning');
         var bars = document.querySelectorAll('.visualizer .bar');
         for (var i = 0; i < bars.length; i++) bars[i].style.height = '5px';
     }
@@ -537,34 +387,41 @@ function formatTime(s) {
     return m + ':' + (sec < 10 ? '0' : '') + sec;
 }
 
-// ========== INICIAR RADIO EM TEMPO REAL ==========
-function startRadio() {
-    currentTrackIndex = getRadioTrackIndex();
-    songsPlayed = 0;
-    loadCloudTrack();
-}
-
 // ========== EVENTS ==========
 playBtn.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
+
     if (isAnnouncing && locucaoAudio) {
-        locucaoAudio.pause();
-        locucaoAudio = null;
-        isAnnouncing = false;
+        locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false;
         audio.volume = savedVolume;
-        document.getElementById('nowPlaying').classList.remove('announcing');
+        var np = document.getElementById('nowPlaying');
+        if (np) np.classList.remove('announcing');
     }
+
     if (isPlaying) {
         audio.pause();
         setPlayingState(false);
-    } else {
-        startRadio();
+        return;
     }
+
+    if (!radioStarted) {
+        radioStarted = true;
+        currentTrackIndex = getRadioTrackIndex();
+        songsPlayed = 0;
+        loadTrack();
+        return;
+    }
+
+    audio.play().then(function() {
+        setPlayingState(true);
+    }).catch(function() {
+        loadTrack();
+    });
 });
 
-nextBtn.addEventListener('click', function(e) { e.preventDefault(); playNext(); });
-prevBtn.addEventListener('click', function(e) { e.preventDefault(); playPrev(); });
+nextBtn.addEventListener('click', function(e) { e.preventDefault(); songsPlayed = 0; goNext(); });
+prevBtn.addEventListener('click', function(e) { e.preventDefault(); goPrev(); });
 
 shuffleBtn.addEventListener('click', function() {
     isShuffled = !isShuffled;
@@ -587,7 +444,8 @@ audio.addEventListener('timeupdate', function() {
 });
 
 audio.addEventListener('ended', function() {
-    if (!isRepeating) playNextWithLocucao();
+    if (isAnnouncing) return;
+    if (!isRepeating) goNext();
 });
 
 if (progressContainer) {
@@ -599,7 +457,6 @@ if (progressContainer) {
     });
 }
 
-// VOLUME
 volumeSlider.addEventListener('input', function(e) {
     var v = e.target.value;
     audio.volume = v / 100;
@@ -610,31 +467,24 @@ volumeSlider.addEventListener('input', function(e) {
 volumeIcon.addEventListener('click', function() {
     if (audio.volume > 0) {
         audio.dataset.pv = volumeSlider.value;
-        volumeSlider.value = 0;
-        audio.volume = 0;
-        volumeValue.textContent = '0%';
-        volumeIcon.className = 'fas fa-volume-mute';
+        volumeSlider.value = 0; audio.volume = 0;
+        volumeValue.textContent = '0%'; volumeIcon.className = 'fas fa-volume-mute';
     } else {
         var p = audio.dataset.pv || 80;
-        volumeSlider.value = p;
-        audio.volume = p / 100;
+        volumeSlider.value = p; audio.volume = p / 100;
         volumeValue.textContent = p + '%';
         volumeIcon.className = p < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
     }
 });
 
-// VISUALIZER
 (function animVis() {
     if (isPlaying && !isAnnouncing) {
         var bars = document.querySelectorAll('.visualizer .bar');
-        for (var i = 0; i < bars.length; i++) {
-            bars[i].style.height = (Math.random() * 50 + 5) + 'px';
-        }
+        for (var i = 0; i < bars.length; i++) bars[i].style.height = (Math.random() * 50 + 5) + 'px';
     }
     requestAnimationFrame(function() { setTimeout(animVis, 100); });
 })();
 
-// ========== MENU ==========
 document.getElementById('menuToggle').addEventListener('click', function() {
     this.classList.toggle('active');
     document.getElementById('mobileNav').classList.toggle('active');
@@ -647,12 +497,10 @@ for (var i = 0; i < mobileLinks.length; i++) {
     });
 }
 
-// ========== SCROLL ==========
 window.addEventListener('scroll', function() {
     document.querySelector('.header').classList.toggle('scrolled', window.scrollY > 50);
 });
 
-// ========== CONTACT FORM ==========
 document.getElementById('contactForm').addEventListener('submit', function(e) {
     e.preventDefault();
     var btn = e.target.querySelector('.submit-btn');
@@ -662,7 +510,6 @@ document.getElementById('contactForm').addEventListener('submit', function(e) {
     setTimeout(function() { btn.innerHTML = orig; btn.style.background = ''; e.target.reset(); }, 3000);
 });
 
-// ========== ACTIVE NAV ==========
 window.addEventListener('scroll', function() {
     var sp = window.scrollY + 100;
     var secs = document.querySelectorAll('section[id]');
@@ -677,20 +524,18 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// ========== KEYBOARD ==========
 document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.code === 'Space') { e.preventDefault(); playBtn.click(); }
-    else if (e.code === 'ArrowRight') { e.preventDefault(); playNext(); }
-    else if (e.code === 'ArrowLeft') { e.preventDefault(); playPrev(); }
+    else if (e.code === 'ArrowRight') { e.preventDefault(); songsPlayed = 0; goNext(); }
+    else if (e.code === 'ArrowLeft') { e.preventDefault(); goPrev(); }
 });
 
-// ========== INIT ==========
 buildShuffledOrder();
 renderPlaylist();
 updateCounter();
 
-// ========== AUTOPLAY ==========
+// AUTOPLAY
 var autoplayOverlay = document.getElementById('autoplayOverlay');
 var autoplayBtn = document.getElementById('autoplayBtn');
 
@@ -698,10 +543,13 @@ if (autoplayBtn) {
     autoplayBtn.addEventListener('click', function(e) {
         e.preventDefault();
         if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
-        startRadio();
+        radioStarted = true;
+        currentTrackIndex = getRadioTrackIndex();
+        songsPlayed = 0;
+        loadTrack();
     });
 }
 
-console.log('%c Pires FM %c ' + playlist.length + ' musicas - RADIO EM TEMPO REAL ',
+console.log('%c Pires FM %c ' + playlist.length + ' musicas - RADIO TEMPO REAL ',
     'background:#e63946;color:white;padding:5px 10px;border-radius:4px 0 0 4px;font-weight:bold',
     'background:#1d3557;color:white;padding:5px 10px;border-radius:0 4px 4px 0');
