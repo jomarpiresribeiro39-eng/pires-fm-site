@@ -21,11 +21,12 @@
 
 html {
     scroll-behavior: smooth;
+    background: transparent;
 }
 
 body {
     font-family: 'Poppins', sans-serif;
-    background: var(--darker);
+    background: transparent;
     color: var(--text);
     overflow-x: hidden;
 }
