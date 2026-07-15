@@ -42,7 +42,7 @@
 
             <div class="clock-section">
                 <div class="clock-label">
-                    <i class="fas fa-map-marker-alt"></i> Horário no Rio de Janeiro
+                    <i class="fas fa-map-marker-alt"></i> Horario no Rio de Janeiro
                 </div>
                 <div class="clock" id="clock">00:00:00</div>
                 <div class="clock-date" id="clockDate">Carregando...</div>
@@ -52,7 +52,7 @@
                 <div class="voice-overlay" id="voiceOverlay">
                     <div class="voice-pulse"></div>
                     <i class="fas fa-microphone"></i>
-                    <span>Locução</span>
+                    <span>Locucao</span>
                 </div>
                 <div class="vinyl" id="vinyl">
                     <div class="vinyl-inner">
@@ -61,7 +61,7 @@
                 </div>
                 <div class="track-info">
                     <p class="track-label">Tocando Agora</p>
-                    <h2 class="track-name" id="trackName">Aguardando conexão...</h2>
+                    <h2 class="track-name" id="trackName">Aguardandoconexao...</h2>
                     <p class="track-artist" id="trackArtist">Pires FM</p>
                 </div>
             </div>
@@ -87,14 +87,6 @@
                     <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
                     <span class="volume-value" id="volumeValue">80%</span>
                 </div>
-            </div>
-
-            <div class="progress-bar-container" id="progressContainer">
-                <div class="progress-bar-fill" id="progressBar"></div>
-            </div>
-            <div class="time-info">
-                <span id="currentTime">0:00</span>
-                <span id="totalTime">0:00</span>
             </div>
 
             <div class="stream-status" id="streamStatus">
@@ -141,9 +133,9 @@
             { file: "024.mp3", artist: "Claudia Leitte", song: "Matimba" },
             { file: "025.mp3", artist: "Zeca Pagodinho", song: "Deixa a Vida Me Levar" },
             { file: "026.mp3", artist: "Martinho da Vila", song: "Divina" },
-            { file: "027.mp3", artist: "Alceu Valença", song: "Anunciação" },
+            { file: "027.mp3", artist: "Alceu Valenca", song: "Anunciacao" },
             { file: "028.mp3", artist: "Dominguinhos", song: "Esquinas" },
-            { file: "029.mp3", artist: "Fafá de Belém", song: "Olhos Coloridos" },
+            { file: "029.mp3", artist: "Fafa de Belem", song: "Olhos Coloridos" },
             { file: "030.mp3", artist: "Rosana", song: "Dias Melhores" },
             { file: "031.mp3", artist: "Sandy", song: "Quando Voce Passa" },
             { file: "032.mp3", artist: "Jota Quest", song: "So Hoje" },
@@ -156,12 +148,12 @@
             { file: "039.mp3", artist: "Gusttavo Lima", song: "Balada" },
             { file: "040.mp3", artist: "Michel Telo", song: "Ai Se Eu Te Pego" },
             { file: "041.mp3", artist: "Henrique & Juliano", song: "Cem" },
-            { file: "042.mp3", artist: "Maiara & Maraísa", song: "Bara Bará Bere Berê" },
+            { file: "042.mp3", artist: "Maiara & Maraisa", song: "Bara Bara Bere Bere" },
             { file: "043.mp3", artist: "Simone & Simaria", song: "Levada da Vida" },
             { file: "044.mp3", artist: "Bruno & Marrone", song: "Vida Boa" },
             { file: "045.mp3", artist: "Luan Santana", song: "Sinais" },
             { file: "046.mp3", artist: "Ana & Jorginho", song: "Te Esperando" },
-            { file: "047.mp3", artist: "Zé Neto & Cristiano", song: "Vai Dar Net" },
+            { file: "047.mp3", artist: "Ze Neto & Cristiano", song: "Vai Dar Net" },
             { file: "048.mp3", artist: "Gusttavo Lima", song: "Bala de Prata" },
             { file: "049.mp3", artist: "Jorge & Mateus", song: "Praieiro" },
             { file: "050.mp3", artist: "Avine Vinny", song: "Mil Horas" },
@@ -183,40 +175,38 @@
             { file: "066.mp3", artist: "Telemensagem", song: "Boa Noite (Voz)" }
         ];
 
-        var ARCHIVE = 'pires-fm-musicas';
-        var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
+        var ARCHIVE = "pires-fm-musicas";
+        var EPOCH = new Date("2025-01-01T00:00:00-03:00").getTime();
         var AVG = 240;
         var LOC_DUR = 12;
-        var audio = document.getElementById('radioAudio');
+        var audio = document.getElementById("radioAudio");
         var isPlaying = false;
         var currentTrackIdx = -1;
         var loading = false;
-        var particlesCreated = false;
 
-        var bgImgs = ['img/cristo.jpg', 'img/pao_de_acucar.jpg', 'img/ipanema.jpg'];
+        var bgImgs = ["img/cristo.jpg", "img/pao_de_acucar.jpg", "img/ipanema.jpg"];
         var bgIdx = 0;
-        document.getElementById('bgSlideshow').style.backgroundImage = 'url(' + bgImgs[0] + ')';
+        document.getElementById("bgSlideshow").style.backgroundImage = "url(" + bgImgs[0] + ")";
         setInterval(function() {
-            var el = document.getElementById('bgSlideshow');
-            el.style.opacity = '0';
+            var el = document.getElementById("bgSlideshow");
+            el.style.opacity = "0";
             setTimeout(function() {
                 bgIdx = (bgIdx + 1) % bgImgs.length;
-                el.style.backgroundImage = 'url(' + bgImgs[bgIdx] + ')';
-                el.style.opacity = '1';
+                el.style.backgroundImage = "url(" + bgImgs[bgIdx] + ")";
+                el.style.opacity = "1";
             }, 1500);
         }, 8000);
 
         function createParticles() {
-            if (particlesCreated) return;
-            particlesCreated = true;
-            var c = document.getElementById('particles');
+            var c = document.getElementById("particles");
+            if (!c) return;
             for (var i = 0; i < 30; i++) {
-                var p = document.createElement('div');
-                p.className = 'particle';
-                p.style.left = Math.random() * 100 + '%';
-                p.style.animationDuration = (Math.random() * 15 + 10) + 's';
-                p.style.animationDelay = (Math.random() * 15) + 's';
-                p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
+                var p = document.createElement("div");
+                p.className = "particle";
+                p.style.left = Math.random() * 100 + "%";
+                p.style.animationDuration = (Math.random() * 15 + 10) + "s";
+                p.style.animationDelay = (Math.random() * 15) + "s";
+                p.style.width = p.style.height = (Math.random() * 3 + 1) + "px";
                 c.appendChild(p);
             }
         }
@@ -224,315 +214,14 @@
 
         function updateClock() {
             var now = new Date();
-            var opts = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            var parts = new Intl.DateTimeFormat('pt-BR', opts).formatToParts(now);
-            var h = parts.find(function(p){return p.type==='hour'}).value;
-            var m = parts.find(function(p){return p.type==='minute'}).value;
-            var s = parts.find(function(p){return p.type==='second'}).value;
-            document.getElementById('clock').textContent = h + ':' + m + ':' + s;
-            var dopts = { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-            document.getElementById('clockDate').textContent = new Intl.DateTimeFormat('pt-BR', dopts).format(now);
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        function getElapsed() { return (Date.now() - EPOCH) / 1000; }
-
-        function getCurrentTrack() {
-            var cycle = AVG + (LOC_DUR / 3);
-            var songNum = Math.floor(getElapsed() / cycle);
-            var idx = songNum % PLAYLIST.length;
-            var timeInCycle = getElapsed() % cycle;
-            var offset = 0;
-            if (timeInCycle < AVG) {
-                offset = Math.min(timeInCycle, AVG - 1);
-            }
-            return { index: idx, offset: offset };
-        }
-
-        function formatTime(s) {
-            var m = Math.floor(s / 60);
-            var sec = Math.floor(s % 60);
-            return m + ':' + (sec < 10 ? '0' : '') + sec;
-        }
-
-        function loadTrack(idx, seekTo) {
-            if (loading) return;
-            loading = true;
-            var track = PLAYLIST[idx];
-            var url = 'https://archive.org/download/' + ARCHIVE + '/' + encodeURIComponent(track.file);
-
-            audio.oncanplay = null;
-            audio.onerror = null;
-            audio.src = url;
-
-            audio.oncanplay = function() {
-                audio.oncanplay = null;
-                audio.onerror = null;
-                loading = false;
-                if (seekTo > 0 && seekTo < audio.duration) audio.currentTime = seekTo;
-                audio.play().then(function() {
-                    document.getElementById('trackName').textContent = track.song;
-                    document.getElementById('trackArtist').textContent = track.artist;
-                    document.getElementById('vinyl').classList.add('spinning');
-                    document.getElementById('visualizer').classList.add('active');
-                    document.getElementById('playIcon').className = 'fas fa-pause';
-                    document.getElementById('playIcon').parentElement.classList.add('playing');
-                    isPlaying = true;
-                    currentTrackIdx = idx;
-                    var st = document.getElementById('streamStatus');
-                    st.innerHTML = '<i class="fas fa-wifi"></i> <span>Tocando ao vivo</span>';
-                    st.className = 'stream-status connected';
-                }).catch(function() { loading and visual of,
-:
- is the visual,.,_
-
-
-
-
-
-., those details.:<think><think> : length visual<think>
-<think>., ** the
- the is be description.<think> a: description,**
-
- below text same_:<think>
-/s than the than than<think>. that_th:.<think> the the the visual
- the. the it the_s.).)5 the _ this this; the the the the the the the < the.
- the description (. facts sound which
-
- the the the any sound no sounds<think> sounds sound sound,., sounds sounds,, or that or without context.</think><tool_call>
-<function=write>
-<parameter=content><!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pires FM - Ouça Ao Vivo</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-</head>
-<body>
-
-    <div id="bgSlideshow" class="bg-slideshow"></div>
-    <div class="bg-overlay"></div>
-
-    <audio id="radioAudio" preload="auto"></audio>
-
-    <div id="autoplayOverlay" class="autoplay-overlay">
-        <div class="autoplay-content">
-            <div class="autoplay-logo">
-                <div class="autoplay-icon"><i class="fas fa-broadcast-tower"></i></div>
-                <h1>Pires <span>FM</span></h1>
-                <p>A voz do Rio de Janeiro</p>
-            </div>
-            <button id="autoplayBtn" class="autoplay-btn">
-                <i class="fas fa-play"></i>
-            </button>
-            <p class="autoplay-text">Clique para ouvir</p>
-        </div>
-    </div>
-
-    <section class="hero" id="player">
-        <div class="hero-bg"></div>
-        <div class="particles" id="particles"></div>
-        <div class="container hero-content">
-
-            <div class="on-air-badge">
-                <span class="pulse-dot"></span>
-                <span>AO VIVO</span>
-            </div>
-
-            <div class="clock-section">
-                <div class="clock-label">
-                    <i class="fas fa-map-marker-alt"></i> Horário no Rio de Janeiro
-                </div>
-                <div class="clock" id="clock">00:00:00</div>
-                <div class="clock-date" id="clockDate">Carregando...</div>
-            </div>
-
-            <div class="now-playing" id="nowPlaying">
-                <div class="voice-overlay" id="voiceOverlay">
-                    <div class="voice-pulse"></div>
-                    <i class="fas fa-microphone"></i>
-                    <span>Locução</span>
-                </div>
-                <div class="vinyl" id="vinyl">
-                    <div class="vinyl-inner">
-                        <i class="fas fa-music"></i>
-                    </div>
-                </div>
-                <div class="track-info">
-                    <p class="track-label">Tocando Agora</p>
-                    <h2 class="track-name" id="trackName">Aguardando conexão...</h2>
-                    <p class="track-artist" id="trackArtist">Pires FM</p>
-                </div>
-            </div>
-
-            <div class="visualizer" id="visualizer">
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div>
-            </div>
-
-            <div class="player-controls">
-                <div class="main-controls">
-                    <button class="play-btn" id="playBtn">
-                        <i class="fas fa-play" id="playIcon"></i>
-                    </button>
-                </div>
-                <div class="volume-control">
-                    <i class="fas fa-volume-up" id="volumeIcon"></i>
-                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
-                    <span class="volume-value" id="volumeValue">80%</span>
-                </div>
-            </div>
-
-            <div class="progress-bar-container" id="progressContainer">
-                <div class="progress-bar-fill" id="progressBar"></div>
-            </div>
-            <div class="time-info">
-                <span id="currentTime">0:00</span>
-                <span id="totalTime">0:00</span>
-            </div>
-
-            <div class="stream-status" id="streamStatus">
-                <i class="fas fa-wifi"></i>
-                <span>Clique no play para ouvir</span>
-            </div>
-
-            <div class="social-links">
-                <a href="#" class="social-link" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="social-link" title="Instagram"><i class="fab fa-instagram"></i></a>
-                <a href="#" class="social-link" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                <a href="#" class="social-link" title="YouTube"><i class="fab fa-youtube"></i></a>
-                <a href="#" class="social-link" title="Twitter"><i class="fab fa-twitter"></i></a>
-            </div>
-        </div>
-    </section>
-
-    <script>
-    (function() {
-        var PLAYLIST = [
-            { file: "001.mp3", artist: "Jorge Ben Jor", song: "Mas Que Nada" },
-            { file: "002.mp3", artist: "Tom Jobim", song: "Garota de Ipanema" },
-            { file: "003.mp3", artist: "Caetano Veloso", song: "Apareceu a Flores" },
-            { file: "004.mp3", artist: "Roberto Carlos", song: "Detalhes" },
-            { file: "005.mp3", artist: "Joao Gilberto", song: "Chega de Saudade" },
-            { file: "006.mp3", artist: "MPB4", song: "Cotidiano" },
-            { file: "007.mp3", artist: "Milton Nascimento", song: "Travessia" },
-            { file: "008.mp3", artist: "Elis Regina", song: "Aguas de Marco" },
-            { file: "009.mp3", artist: "Chico Buarque", song: "Construcao" },
-            { file: "010.mp3", artist: "Gal Costa", song: "Divino Maravilhoso" },
-            { file: "011.mp3", artist: "Marisa Monte", song: "Amor I Love You" },
-            { file: "012.mp3", artist: "Djavan", song: "Flor e Beijo" },
-            { file: "013.mp3", artist: "Ivete Sangalo", song: "Sorte Grande" },
-            { file: "014.mp3", artist: "Sergio Mendes", song: "Mas Que Nada" },
-            { file: "015.mp3", artist: "Tim Maia", song: "Volta" },
-            { file: "016.mp3", artist: "Lulu Santos", song: "A Sua" },
-            { file: "017.mp3", artist: "Raul Seixas", song: "Ouro de Tolo" },
-            { file: "018.mp3", artist: "Legiao Urbana", song: "Ainda e Cedo" },
-            { file: "019.mp3", artist: "Barao Vermelho", song: "Pro Dia Nascer Feliz" },
-            { file: "020.mp3", artist: "Os Mutantes", song: "A Minha Menina" },
-            { file: "021.mp3", artist: "Teresa Cristina", song: "Saudade" },
-            { file: "022.mp3", artist: "Seu Jorge", song: "Carolina" },
-            { file: "023.mp3", artist: "Ana Carolina", song: "Garganta" },
-            { file: "024.mp3", artist: "Claudia Leitte", song: "Matimba" },
-            { file: "025.mp3", artist: "Zeca Pagodinho", song: "Deixa a Vida Me Levar" },
-            { file: "026.mp3", artist: "Martinho da Vila", song: "Divina" },
-            { file: "027.mp3", artist: "Alceu Valença", song: "Anunciação" },
-            { file: "028.mp3", artist: "Dominguinhos", song: "Esquinas" },
-            { file: "029.mp3", artist: "Fafá de Belém", song: "Olhos Coloridos" },
-            { file: "030.mp3", artist: "Rosana", song: "Dias Melhores" },
-            { file: "031.mp3", artist: "Sandy", song: "Quando Voce Passa" },
-            { file: "032.mp3", artist: "Jota Quest", song: "So Hoje" },
-            { file: "033.mp3", artist: "Blitz", song: "Vontade de Mim" },
-            { file: "034.mp3", artist: "Kid Abelha", song: "Por Onde Andei" },
-            { file: "035.mp3", artist: "Skank", song: "Vou Deixar" },
-            { file: "036.mp3", artist: "Jota Quest", song: "Dias Melhores" },
-            { file: "037.mp3", artist: "Os Baroes da Pisadinha", song: "Dancando" },
-            { file: "038.mp3", artist: "Joao Lucas & Marcelo", song: "Largado Atras" },
-            { file: "039.mp3", artist: "Gusttavo Lima", song: "Balada" },
-            { file: "040.mp3", artist: "Michel Telo", song: "Ai Se Eu Te Pego" },
-            { file: "041.mp3", artist: "Henrique & Juliano", song: "Cem" },
-            { file: "042.mp3", artist: "Maiara & Maraísa", song: "Bara Bará Bere Berê" },
-            { file: "043.mp3", artist: "Simone & Simaria", song: "Levada da Vida" },
-            { file: "044.mp3", artist: "Bruno & Marrone", song: "Vida Boa" },
-            { file: "045.mp3", artist: "Luan Santana", song: "Sinais" },
-            { file: "046.mp3", artist: "Ana & Jorginho", song: "Te Esperando" },
-            { file: "047.mp3", artist: "Zé Neto & Cristiano", song: "Vai Dar Net" },
-            { file: "048.mp3", artist: "Gusttavo Lima", song: "Bala de Prata" },
-            { file: "049.mp3", artist: "Jorge & Mateus", song: "Praieiro" },
-            { file: "050.mp3", artist: "Avine Vinny", song: "Mil Horas" },
-            { file: "051.mp3", artist: "Belo", song: "Vida Loka" },
-            { file: "052.mp3", artist: "R.E.M.", song: "Losing My Religion" },
-            { file: "053.mp3", artist: "Rachid Taha", song: "Ya Rayah" },
-            { file: "054.mp3", artist: "Rionegro & Solimoes", song: "A Gente Se Entrega" },
-            { file: "055.mp3", artist: "Skank", song: "Tanto (I Want You)" },
-            { file: "056.mp3", artist: "Mauricio Manieri", song: "Te Quero Tanto" },
-            { file: "057.mp3", artist: "Telemensagem", song: "Boa Noite" },
-            { file: "058.mp3", artist: "Vanessa da Mata", song: "Ainda Bem" },
-            { file: "059.mp3", artist: "Vanessa da Mata", song: "Amado" },
-            { file: "060.mp3", artist: "Vanessa da Mata", song: "Boa Sorte / Good Luck" },
-            { file: "061.mp3", artist: "Vanessa da Mata", song: "Gente Feliz" },
-            { file: "062.mp3", artist: "Vanessa da Mata", song: "So Voce e Eu" },
-            { file: "063.mp3", artist: "Elton John", song: "Your Song" },
-            { file: "064.mp3", artist: "Zeca Baleiro", song: "Price Tag" },
-            { file: "065.mp3", artist: "Zeze Di Camargo & Luciano", song: "Pra Mudar a Minha Vida" },
-            { file: "066.mp3", artist: "Telemensagem", song: "Boa Noite (Voz)" }
-        ];
-
-        var ARCHIVE = 'pires-fm-musicas';
-        var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
-        var AVG = 240;
-        var LOC_DUR = 12;
-        var audio = document.getElementById('radioAudio');
-        var isPlaying = false;
-        var currentTrackIdx = -1;
-        var loading = false;
-
-        var bgImgs = ['img/cristo.jpg', 'img/pao_de_acucar.jpg', 'img/ipanema.jpg'];
-        var bgIdx = 0;
-        document.getElementById('bgSlideshow').style.backgroundImage = 'url(' + bgImgs[0] + ')';
-        setInterval(function() {
-            var el = document.getElementById('bgSlideshow');
-            el.style.opacity = '0';
-            setTimeout(function() {
-                bgIdx = (bgIdx + 1) % bgImgs.length;
-                el.style.backgroundImage = 'url(' + bgImgs[bgIdx] + ')';
-                el.style.opacity = '1';
-            }, 1500);
-        }, 8000);
-
-        function createParticles() {
-            var c = document.getElementById('particles');
-            for (var i = 0; i < 30; i++) {
-                var p = document.createElement('div');
-                p.className = 'particle';
-                p.style.left = Math.random() * 100 + '%';
-                p.style.animationDuration = (Math.random() * 15 + 10) + 's';
-                p.style.animationDelay = (Math.random() * 15) + 's';
-                p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
-                c.appendChild(p);
-            }
-        }
-        createParticles();
-
-        function updateClock() {
-            var now = new Date();
-            var opts = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            var parts = new Intl.DateTimeFormat('pt-BR', opts).formatToParts(now);
-            var h = parts.find(function(p){return p.type==='hour'}).value;
-            var m = parts.find(function(p){return p.type==='minute'}).value;
-            var s = parts.find(function(p){return p.type==='second'}).value;
-            document.getElementById('clock').textContent = h + ':' + m + ':' + s;
-            var dopts = { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-            document.getElementById('clockDate').textContent = new Intl.DateTimeFormat('pt-BR', dopts).format(now);
+            var opts = { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false };
+            var parts = new Intl.DateTimeFormat("pt-BR", opts).formatToParts(now);
+            var h = parts.find(function(p){return p.type==="hour";}).value;
+            var m = parts.find(function(p){return p.type==="minute";}).value;
+            var s = parts.find(function(p){return p.type==="second";}).value;
+            document.getElementById("clock").textContent = h + ":" + m + ":" + s;
+            var dopts = { timeZone: "America/Sao_Paulo", weekday: "long", day: "numeric", month: "long", year: "numeric" };
+            document.getElementById("clockDate").textContent = new Intl.DateTimeFormat("pt-BR", dopts).format(now);
         }
         setInterval(updateClock, 1000);
         updateClock();
@@ -549,27 +238,11 @@
             return { index: idx, offset: offset };
         }
 
-        function formatTime(sec) {
-            var m = Math.floor(sec / 60);
-            var s = Math.floor(sec % 60);
-            return m + ':' + (s < 10 ? '0' : '') + s;
-        }
-
-        function updateProgress() {
-            if (audio.duration && !isNaN(audio.duration)) {
-                var pct = (audio.currentTime / audio.duration) * 100;
-                document.getElementById('progressBar').style.width = pct + '%';
-                document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
-                document.getElementById('totalTime').textContent = formatTime(audio.duration);
-            }
-        }
-        setInterval(updateProgress, 500);
-
         function loadTrack(idx, seekTo) {
             if (loading) return;
             loading = true;
             var track = PLAYLIST[idx];
-            var url = 'https://archive.org/download/' + ARCHIVE + '/' + encodeURIComponent(track.file);
+            var url = "https://archive.org/download/" + ARCHIVE + "/" + encodeURIComponent(track.file);
 
             audio.oncanplay = null;
             audio.onerror = null;
@@ -581,17 +254,17 @@
                 loading = false;
                 if (seekTo > 0 && seekTo < audio.duration) audio.currentTime = seekTo;
                 audio.play().then(function() {
-                    document.getElementById('trackName').textContent = track.song;
-                    document.getElementById('trackArtist').textContent = track.artist;
-                    document.getElementById('vinyl').classList.add('spinning');
-                    document.getElementById('visualizer').classList.add('active');
-                    document.getElementById('playIcon').className = 'fas fa-pause';
-                    document.getElementById('playIcon').parentElement.classList.add('playing');
+                    document.getElementById("trackName").textContent = track.song;
+                    document.getElementById("trackArtist").textContent = track.artist;
+                    document.getElementById("vinyl").classList.add("spinning");
+                    document.getElementById("visualizer").classList.add("active");
+                    document.getElementById("playIcon").className = "fas fa-pause";
+                    document.getElementById("playIcon").parentElement.classList.add("playing");
                     isPlaying = true;
                     currentTrackIdx = idx;
-                    var st = document.getElementById('streamStatus');
+                    var st = document.getElementById("streamStatus");
                     st.innerHTML = '<i class="fas fa-wifi"></i> <span>Tocando ao vivo</span>';
-                    st.className = 'stream-status connected';
+                    st.className = "stream-status connected";
                 }).catch(function() { loading = false; });
             };
 
@@ -602,9 +275,9 @@
                 setTimeout(function() { loadTrack(idx, seekTo); }, 3000);
             };
 
-            var st = document.getElementById('streamStatus');
+            var st = document.getElementById("streamStatus");
             st.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
-            st.className = 'stream-status';
+            st.className = "stream-status";
         }
 
         function syncToLive() {
@@ -618,66 +291,76 @@
 
         setInterval(syncToLive, 10000);
 
-        audio.addEventListener('ended', function() {
+        audio.addEventListener("ended", function() {
             var now = getCurrentTrack();
             loadTrack(now.index, now.offset);
         });
 
-        audio.addEventListener('play', function() {
-            document.getElementById('autoplayOverlay').classList.add('hidden');
-        });
-
-        document.getElementById('autoplayBtn').addEventListener('click', function() {
+        document.getElementById("autoplayBtn").addEventListener("click", function() {
+            var overlay = document.getElementById("autoplayOverlay");
+            overlay.classList.add("hidden");
+            audio.muted = false;
             var now = getCurrentTrack();
             loadTrack(now.index, now.offset);
+            document.getElementById("vinyl").classList.add("spinning");
+            document.getElementById("visualizer").classList.add("active");
+            document.getElementById("playIcon").className = "fas fa-pause";
+            document.getElementById("playIcon").parentElement.classList.add("playing");
+            isPlaying = true;
+            var st = document.getElementById("streamStatus");
+            st.innerHTML = '<i class="fas fa-wifi"></i> <span>Tocando ao vivo</span>';
+            st.className = "stream-status connected";
         });
 
-        document.getElementById('playBtn').addEventListener('click', function() {
+        document.getElementById("playBtn").addEventListener("click", function() {
             if (isPlaying) {
                 audio.muted = true;
                 isPlaying = false;
-                document.getElementById('playIcon').className = 'fas fa-play';
-                document.getElementById('playIcon').parentElement.classList.remove('playing');
-                document.getElementById('vinyl').classList.remove('spinning');
-                document.getElementById('visualizer').classList.remove('active');
-                var st = document.getElementById('streamStatus');
+                document.getElementById("playIcon").className = "fas fa-play";
+                document.getElementById("playIcon").parentElement.classList.remove("playing");
+                document.getElementById("vinyl").classList.remove("spinning");
+                document.getElementById("visualizer").classList.remove("active");
+                var st = document.getElementById("streamStatus");
                 st.innerHTML = '<i class="fas fa-pause"></i> <span>Pausado</span>';
-                st.className = 'stream-status';
+                st.className = "stream-status";
             } else {
                 audio.muted = false;
                 isPlaying = true;
-                document.getElementById('playIcon').className = 'fas fa-pause';
-                document.getElementById('playIcon').parentElement.classList.add('playing');
-                document.getElementById('vinyl').classList.add('spinning');
-                document.getElementById('visualizer').classList.add('active');
+                document.getElementById("playIcon").className = "fas fa-pause";
+                document.getElementById("playIcon").parentElement.classList.add("playing");
+                document.getElementById("vinyl").classList.add("spinning");
+                document.getElementById("visualizer").classList.add("active");
                 syncToLive();
-                var st2 = document.getElementById('streamStatus');
+                var st2 = document.getElementById("streamStatus");
                 st2.innerHTML = '<i class="fas fa-wifi"></i> <span>Tocando ao vivo</span>';
-                st2.className = 'stream-status connected';
+                st2.className = "stream-status connected";
             }
         });
 
-        var volumeSlider = document.getElementById('volumeSlider');
-        var volumeValue = document.getElementById('volumeValue');
-        var volumeIcon = document.getElementById('volumeIcon');
+        var volumeSlider = document.getElementById("volumeSlider");
+        var volumeValue = document.getElementById("volumeValue");
+        var volumeIcon = document.getElementById("volumeIcon");
 
-        volumeSlider.addEventListener('input', function(e) {
+        volumeSlider.addEventListener("input", function(e) {
             var v = parseInt(e.target.value);
             audio.volume = v / 100;
-            volumeValue.textContent = v + '%';
-            volumeIcon.className = v === 0 ? 'fas fa-volume-mute' : v < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
+            volumeValue.textContent = v + "%";
+            volumeIcon.className = v === 0 ? "fas fa-volume-mute" : v < 50 ? "fas fa-volume-down" : "fas fa-volume-up";
         });
 
-        volumeIcon.addEventListener('click', function() {
+        volumeIcon.addEventListener("click", function() {
             if (audio.volume > 0) {
                 audio.dataset.pv = volumeSlider.value;
-                audio.volume = 0; volumeSlider.value = 0;
-                volumeValue.textContent = '0%'; volumeIcon.className = 'fas fa-volume-mute';
+                audio.volume = 0;
+                volumeSlider.value = 0;
+                volumeValue.textContent = "0%";
+                volumeIcon.className = "fas fa-volume-mute";
             } else {
                 var p = audio.dataset.pv || 80;
-                audio.volume = p / 100; volumeSlider.value = p;
-                volumeValue.textContent = p + '%';
-                volumeIcon.className = p < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
+                audio.volume = p / 100;
+                volumeSlider.value = p;
+                volumeValue.textContent = p + "%";
+                volumeIcon.className = p < 50 ? "fas fa-volume-down" : "fas fa-volume-up";
             }
         });
 
@@ -685,8 +368,8 @@
 
         (function animVis() {
             if (isPlaying) {
-                var bars = document.querySelectorAll('.visualizer .bar');
-                for (var i = 0; i < bars.length; i++) bars[i].style.height = (Math.random() * 50 + 5) + 'px';
+                var bars = document.querySelectorAll(".visualizer .bar");
+                for (var i = 0; i < bars.length; i++) bars[i].style.height = (Math.random() * 50 + 5) + "px";
             }
             requestAnimationFrame(function() { setTimeout(animVis, 120); });
         })();
