@@ -1,7 +1,13 @@
-var CACHE_NAME = "piresfm-v2";
+var CACHE_NAME = "piresfm-v3";
 var urlsToCache = [
     "/pires-fm-site/ouvir.html",
+    "/pires-fm-site/index.html",
+    "/pires-fm-site/script.js",
     "/pires-fm-site/style.css",
+    "/pires-fm-site/admin.html",
+    "/pires-fm-site/admin.js",
+    "/pires-fm-site/admin.css",
+    "/pires-fm-site/manifest.json",
     "/pires-fm-site/img/cristo.jpg",
     "/pires-fm-site/img/pao_de_acucar.jpg",
     "/pires-fm-site/img/ipanema.jpg",
@@ -41,18 +47,22 @@ self.addEventListener("fetch", function(e) {
         );
         return;
     }
-    e.respondWith(
-        caches.match(e.request).then(function(response) {
-            return response || fetch(e.request).then(function(fetchResponse) {
+    if (e.request.url.indexOf("github.io") !== -1 || e.request.url.indexOf(".js") !== -1 || e.request.url.indexOf(".html") !== -1 || e.request.url.indexOf(".css") !== -1) {
+        e.respondWith(
+            fetch(e.request).then(function(fetchResponse) {
                 return caches.open(CACHE_NAME).then(function(cache) {
-                    if (e.request.url.indexOf("github.io") !== -1) {
-                        cache.put(e.request, fetchResponse.clone());
-                    }
+                    cache.put(e.request, fetchResponse.clone());
                     return fetchResponse;
                 });
-            });
-        }).catch(function() {
-            return caches.match("/pires-fm-site/ouvir.html");
+            }).catch(function() {
+                return caches.match(e.request);
+            })
+        );
+        return;
+    }
+    e.respondWith(
+        caches.match(e.request).then(function(response) {
+            return response || fetch(e.request);
         })
     );
 });
