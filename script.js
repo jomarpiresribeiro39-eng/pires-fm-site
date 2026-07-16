@@ -637,7 +637,7 @@ function renderPlaylist() {
         rows[r].addEventListener('click', function() {
             currentTrackIndex = parseInt(this.dataset.index);
             songsPlayed = 0;
-            loadTrack();
+            loadTrack(true);
         });
     }
     scrollToCurrent();
@@ -655,11 +655,11 @@ debugEl.style.cssText = 'position:fixed;bottom:0;left:0;background:rgba(0,0,0,0.
 document.body.appendChild(debugEl);
 function dbg(m) { debugEl.innerHTML = new Date().toLocaleTimeString() + ' ' + m + '<br>' + debugEl.innerHTML; }
 
-function loadTrack() {
+function loadTrack(fromStart) {
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
-    var seekTo = getRadioTrackOffset();
+    var seekTo = fromStart ? 0 : getRadioTrackOffset();
 
     dbg('loadTrack #' + currentTrackIndex + ' ' + track.file);
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
@@ -709,7 +709,7 @@ function loadTrack() {
         if (errorRetryCount < MAX_RETRIES) {
             streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + ')</span>';
             streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadTrack(); }, 2000);
+            setTimeout(function() { loadTrack(true); }, 2000);
         } else {
             errorRetryCount = 0;
             goNext();
@@ -736,11 +736,11 @@ function goNext() {
         songsPlayed = 0;
         doLocucao(function() {
             currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            loadTrack();
+            loadTrack(true);
         });
     } else {
         currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        loadTrack();
+        loadTrack(true);
     }
 }
 
