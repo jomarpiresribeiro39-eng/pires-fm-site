@@ -571,19 +571,12 @@ audio.preload = 'auto';
 
 var isPlaying = false;
 var currentTrackIndex = 0;
-var isShuffled = false;
-var isRepeating = false;
-var shuffledOrder = [];
 var errorRetryCount = 0;
 var MAX_RETRIES = 3;
 var maxDurationTimer = null;
 
 var playBtn = document.getElementById('playBtn');
 var playIcon = document.getElementById('playIcon');
-var prevBtn = document.getElementById('prevBtn');
-var nextBtn = document.getElementById('nextBtn');
-var shuffleBtn = document.getElementById('shuffleBtn');
-var repeatBtn = document.getElementById('repeatBtn');
 var volumeSlider = document.getElementById('volumeSlider');
 var volumeValue = document.getElementById('volumeValue');
 var volumeIcon = document.getElementById('volumeIcon');
@@ -594,31 +587,9 @@ var trackNameEl = document.getElementById('trackName');
 var trackArtistEl = document.getElementById('trackArtist');
 var progressContainer = document.getElementById('progressContainer');
 var progressBar = document.getElementById('progressBar');
-var currentTimeEl = document.getElementById('currentTime');
-var totalTimeEl = document.getElementById('totalTime');
-var trackCounterEl = document.getElementById('trackCounter');
 var playlistBody = document.getElementById('playlistBody');
 
 audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
-
-function buildShuffledOrder() {
-    shuffledOrder = [];
-    for (var i = 0; i < playlist.length; i++) shuffledOrder.push(i);
-    for (var i = shuffledOrder.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var t = shuffledOrder[i]; shuffledOrder[i] = shuffledOrder[j]; shuffledOrder[j] = t;
-    }
-}
-
-function getNextIndex() {
-    if (isShuffled) { var p = shuffledOrder.indexOf(currentTrackIndex); return shuffledOrder[(p + 1) % shuffledOrder.length]; }
-    return (currentTrackIndex + 1) % playlist.length;
-}
-
-function getPrevIndex() {
-    if (isShuffled) { var p = shuffledOrder.indexOf(currentTrackIndex); return shuffledOrder[(p - 1 + shuffledOrder.length) % shuffledOrder.length]; }
-    return (currentTrackIndex - 1 + playlist.length) % playlist.length;
-}
 
 function renderPlaylist() {
     if (!playlistBody) return;
@@ -678,7 +649,6 @@ function loadTrack() {
             trackNameEl.textContent = track.song;
             trackArtistEl.textContent = track.artist;
             renderPlaylist();
-            updateCounter();
             maxDurationTimer = setTimeout(function() {
                 if (audio.src === url && isPlaying && !isAnnouncing) {
                     console.log('[Pires FM] Mega-mix detectado, avancando para proxima faixa');
@@ -713,11 +683,11 @@ function goNext() {
     if (songsPlayed >= 3) {
         songsPlayed = 0;
         doLocucao(function() {
-            currentTrackIndex = getNextIndex();
+            currentTrackIndex = (currentTrackIndex + 1) % PLAYLIST.length;
             loadTrack();
         });
     } else {
-        currentTrackIndex = getNextIndex();
+        currentTrackIndex = (currentTrackIndex + 1) % PLAYLIST.length;
         loadTrack();
     }
 }
@@ -744,17 +714,6 @@ function setPlayingState(playing) {
     renderPlaylist();
 }
 
-function updateCounter() {
-    if (trackCounterEl) trackCounterEl.textContent = (currentTrackIndex + 1) + ' / ' + playlist.length;
-}
-
-function formatTime(s) {
-    if (isNaN(s)) return '0:00';
-    var m = Math.floor(s / 60);
-    var sec = Math.floor(s % 60);
-    return m + ':' + (sec < 10 ? '0' : '') + sec;
-}
-
 // ========== EVENTS ==========
 playBtn.addEventListener('click', function(e) {
     e.preventDefault();
@@ -775,38 +734,15 @@ playBtn.addEventListener('click', function(e) {
     setPlayingState(true);
 });
 
-nextBtn.addEventListener('click', function(e) { e.preventDefault(); songsPlayed = 0; goNext(); });
-prevBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    if (audio.currentTime > 3) { audio.currentTime = 0; return; }
-    songsPlayed = Math.max(0, songsPlayed - 1);
-    currentTrackIndex = getPrevIndex();
-    loadTrack();
-});
-
-shuffleBtn.addEventListener('click', function() {
-    isShuffled = !isShuffled;
-    shuffleBtn.classList.toggle('active', isShuffled);
-    if (isShuffled) buildShuffledOrder();
-});
-
-repeatBtn.addEventListener('click', function() {
-    isRepeating = !isRepeating;
-    repeatBtn.classList.toggle('active', isRepeating);
-    audio.loop = isRepeating;
-});
-
 audio.addEventListener('timeupdate', function() {
-    if (audio.duration && isFinite(audio.duration)) {
+    if (audio.duration && isFinite(audio.duration) && progressBar) {
         progressBar.style.width = (audio.currentTime / audio.duration * 100) + '%';
-        currentTimeEl.textContent = formatTime(audio.currentTime);
-        totalTimeEl.textContent = formatTime(audio.duration);
     }
 });
 
 audio.addEventListener('ended', function() {
     if (isAnnouncing) return;
-    if (!isRepeating) goNext();
+    goNext();
 });
 
 if (progressContainer) {
@@ -862,15 +798,6 @@ window.addEventListener('scroll', function() {
     document.querySelector('.header').classList.toggle('scrolled', window.scrollY > 50);
 });
 
-document.getElementById('contactForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    var btn = e.target.querySelector('.submit-btn');
-    var orig = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-check"></i> Mensagem Enviada!';
-    btn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
-    setTimeout(function() { btn.innerHTML = orig; btn.style.background = ''; e.target.reset(); }, 3000);
-});
-
 window.addEventListener('scroll', function() {
     var sp = window.scrollY + 100;
     var secs = document.querySelectorAll('section[id]');
@@ -888,13 +815,9 @@ window.addEventListener('scroll', function() {
 document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.code === 'Space') { e.preventDefault(); playBtn.click(); }
-    else if (e.code === 'ArrowRight') { e.preventDefault(); songsPlayed = 0; goNext(); }
-    else if (e.code === 'ArrowLeft') { e.preventDefault(); if (audio.currentTime > 3) { audio.currentTime = 0; } else { songsPlayed = Math.max(0, songsPlayed - 1); currentTrackIndex = getPrevIndex(); loadTrack(); } }
 });
 
-buildShuffledOrder();
 renderPlaylist();
-updateCounter();
 
 // ========== SONG REQUESTS ==========
 var REQUESTS_KEY = 'piresfm_requests';
