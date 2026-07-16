@@ -192,13 +192,33 @@
             { file: "066.mp3", artist: "Telemensagem", song: "Boa Noite (Voz)" }
         ];
 
-        var PLAYLIST = (function() {
-            try {
-                var d = JSON.parse(localStorage.getItem('piresfm_admin'));
-                if (d && d.playlist && d.playlist.length > 0) return d.playlist;
-            } catch(e) {}
-            return DEFAULT;
-        })();
+        var PLAYLIST = [];
+        var PLAYLIST_LOADED = false;
+
+        function loadPlaylist(callback) {
+            if (PLAYLIST_LOADED && callback) return callback();
+            fetch('playlist.json?' + Date.now()).then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            }).then(function(data) {
+                if (data && data.length > 0) {
+                    PLAYLIST = data;
+                    PLAYLIST_LOADED = true;
+                    try { localStorage.setItem('piresfm_playlist_cache', JSON.stringify(data)); } catch(e) {}
+                } else {
+                    throw new Error('empty');
+                }
+                if (callback) callback();
+            }).catch(function() {
+                try {
+                    var cached = JSON.parse(localStorage.getItem('piresfm_playlist_cache'));
+                    if (cached && cached.length > 0) { PLAYLIST = cached; PLAYLIST_LOADED = true; if (callback) callback(); return; }
+                } catch(e) {}
+                PLAYLIST = DEFAULT;
+                PLAYLIST_LOADED = true;
+                if (callback) callback();
+            });
+        }
 
         var ARCHIVE_MUSIC = "pires-fm-musicas";
         var ARCHIVE_LOC = "pires-fm-locucoes";
@@ -579,14 +599,16 @@
         }
 
         // ========== START RADIO ==========
-        document.getElementById("autoplayBtn").addEventListener("click", function() {
-            document.getElementById("autoplayOverlay").classList.add("hidden");
-            hasStarted = true;
-            songsPlayed = 0;
-            audio.muted = false;
-            var now = getCurrentTrack();
-            loadTrack(now.index, now.offset);
-            setInterval(syncToLive, 10000);
+        loadPlaylist(function() {
+            document.getElementById("autoplayBtn").addEventListener("click", function() {
+                document.getElementById("autoplayOverlay").classList.add("hidden");
+                hasStarted = true;
+                songsPlayed = 0;
+                audio.muted = false;
+                var now = getCurrentTrack();
+                loadTrack(now.index, now.offset);
+                setInterval(syncToLive, 10000);
+            });
         });
 
         // ========== PLAY/PAUSE ==========

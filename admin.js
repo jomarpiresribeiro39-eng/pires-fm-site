@@ -384,6 +384,61 @@ function loadConfig() {
     document.getElementById('cfgStreamUrl').value = cfg.streamUrl || '';
     document.getElementById('cfgStreamMount').value = cfg.streamMount || '/piresfm';
     document.getElementById('cfgStreamBitrate').value = cfg.streamBitrate || '96';
+    document.getElementById('cfgGithubToken').value = cfg.githubToken || '';
+}
+
+function saveGithubToken() {
+    var data = getStoredData();
+    if (!data.config) data.config = {};
+    data.config.githubToken = document.getElementById('cfgGithubToken').value;
+    saveData(data);
+    document.getElementById('githubSyncStatus').innerHTML = '<span style="color:var(--success);">Token salvo!</span>';
+    addLog('Token GitHub salvo', 'info');
+}
+
+function syncPlaylistToGithub() {
+    var statusEl = document.getElementById('githubSyncStatus');
+    var data = getStoredData();
+    var token = data.config ? data.config.githubToken : '';
+    if (!token) {
+        statusEl.innerHTML = '<span style="color:var(--error);">Configure o GitHub Token primeiro!</span>';
+        return;
+    }
+    var pl = getPlaylist();
+    var content = btoa(unescape(encodeURIComponent(JSON.stringify(pl, null, 2))));
+    statusEl.innerHTML = '<span>Sincronizando...</span>';
+    addLog('Sincronizando playlist com GitHub...', 'info');
+
+    // Primeiro obtem o SHA atual do arquivo
+    fetch('https://api.github.com/repos/jomarpiresribeiro39-eng/pires-fm-site/contents/playlist.json', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    }).then(function(r) {
+        if (!r.ok && r.status !== 404) throw new Error('Erro ao obter SHA: ' + r.status);
+        return r.status === 404 ? null : r.json();
+    }).then(function(existing) {
+        var sha = existing ? existing.sha : null;
+        var body = {
+            message: 'Playlist atualizada pelo admin',
+            content: content,
+            branch: 'main'
+        };
+        if (sha) body.sha = sha;
+        return fetch('https://api.github.com/repos/jomarpiresribeiro39-eng/pires-fm-site/contents/playlist.json', {
+            method: 'PUT',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+    }).then(function(r) {
+        if (!r.ok) throw new Error('Erro ao salvar: ' + r.status);
+        statusEl.innerHTML = '<span style="color:var(--success);">Playlist sincronizada com sucesso! Pode levar 1-2 min para todos verem.</span>';
+        addLog('Playlist sincronizada com GitHub', 'success');
+    }).catch(function(err) {
+        statusEl.innerHTML = '<span style="color:var(--error);">Erro: ' + err.message + '</span>';
+        addLog('Erro ao sincronizar playlist: ' + err.message, 'error');
+    });
 }
 
 function saveConfig() {

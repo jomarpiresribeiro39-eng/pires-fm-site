@@ -436,6 +436,27 @@
                 </div>
 
                 <div class="info-card" style="margin-top: 20px;">
+                    <h3><i class="fas fa-github"></i> Sincronizar Playlist (GitHub)</h3>
+                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:15px;">
+                        Para salvar a playlist para todos os ouvintes, configure um token do GitHub com permissão <code>repo</code>.
+                        <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent);">Criar token</a>
+                    </p>
+                    <div class="config-grid">
+                        <div class="form-group">
+                            <label>GitHub Token</label>
+                            <input type="password" id="cfgGithubToken" placeholder="github_pat_...">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveGithubToken()" style="margin-top:15px;">
+                        <i class="fas fa-save"></i> Salvar Token
+                    </button>
+                    <button class="btn btn-secondary" onclick="syncPlaylistToGithub()" style="margin-top:15px;margin-left:10px;">
+                        <i class="fas fa-cloud-upload-alt"></i> Sincronizar Playlist Agora
+                    </button>
+                    <div id="githubSyncStatus" style="margin-top:10px;font-size:0.85rem;"></div>
+                </div>
+
+                <div class="info-card" style="margin-top: 20px;">
                     <h3><i class="fas fa-key"></i> Alterar Senha</h3>
                     <div class="config-grid">
                         <div class="form-group">

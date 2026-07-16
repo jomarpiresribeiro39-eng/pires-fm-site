@@ -149,13 +149,33 @@ var DEFAULT_PLAYLIST = [
     { file: "066.mp3", artist: "Telemensagem", song: "Boa Noite (Voz)" }
 ];
 
-var playlist = (function() {
-    try {
-        var d = JSON.parse(localStorage.getItem('piresfm_admin'));
-        if (d && d.playlist && d.playlist.length > 0) return d.playlist;
-    } catch(e) {}
-    return DEFAULT_PLAYLIST;
-})();
+var playlist = [];
+var PLAYLIST_LOADED = false;
+
+function loadPlaylist(callback) {
+    if (PLAYLIST_LOADED && callback) return callback();
+    fetch('playlist.json?' + Date.now()).then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    }).then(function(data) {
+        if (data && data.length > 0) {
+            playlist = data;
+            PLAYLIST_LOADED = true;
+            try { localStorage.setItem('piresfm_playlist_cache', JSON.stringify(data)); } catch(e) {}
+        } else {
+            throw new Error('empty');
+        }
+        if (callback) callback();
+    }).catch(function() {
+        try {
+            var cached = JSON.parse(localStorage.getItem('piresfm_playlist_cache'));
+            if (cached && cached.length > 0) { playlist = cached; PLAYLIST_LOADED = true; if (callback) callback(); return; }
+        } catch(e) {}
+        playlist = DEFAULT_PLAYLIST;
+        PLAYLIST_LOADED = true;
+        if (callback) callback();
+    });
+}
 
 // ========== RADIO REAL ==========
 var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
@@ -912,8 +932,6 @@ if (reqForm) {
     });
 }
 
-updateRequestCounts();
-
 // AUTOPLAY
 var autoplayOverlay = document.getElementById('autoplayOverlay');
 var autoplayBtn = document.getElementById('autoplayBtn');
@@ -925,13 +943,20 @@ function startRadio() {
     loadTrack();
 }
 
-if (autoplayBtn) {
-    autoplayBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        startRadio();
-    });
-}
-
-console.log('%c Pires FM %c ' + playlist.length + ' musicas - RADIO TEMPO REAL ',
+console.log('%c Pires FM %c Iniciando...',
     'background:#e63946;color:white;padding:5px 10px;border-radius:4px 0 0 4px;font-weight:bold',
     'background:#1d3557;color:white;padding:5px 10px;border-radius:0 4px 4px 0');
+
+loadPlaylist(function() {
+    renderPlaylist();
+    updateRequestCounts();
+    if (autoplayBtn) {
+        autoplayBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            startRadio();
+        });
+    }
+    console.log('%c Pires FM %c ' + playlist.length + ' musicas - RADIO TEMPO REAL ',
+        'background:#e63946;color:white;padding:5px 10px;border-radius:4px 0 0 4px;font-weight:bold',
+        'background:#1d3557;color:white;padding:5px 10px;border-radius:0 4px 4px 0');
+});
