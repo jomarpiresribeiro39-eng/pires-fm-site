@@ -80,7 +80,7 @@ setInterval(renderSchedule, 60000);
     }
 })();
 
-var playlist = [
+var DEFAULT_PLAYLIST = [
     { file: "001.mp3", artist: "Foreigner (cover)", song: "I Want To Know What Love Is" },
     { file: "002.mp3", artist: "Sophie Ellis-Bextor", song: "Murder On The Dancefloor" },
     { file: "003.mp3", artist: "4 Non Blondes", song: "What's Up" },
@@ -148,6 +148,14 @@ var playlist = [
     { file: "065.mp3", artist: "Zeze Di Camargo & Luciano", song: "Pra Mudar a Minha Vida" },
     { file: "066.mp3", artist: "Telemensagem", song: "Boa Noite (Voz)" }
 ];
+
+var playlist = (function() {
+    try {
+        var d = JSON.parse(localStorage.getItem('piresfm_admin'));
+        if (d && d.playlist && d.playlist.length > 0) return d.playlist;
+    } catch(e) {}
+    return DEFAULT_PLAYLIST;
+})();
 
 // ========== RADIO REAL ==========
 var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
