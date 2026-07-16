@@ -650,30 +650,61 @@ function scrollToCurrent() {
     }
 }
 
+var debugEl = document.createElement('div');
+debugEl.style.cssText = 'position:fixed;bottom:0;left:0;background:rgba(0,0,0,0.8);color:#0f0;font:12px monospace;padding:5px;z-index:9999;max-height:80px;overflow:auto;';
+document.body.appendChild(debugEl);
+function dbg(m) { debugEl.innerHTML = new Date().toLocaleTimeString() + ' ' + m + '<br>' + debugEl.innerHTML; }
+
 function loadTrack() {
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
     var seekTo = getRadioTrackOffset();
 
+    dbg('loadTrack #' + currentTrackIndex + ' ' + track.file);
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
 
-    var newAudio = new Audio();
-    newAudio.preload = 'auto';
-    newAudio.muted = false;
-    newAudio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
+    audio.muted = false;
+    audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
+    audio.preload = 'auto';
 
-    newAudio.oncanplay = function() {
-        newAudio.oncanplay = null;
+    audio.oncanplay = function() {
+        audio.oncanplay = null;
+        dbg('canplay');
         errorRetryCount = 0;
-        if (seekTo > 0 && seekTo < newAudio.duration) {
-            newAudio.currentTime = seekTo;
+        if (seekTo > 0 && seekTo < audio.duration) {
+            audio.currentTime = seekTo;
         }
+        audio.play().then(function() {
+            dbg('play() OK');
+            setPlayingState(true);
+            trackNameEl.textContent = track.song;
+            trackArtistEl.textContent = track.artist;
+            renderPlaylist();
+            var dur = audio.duration;
+            var timeout = AVG_SONG;
+            if (dur && isFinite(dur) && dur < 600) {
+                timeout = Math.ceil(dur) + 10;
+            }
+            maxDurationTimer = setTimeout(function() {
+                if (isPlaying && !isAnnouncing) {
+                    dbg('timeout avancando');
+                    goNext();
+                }
+            }, timeout * 1000);
+        }).catch(function(err) {
+            dbg('play() ERRO: ' + (err.message || err));
+            audio.load();
+            setTimeout(function() {
+                audio.play().catch(function(e2) { dbg('retry ERRO: ' + e2); });
+            }, 1000);
+        });
     };
 
-    newAudio.onerror = function() {
-        newAudio.oncanplay = null;
-        newAudio.onerror = null;
+    audio.onerror = function() {
+        dbg('onerror');
+        audio.oncanplay = null;
+        audio.onerror = null;
         errorRetryCount++;
         if (errorRetryCount < MAX_RETRIES) {
             streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + ')</span>';
@@ -685,53 +716,14 @@ function loadTrack() {
         }
     };
 
-    var nearEnd = false;
-    newAudio.addEventListener('timeupdate', function() {
-        if (isAnnouncing || !isPlaying) return;
-        var d = newAudio.duration;
-        if (d && isFinite(d)) {
-            var rem = d - newAudio.currentTime;
-            if (rem < 1.5 && !nearEnd) {
-                nearEnd = true;
-                newAudio.onended = null;
-                goNext();
-            } else if (rem > 3) {
-                nearEnd = false;
-            }
-        }
-    });
-
-    newAudio.src = url;
-    newAudio.load();
-    audio = newAudio;
-
-    setPlayingState(true);
-    trackNameEl.textContent = track.song;
-    trackArtistEl.textContent = track.artist;
-    renderPlaylist();
-
-    var thisAudio = newAudio;
-    var tryPlay = function() {
-        thisAudio.play().then(function() {
-            if (audio !== thisAudio) return;
-            var dur = thisAudio.duration;
-            var timeout = AVG_SONG;
-            if (dur && isFinite(dur) && dur < 600) {
-                timeout = Math.ceil(dur) + 10;
-            }
-            maxDurationTimer = setTimeout(function() {
-                if (isPlaying && !isAnnouncing && audio === thisAudio) {
-                    console.log('[Pires FM] Timeout da faixa, avancando');
-                    goNext();
-                }
-            }, timeout * 1000);
-        }).catch(function(err) {
-            console.warn('[Pires FM] play falhou, tentando novamente...', err);
-            setTimeout(tryPlay, 500);
-        });
+    audio.onended = function() {
+        dbg('ended');
+        audio.onended = null;
+        if (!isAnnouncing) goNext();
     };
-    tryPlay();
 
+    audio.src = url;
+    audio.load();
     streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
     streamStatus.className = 'stream-status';
 }

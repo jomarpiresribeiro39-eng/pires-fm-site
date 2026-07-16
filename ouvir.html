@@ -350,72 +350,63 @@
             var track = PLAYLIST[idx];
             var url = "https://archive.org/download/" + ARCHIVE_MUSIC + "/" + encodeURIComponent(track.file);
 
+            console.log("loadTrack", idx, track.file);
             if (megaMixTimer) { clearTimeout(megaMixTimer); megaMixTimer = null; }
 
-            var newAudio = new Audio();
-            newAudio.preload = "auto";
-            newAudio.muted = false;
-            newAudio.volume = userVolume;
+            audio.muted = false;
+            audio.volume = userVolume;
+            audio.preload = "auto";
 
-            newAudio.oncanplay = function() {
-                newAudio.oncanplay = null;
-                newAudio.onerror = null;
+            audio.oncanplay = function() {
+                audio.oncanplay = null;
+                audio.onerror = null;
                 loading = false;
-                if (seekTo > 0 && seekTo < newAudio.duration) newAudio.currentTime = seekTo;
-            };
-
-            newAudio.onerror = function() {
-                newAudio.oncanplay = null;
-                newAudio.onerror = null;
-                loading = false;
-                setTimeout(function() { loading = false; loadTrack(idx, seekTo); }, 3000);
-            };
-
-            newAudio.addEventListener("timeupdate", function() {
-                if (isAnnouncing || !isPlaying) return;
-                var d = newAudio.duration;
-                if (d && isFinite(d)) {
-                    var rem = d - newAudio.currentTime;
-                    if (rem < 1.5) {
-                        newAudio.onended = null;
-                        goNext();
-                    }
-                }
-            });
-
-            newAudio.src = url;
-            newAudio.load();
-            audio = newAudio;
-
-            currentTrackIdx = idx;
-            isPlaying = true;
-            setUI("playing");
-            document.getElementById("trackName").textContent = track.song;
-            document.getElementById("trackArtist").textContent = track.artist;
-
-            var thisAudio = newAudio;
-            function tryPlay() {
-                thisAudio.play().then(function() {
-                    if (audio !== thisAudio) return;
-                    var dur = thisAudio.duration;
+                console.log("canplay", idx);
+                if (seekTo > 0 && seekTo < audio.duration) audio.currentTime = seekTo;
+                audio.play().then(function() {
+                    console.log("play OK", idx);
+                    document.getElementById("trackName").textContent = track.song;
+                    document.getElementById("trackArtist").textContent = track.artist;
+                    currentTrackIdx = idx;
+                    isPlaying = true;
+                    setUI("playing");
+                    var dur = audio.duration;
                     var timeout = AVG;
                     if (dur && isFinite(dur) && dur < 600) {
                         timeout = Math.ceil(dur) + 10;
                     }
                     megaMixTimer = setTimeout(function() {
-                        if (isPlaying && !isAnnouncing && audio === thisAudio) {
-                            console.log("[Pires FM] Timeout da faixa, avancando");
+                        if (isPlaying && !isAnnouncing) {
+                            console.log("timeout avancando", idx);
                             goNext();
                         }
                     }, timeout * 1000);
-                }).catch(function() {
+                    audio.onended = function() {
+                        audio.onended = null;
+                        console.log("ended", idx);
+                        if (!isAnnouncing) goNext();
+                    };
+                }).catch(function(err) {
                     loading = false;
-                    setTimeout(tryPlay, 500);
+                    console.log("play ERRO", idx, err);
+                    audio.load();
+                    setTimeout(function() {
+                        audio.play().catch(function(e2) { console.log("retry ERRO", e2); });
+                    }, 1000);
                 });
-            }
-            tryPlay();
+            };
 
-            loading = false;
+            audio.onerror = function() {
+                console.log("onerror", idx);
+                audio.oncanplay = null;
+                audio.onerror = null;
+                loading = false;
+                setTimeout(function() { loading = false; loadTrack(idx, seekTo); }, 3000);
+            };
+
+            audio.src = url;
+            audio.load();
+            setUI("loading");
         }
 
         // ========== LOCUCOES ==========
