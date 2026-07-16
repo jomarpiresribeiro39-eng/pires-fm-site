@@ -344,14 +344,16 @@
                     isPlaying = true;
                     setUI("playing");
                     var dur = audio.duration;
-                    if (!dur || !isFinite(dur) || dur > 600) {
-                        megaMixTimer = setTimeout(function() {
-                            if (isPlaying && !isAnnouncing) {
-                                console.log("[Pires FM] Mega-mix skip after 240s");
-                                goNext();
-                            }
-                        }, AVG * 1000);
+                    var timeout = AVG;
+                    if (dur && isFinite(dur) && dur < 600) {
+                        timeout = Math.ceil(dur) + 5;
                     }
+                    megaMixTimer = setTimeout(function() {
+                        if (isPlaying && !isAnnouncing) {
+                            console.log("[Pires FM] Timeout da faixa, avancando");
+                            goNext();
+                        }
+                    }, timeout * 1000);
                     audio.onended = function() {
                         audio.onended = null;
                         if (!isAnnouncing) goNext();

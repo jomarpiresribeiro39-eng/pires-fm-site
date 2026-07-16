@@ -652,14 +652,16 @@ function loadTrack() {
             trackArtistEl.textContent = track.artist;
             renderPlaylist();
             var dur = audio.duration;
-            if (!dur || !isFinite(dur) || dur > 600) {
-                maxDurationTimer = setTimeout(function() {
-                    if (isPlaying && !isAnnouncing) {
-                        console.log('[Pires FM] Mega-mix detectado, avancando para proxima faixa');
-                        goNext();
-                    }
-                }, AVG_SONG * 1000);
+            var timeout = AVG_SONG;
+            if (dur && isFinite(dur) && dur < 600) {
+                timeout = Math.ceil(dur) + 5;
             }
+            maxDurationTimer = setTimeout(function() {
+                if (isPlaying && !isAnnouncing) {
+                    console.log('[Pires FM] Timeout da faixa, avancando');
+                    goNext();
+                }
+            }, timeout * 1000);
         }).catch(function(err) {
             console.warn('[Pires FM] play falhou, tentando novamente...', err);
             audio.load();
