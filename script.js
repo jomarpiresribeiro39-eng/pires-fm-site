@@ -637,7 +637,6 @@ function loadTrack() {
 
     audio.oncanplay = function() {
         audio.oncanplay = null;
-        audio.onerror = null;
         errorRetryCount = 0;
         if (seekTo > 0 && seekTo < audio.duration) {
             audio.currentTime = seekTo;
@@ -658,9 +657,10 @@ function loadTrack() {
             }
         }).catch(function(err) {
             console.warn('[Pires FM] play falhou, tentando novamente...', err);
+            audio.load();
             setTimeout(function() {
                 audio.play().catch(function() {});
-            }, 500);
+            }, 1000);
         });
     };
 
@@ -679,7 +679,7 @@ function loadTrack() {
     };
 
     audio.src = url;
-
+    audio.load();
     streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
     streamStatus.className = 'stream-status';
 }

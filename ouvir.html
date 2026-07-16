@@ -325,19 +325,16 @@
 
             if (megaMixTimer) { clearTimeout(megaMixTimer); megaMixTimer = null; }
 
-            audio.oncanplay = null;
             audio.onerror = null;
             audio.onended = null;
-            audio.src = url;
 
-            setUI("loading");
+            audio.muted = false;
+            audio.volume = userVolume;
 
             audio.oncanplay = function() {
                 audio.oncanplay = null;
                 audio.onerror = null;
                 loading = false;
-                audio.volume = userVolume;
-                audio.muted = false;
                 if (seekTo > 0 && seekTo < audio.duration) audio.currentTime = seekTo;
                 audio.play().then(function() {
                     document.getElementById("trackName").textContent = track.song;
@@ -360,9 +357,16 @@
                     };
                 }).catch(function() {
                     loading = false;
-                    setUI("paused");
+                    audio.load();
+                    setTimeout(function() {
+                        audio.play().catch(function() {});
+                    }, 1000);
                 });
             };
+
+            audio.src = url;
+            audio.load();
+            setUI("loading");
 
             audio.onerror = function() {
                 audio.oncanplay = null;
@@ -370,8 +374,6 @@
                 loading = false;
                 setTimeout(function() { loading = false; loadTrack(idx, seekTo); }, 3000);
             };
-
-            setUI("loading");
         }
 
         // ========== LOCUCOES ==========
