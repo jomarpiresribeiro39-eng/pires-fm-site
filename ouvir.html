@@ -311,6 +311,7 @@
         // ========== LOAD MUSIC TRACK ==========
         function loadTrack(idx, seekTo) {
             if (loading || idx < 0 || idx >= PLAYLIST.length) return;
+            if (idx === currentTrackIdx && audio.src && audio.src.indexOf(PLAYLIST[idx].file) !== -1 && !audio.ended) return;
             loading = true;
             var track = PLAYLIST[idx];
             var url = "https://archive.org/download/" + ARCHIVE_MUSIC + "/" + encodeURIComponent(track.file);
@@ -531,16 +532,15 @@
         function goNext() {
             if (megaMixTimer) { clearTimeout(megaMixTimer); megaMixTimer = null; }
             if (isAnnouncing) return;
+            var nextIdx = (currentTrackIdx + 1) % PLAYLIST.length;
             songsPlayed++;
             if (songsPlayed >= LOC_EACH) {
                 songsPlayed = 0;
                 doLocucao(function() {
-                    var now = getCurrentTrack();
-                    loadTrack(now.index, now.offset);
+                    loadTrack(nextIdx, 0);
                 });
             } else {
-                var now = getCurrentTrack();
-                loadTrack(now.index, now.offset);
+                loadTrack(nextIdx, 0);
             }
         }
 
@@ -550,7 +550,7 @@
             var now = getCurrentTrack();
             if (now.index !== currentTrackIdx) {
                 loadTrack(now.index, now.offset);
-            } else if (audio.duration && Math.abs(audio.currentTime - now.offset) > 10) {
+            } else if (audio.duration && audio.currentTime < now.offset - 30) {
                 audio.currentTime = now.offset;
             }
         }
