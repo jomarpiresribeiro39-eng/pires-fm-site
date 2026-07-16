@@ -650,18 +650,12 @@ function scrollToCurrent() {
     }
 }
 
-var debugEl = document.createElement('div');
-debugEl.style.cssText = 'position:fixed;bottom:0;left:0;background:rgba(0,0,0,0.8);color:#0f0;font:12px monospace;padding:5px;z-index:9999;max-height:80px;overflow:auto;';
-document.body.appendChild(debugEl);
-function dbg(m) { debugEl.innerHTML = new Date().toLocaleTimeString() + ' ' + m + '<br>' + debugEl.innerHTML; }
-
 function loadTrack(fromStart) {
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
     var seekTo = fromStart ? 0 : getRadioTrackOffset();
 
-    dbg('loadTrack #' + currentTrackIndex + ' ' + track.file);
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
 
     audio.muted = false;
@@ -670,13 +664,11 @@ function loadTrack(fromStart) {
 
     audio.oncanplay = function() {
         audio.oncanplay = null;
-        dbg('canplay');
         errorRetryCount = 0;
         if (seekTo > 0 && seekTo < audio.duration) {
             audio.currentTime = seekTo;
         }
         audio.play().then(function() {
-            dbg('play() OK');
             setPlayingState(true);
             trackNameEl.textContent = track.song;
             trackArtistEl.textContent = track.artist;
@@ -688,21 +680,18 @@ function loadTrack(fromStart) {
             }
             maxDurationTimer = setTimeout(function() {
                 if (isPlaying && !isAnnouncing) {
-                    dbg('timeout avancando');
                     goNext();
                 }
             }, timeout * 1000);
         }).catch(function(err) {
-            dbg('play() ERRO: ' + (err.message || err));
             audio.load();
             setTimeout(function() {
-                audio.play().catch(function(e2) { dbg('retry ERRO: ' + e2); });
+                audio.play().catch(function() {});
             }, 1000);
         });
     };
 
     audio.onerror = function() {
-        dbg('onerror');
         audio.oncanplay = null;
         audio.onerror = null;
         errorRetryCount++;
@@ -717,7 +706,6 @@ function loadTrack(fromStart) {
     };
 
     audio.onended = function() {
-        dbg('ended');
         audio.onended = null;
         if (!isAnnouncing) goNext();
     };
