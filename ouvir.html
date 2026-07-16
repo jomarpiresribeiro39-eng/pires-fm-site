@@ -362,34 +362,6 @@
                 newAudio.onerror = null;
                 loading = false;
                 if (seekTo > 0 && seekTo < newAudio.duration) newAudio.currentTime = seekTo;
-                newAudio.play().then(function() {
-                    document.getElementById("trackName").textContent = track.song;
-                    document.getElementById("trackArtist").textContent = track.artist;
-                    currentTrackIdx = idx;
-                    isPlaying = true;
-                    setUI("playing");
-                    var dur = newAudio.duration;
-                    var timeout = AVG;
-                    if (dur && isFinite(dur) && dur < 600) {
-                        timeout = Math.ceil(dur) + 5;
-                    }
-                    megaMixTimer = setTimeout(function() {
-                        if (isPlaying && !isAnnouncing) {
-                            console.log("[Pires FM] Timeout da faixa, avancando");
-                            goNext();
-                        }
-                    }, timeout * 1000);
-                    newAudio.onended = function() {
-                        newAudio.onended = null;
-                        if (!isAnnouncing) goNext();
-                    };
-                }).catch(function() {
-                    loading = false;
-                    newAudio.load();
-                    setTimeout(function() {
-                        newAudio.play().catch(function() {});
-                    }, 1000);
-                });
             };
 
             newAudio.onerror = function() {
@@ -399,10 +371,51 @@
                 setTimeout(function() { loading = false; loadTrack(idx, seekTo); }, 3000);
             };
 
+            newAudio.addEventListener("timeupdate", function() {
+                if (isAnnouncing || !isPlaying) return;
+                var d = newAudio.duration;
+                if (d && isFinite(d)) {
+                    var rem = d - newAudio.currentTime;
+                    if (rem < 1.5) {
+                        newAudio.onended = null;
+                        goNext();
+                    }
+                }
+            });
+
             newAudio.src = url;
             newAudio.load();
             audio = newAudio;
-            setUI("loading");
+
+            currentTrackIdx = idx;
+            isPlaying = true;
+            setUI("playing");
+            document.getElementById("trackName").textContent = track.song;
+            document.getElementById("trackArtist").textContent = track.artist;
+
+            var thisAudio = newAudio;
+            function tryPlay() {
+                thisAudio.play().then(function() {
+                    if (audio !== thisAudio) return;
+                    var dur = thisAudio.duration;
+                    var timeout = AVG;
+                    if (dur && isFinite(dur) && dur < 600) {
+                        timeout = Math.ceil(dur) + 10;
+                    }
+                    megaMixTimer = setTimeout(function() {
+                        if (isPlaying && !isAnnouncing && audio === thisAudio) {
+                            console.log("[Pires FM] Timeout da faixa, avancando");
+                            goNext();
+                        }
+                    }, timeout * 1000);
+                }).catch(function() {
+                    loading = false;
+                    setTimeout(tryPlay, 500);
+                });
+            }
+            tryPlay();
+
+            loading = false;
         }
 
         // ========== LOCUCOES ==========

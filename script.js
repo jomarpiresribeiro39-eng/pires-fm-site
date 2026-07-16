@@ -669,29 +669,6 @@ function loadTrack() {
         if (seekTo > 0 && seekTo < newAudio.duration) {
             newAudio.currentTime = seekTo;
         }
-        newAudio.play().then(function() {
-            setPlayingState(true);
-            trackNameEl.textContent = track.song;
-            trackArtistEl.textContent = track.artist;
-            renderPlaylist();
-            var dur = newAudio.duration;
-            var timeout = AVG_SONG;
-            if (dur && isFinite(dur) && dur < 600) {
-                timeout = Math.ceil(dur) + 5;
-            }
-            maxDurationTimer = setTimeout(function() {
-                if (isPlaying && !isAnnouncing) {
-                    console.log('[Pires FM] Timeout da faixa, avancando');
-                    goNext();
-                }
-            }, timeout * 1000);
-        }).catch(function(err) {
-            console.warn('[Pires FM] play falhou, tentando novamente...', err);
-            newAudio.load();
-            setTimeout(function() {
-                newAudio.play().catch(function() {});
-            }, 1000);
-        });
     };
 
     newAudio.onerror = function() {
@@ -708,14 +685,52 @@ function loadTrack() {
         }
     };
 
-    newAudio.onended = function() {
-        newAudio.onended = null;
-        if (!isAnnouncing) goNext();
-    };
+    var nearEnd = false;
+    newAudio.addEventListener('timeupdate', function() {
+        if (isAnnouncing || !isPlaying) return;
+        var d = newAudio.duration;
+        if (d && isFinite(d)) {
+            var rem = d - newAudio.currentTime;
+            if (rem < 1.5 && !nearEnd) {
+                nearEnd = true;
+                newAudio.onended = null;
+                goNext();
+            } else if (rem > 3) {
+                nearEnd = false;
+            }
+        }
+    });
 
     newAudio.src = url;
     newAudio.load();
     audio = newAudio;
+
+    setPlayingState(true);
+    trackNameEl.textContent = track.song;
+    trackArtistEl.textContent = track.artist;
+    renderPlaylist();
+
+    var thisAudio = newAudio;
+    var tryPlay = function() {
+        thisAudio.play().then(function() {
+            if (audio !== thisAudio) return;
+            var dur = thisAudio.duration;
+            var timeout = AVG_SONG;
+            if (dur && isFinite(dur) && dur < 600) {
+                timeout = Math.ceil(dur) + 10;
+            }
+            maxDurationTimer = setTimeout(function() {
+                if (isPlaying && !isAnnouncing && audio === thisAudio) {
+                    console.log('[Pires FM] Timeout da faixa, avancando');
+                    goNext();
+                }
+            }, timeout * 1000);
+        }).catch(function(err) {
+            console.warn('[Pires FM] play falhou, tentando novamente...', err);
+            setTimeout(tryPlay, 500);
+        });
+    };
+    tryPlay();
 
     streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
     streamStatus.className = 'stream-status';
