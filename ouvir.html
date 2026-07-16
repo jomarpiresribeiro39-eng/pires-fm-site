@@ -345,12 +345,15 @@
                     currentTrackIdx = idx;
                     isPlaying = true;
                     setUI("playing");
-                    megaMixTimer = setTimeout(function() {
-                        if (audio.src.indexOf(url) !== -1 && isPlaying && !isAnnouncing) {
-                            console.log("[Pires FM] Mega-mix skip after 240s");
-                            goNext();
-                        }
-                    }, AVG * 1000);
+                    var dur = audio.duration;
+                    if (!dur || !isFinite(dur) || dur > 600) {
+                        megaMixTimer = setTimeout(function() {
+                            if (audio.src.indexOf(url) !== -1 && isPlaying && !isAnnouncing) {
+                                console.log("[Pires FM] Mega-mix skip after 240s");
+                                goNext();
+                            }
+                        }, AVG * 1000);
+                    }
                     audio.onended = function() {
                         audio.onended = null;
                         if (!isAnnouncing) goNext();
