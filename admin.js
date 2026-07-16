@@ -162,7 +162,7 @@ function renderLogs() {
 }
 
 // ========== PLAYLIST ==========
-var PLAYLIST_VERSION = 3;
+var PLAYLIST_VERSION = 4;
 
 function getPlaylist() {
     var data = getStoredData();
@@ -333,7 +333,7 @@ function renderNextTracks() {
     var pl = getPlaylist();
     var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
     var AVG_SONG = 240;
-    var LOC_DUR = 12;
+    var LOC_DUR = 30;
     var LOC_EACH = 3;
     var cycle = AVG_SONG + (LOC_DUR / LOC_EACH);
     var elapsed = (Date.now() - EPOCH) / 1000;
@@ -378,7 +378,7 @@ function loadConfig() {
     var cfg = data.config || {};
     document.getElementById('cfgAvgSong').value = cfg.avgSong || 240;
     document.getElementById('cfgLocEvery').value = cfg.locEvery || 3;
-    document.getElementById('cfgLocDuration').value = cfg.locDuration || 12;
+    document.getElementById('cfgLocDuration').value = cfg.locDuration || 30;
     document.getElementById('cfgVoice').value = cfg.voice || 'pt-BR-FranciscaNeural';
 }
 

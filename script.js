@@ -152,7 +152,7 @@ var playlist = [
 // ========== RADIO REAL ==========
 var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
 var AVG_SONG = 240;
-var LOCUCAO_DURATION = 12;
+var LOCUCAO_DURATION = 30;
 
 function getElapsedSeconds() {
     return (Date.now() - EPOCH) / 1000;
