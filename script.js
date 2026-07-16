@@ -630,8 +630,13 @@ function loadTrack() {
 
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
 
-    if (audio.src === url && !audio.ended) return;
-
+    // Create fresh audio element to avoid browser state issues after ended
+    audio.pause();
+    audio.src = '';
+    audio.load();
+    audio = new Audio();
+    audio.id = 'radioAudio';
+    audio.preload = 'auto';
     audio.muted = false;
     audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
 
@@ -649,7 +654,7 @@ function loadTrack() {
             var dur = audio.duration;
             if (!dur || !isFinite(dur) || dur > 600) {
                 maxDurationTimer = setTimeout(function() {
-                    if (audio.src === url && isPlaying && !isAnnouncing) {
+                    if (isPlaying && !isAnnouncing) {
                         console.log('[Pires FM] Mega-mix detectado, avancando para proxima faixa');
                         goNext();
                     }
@@ -676,6 +681,11 @@ function loadTrack() {
             errorRetryCount = 0;
             goNext();
         }
+    };
+
+    audio.onended = function() {
+        audio.onended = null;
+        if (!isAnnouncing) goNext();
     };
 
     audio.src = url;
@@ -746,11 +756,6 @@ audio.addEventListener('timeupdate', function() {
     if (audio.duration && isFinite(audio.duration) && progressBar) {
         progressBar.style.width = (audio.currentTime / audio.duration * 100) + '%';
     }
-});
-
-audio.addEventListener('ended', function() {
-    if (isAnnouncing) return;
-    goNext();
 });
 
 if (progressContainer) {

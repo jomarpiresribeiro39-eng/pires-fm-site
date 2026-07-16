@@ -317,17 +317,18 @@
 
         // ========== LOAD MUSIC TRACK ==========
         function loadTrack(idx, seekTo) {
-            if (loading || idx < 0 || idx >= PLAYLIST.length) return;
-            if (idx === currentTrackIdx && audio.src && audio.src.indexOf(PLAYLIST[idx].file) !== -1 && !audio.ended) return;
+            if (idx < 0 || idx >= PLAYLIST.length) return;
             loading = true;
             var track = PLAYLIST[idx];
             var url = "https://archive.org/download/" + ARCHIVE_MUSIC + "/" + encodeURIComponent(track.file);
 
             if (megaMixTimer) { clearTimeout(megaMixTimer); megaMixTimer = null; }
 
-            audio.onerror = null;
-            audio.onended = null;
-
+            audio.pause();
+            audio.src = "";
+            audio.load();
+            audio = new Audio();
+            audio.preload = "auto";
             audio.muted = false;
             audio.volume = userVolume;
 
@@ -345,7 +346,7 @@
                     var dur = audio.duration;
                     if (!dur || !isFinite(dur) || dur > 600) {
                         megaMixTimer = setTimeout(function() {
-                            if (audio.src.indexOf(url) !== -1 && isPlaying && !isAnnouncing) {
+                            if (isPlaying && !isAnnouncing) {
                                 console.log("[Pires FM] Mega-mix skip after 240s");
                                 goNext();
                             }
@@ -364,16 +365,16 @@
                 });
             };
 
-            audio.src = url;
-            audio.load();
-            setUI("loading");
-
             audio.onerror = function() {
                 audio.oncanplay = null;
                 audio.onerror = null;
                 loading = false;
                 setTimeout(function() { loading = false; loadTrack(idx, seekTo); }, 3000);
             };
+
+            audio.src = url;
+            audio.load();
+            setUI("loading");
         }
 
         // ========== LOCUCOES ==========
