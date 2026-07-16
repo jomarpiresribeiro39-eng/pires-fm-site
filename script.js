@@ -658,28 +658,23 @@ function loadTrack() {
 
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
 
-    // Create fresh audio element to avoid browser state issues after ended
-    audio.pause();
-    audio.src = '';
-    audio.load();
-    audio = new Audio();
-    audio.id = 'radioAudio';
-    audio.preload = 'auto';
-    audio.muted = false;
-    audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
+    var newAudio = new Audio();
+    newAudio.preload = 'auto';
+    newAudio.muted = false;
+    newAudio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
 
-    audio.oncanplay = function() {
-        audio.oncanplay = null;
+    newAudio.oncanplay = function() {
+        newAudio.oncanplay = null;
         errorRetryCount = 0;
-        if (seekTo > 0 && seekTo < audio.duration) {
-            audio.currentTime = seekTo;
+        if (seekTo > 0 && seekTo < newAudio.duration) {
+            newAudio.currentTime = seekTo;
         }
-        audio.play().then(function() {
+        newAudio.play().then(function() {
             setPlayingState(true);
             trackNameEl.textContent = track.song;
             trackArtistEl.textContent = track.artist;
             renderPlaylist();
-            var dur = audio.duration;
+            var dur = newAudio.duration;
             var timeout = AVG_SONG;
             if (dur && isFinite(dur) && dur < 600) {
                 timeout = Math.ceil(dur) + 5;
@@ -692,16 +687,16 @@ function loadTrack() {
             }, timeout * 1000);
         }).catch(function(err) {
             console.warn('[Pires FM] play falhou, tentando novamente...', err);
-            audio.load();
+            newAudio.load();
             setTimeout(function() {
-                audio.play().catch(function() {});
+                newAudio.play().catch(function() {});
             }, 1000);
         });
     };
 
-    audio.onerror = function() {
-        audio.oncanplay = null;
-        audio.onerror = null;
+    newAudio.onerror = function() {
+        newAudio.oncanplay = null;
+        newAudio.onerror = null;
         errorRetryCount++;
         if (errorRetryCount < MAX_RETRIES) {
             streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + ')</span>';
@@ -713,13 +708,15 @@ function loadTrack() {
         }
     };
 
-    audio.onended = function() {
-        audio.onended = null;
+    newAudio.onended = function() {
+        newAudio.onended = null;
         if (!isAnnouncing) goNext();
     };
 
-    audio.src = url;
-    audio.load();
+    newAudio.src = url;
+    newAudio.load();
+    audio = newAudio;
+
     streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
     streamStatus.className = 'stream-status';
 }

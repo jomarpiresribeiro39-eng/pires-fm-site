@@ -352,26 +352,23 @@
 
             if (megaMixTimer) { clearTimeout(megaMixTimer); megaMixTimer = null; }
 
-            audio.pause();
-            audio.src = "";
-            audio.load();
-            audio = new Audio();
-            audio.preload = "auto";
-            audio.muted = false;
-            audio.volume = userVolume;
+            var newAudio = new Audio();
+            newAudio.preload = "auto";
+            newAudio.muted = false;
+            newAudio.volume = userVolume;
 
-            audio.oncanplay = function() {
-                audio.oncanplay = null;
-                audio.onerror = null;
+            newAudio.oncanplay = function() {
+                newAudio.oncanplay = null;
+                newAudio.onerror = null;
                 loading = false;
-                if (seekTo > 0 && seekTo < audio.duration) audio.currentTime = seekTo;
-                audio.play().then(function() {
+                if (seekTo > 0 && seekTo < newAudio.duration) newAudio.currentTime = seekTo;
+                newAudio.play().then(function() {
                     document.getElementById("trackName").textContent = track.song;
                     document.getElementById("trackArtist").textContent = track.artist;
                     currentTrackIdx = idx;
                     isPlaying = true;
                     setUI("playing");
-                    var dur = audio.duration;
+                    var dur = newAudio.duration;
                     var timeout = AVG;
                     if (dur && isFinite(dur) && dur < 600) {
                         timeout = Math.ceil(dur) + 5;
@@ -382,28 +379,29 @@
                             goNext();
                         }
                     }, timeout * 1000);
-                    audio.onended = function() {
-                        audio.onended = null;
+                    newAudio.onended = function() {
+                        newAudio.onended = null;
                         if (!isAnnouncing) goNext();
                     };
                 }).catch(function() {
                     loading = false;
-                    audio.load();
+                    newAudio.load();
                     setTimeout(function() {
-                        audio.play().catch(function() {});
+                        newAudio.play().catch(function() {});
                     }, 1000);
                 });
             };
 
-            audio.onerror = function() {
-                audio.oncanplay = null;
-                audio.onerror = null;
+            newAudio.onerror = function() {
+                newAudio.oncanplay = null;
+                newAudio.onerror = null;
                 loading = false;
                 setTimeout(function() { loading = false; loadTrack(idx, seekTo); }, 3000);
             };
 
-            audio.src = url;
-            audio.load();
+            newAudio.src = url;
+            newAudio.load();
+            audio = newAudio;
             setUI("loading");
         }
 
