@@ -2,6 +2,7 @@
 var ADMIN_PASSWORD = '13237620';
 var STORAGE_KEY = 'piresfm_admin';
 var LOG_KEY = 'piresfm_logs';
+var REQUESTS_KEY = 'piresfm_requests';
 
 // Default playlist
 var DEFAULT_PLAYLIST = [
@@ -380,6 +381,9 @@ function loadConfig() {
     document.getElementById('cfgLocEvery').value = cfg.locEvery || 3;
     document.getElementById('cfgLocDuration').value = cfg.locDuration || 30;
     document.getElementById('cfgVoice').value = cfg.voice || 'pt-BR-FranciscaNeural';
+    document.getElementById('cfgStreamUrl').value = cfg.streamUrl || '';
+    document.getElementById('cfgStreamMount').value = cfg.streamMount || '/piresfm';
+    document.getElementById('cfgStreamBitrate').value = cfg.streamBitrate || '96';
 }
 
 function saveConfig() {
@@ -429,11 +433,107 @@ function changePassword() {
     alert('Senha alterada com sucesso!');
 }
 
+// ========== PEDIDOS ==========
+function getRequests() {
+    try { return JSON.parse(localStorage.getItem(REQUESTS_KEY)) || []; } catch(e) { return []; }
+}
+
+function saveRequests(reqs) {
+    localStorage.setItem(REQUESTS_KEY, JSON.stringify(reqs));
+    renderPedidos();
+}
+
+function renderPedidos() {
+    var container = document.getElementById('pedidosContainer');
+    if (!container) return;
+    var reqs = getRequests();
+    if (reqs.length === 0) {
+        container.innerHTML = '<p class="empty-logs">Nenhum pedido recebido ainda.</p>';
+        return;
+    }
+    var html = '<div class="pedidos-table"><table class="manage-table"><thead><tr><th>Data</th><th>Nome</th><th>Música</th><th>Artista</th><th>Mensagem</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+    for (var i = reqs.length - 1; i >= 0; i--) {
+        var r = reqs[i];
+        var statusClass = r.played ? 'pedido-played' : r.approved ? 'pedido-approved' : 'pedido-pending';
+        var statusText = r.played ? 'Tocada' : r.approved ? 'Aprovada' : 'Pendente';
+        html += '<tr class="' + statusClass + '">' +
+            '<td style="font-size:0.78rem;color:var(--text-muted);">' + r.date + '</td>' +
+            '<td><strong>' + r.name + '</strong></td>' +
+            '<td>' + r.song + '</td>' +
+            '<td>' + r.artist + '</td>' +
+            '<td style="font-size:0.78rem;color:var(--text-muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.message || '-') + '</td>' +
+            '<td><span class="pedido-badge ' + statusClass + '">' + statusText + '</span></td>' +
+            '<td class="actions">' +
+            (!r.played ? '<button class="btn btn-sm btn-primary" onclick="approveRequest(' + i + ')"><i class="fas fa-check"></i></button>' : '') +
+            (!r.played ? '<button class="btn btn-sm btn-secondary" onclick="markPlayed(' + i + ')"><i class="fas fa-play"></i></button>' : '') +
+            '<button class="btn btn-sm btn-danger" onclick="deleteRequest(' + i + ')"><i class="fas fa-trash"></i></button>' +
+            '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+    document.getElementById('statTracks').textContent = getPlaylist().length;
+}
+
+function approveRequest(idx) {
+    var reqs = getRequests();
+    if (reqs[idx]) { reqs[idx].approved = true; saveRequests(reqs); addLog('Pedido aprovado: ' + reqs[idx].song + ' - ' + reqs[idx].name, 'info'); }
+}
+
+function markPlayed(idx) {
+    var reqs = getRequests();
+    if (reqs[idx]) { reqs[idx].played = true; reqs[idx].approved = true; saveRequests(reqs); addLog('Pedido marcado como tocado: ' + reqs[idx].song, 'warning'); }
+}
+
+function deleteRequest(idx) {
+    if (!confirm('Remover este pedido?')) return;
+    var reqs = getRequests();
+    if (reqs[idx]) { addLog('Pedido removido: ' + reqs[idx].song + ' - ' + reqs[idx].name, 'warning'); reqs.splice(idx, 1); saveRequests(reqs); }
+}
+
+function approveAllPending() {
+    var reqs = getRequests();
+    var count = 0;
+    for (var i = 0; i < reqs.length; i++) { if (!reqs[i].approved && !reqs[i].played) { reqs[i].approved = true; count++; } }
+    if (count > 0) { saveRequests(reqs); addLog(count + ' pedidos aprovados em massa', 'info'); }
+    else { alert('Nenhum pedido pendente.'); }
+}
+
+function exportRequests() {
+    var reqs = getRequests();
+    var json = JSON.stringify(reqs, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = 'piresfm_pedidos.json'; a.click();
+    URL.revokeObjectURL(url);
+    addLog('Pedidos exportados (' + reqs.length + ')', 'info');
+}
+
 // ========== LOGS ==========
 function clearLogs() {
     if (!confirm('Limpar todos os logs?')) return;
     localStorage.removeItem(LOG_KEY);
     renderLogs();
+}
+
+// ========== STREAM CONFIG ==========
+function saveStreamConfig() {
+    var data = getStoredData();
+    var cfg = data.config || {};
+    cfg.streamUrl = document.getElementById('cfgStreamUrl').value.trim();
+    cfg.streamMount = document.getElementById('cfgStreamMount').value.trim();
+    cfg.streamBitrate = document.getElementById('cfgStreamBitrate').value;
+    data.config = cfg;
+    saveData(data);
+    addLog('Configuração de stream salva', 'info');
+    alert('Configuração de stream salva! Os ouvintes poderão usar o stream do Caster.fm quando configurado.');
+}
+
+function loadStreamConfig() {
+    var data = getStoredData();
+    var cfg = data.config || {};
+    if (document.getElementById('cfgStreamUrl')) document.getElementById('cfgStreamUrl').value = cfg.streamUrl || '';
+    if (document.getElementById('cfgStreamMount')) document.getElementById('cfgStreamMount').value = cfg.streamMount || '/piresfm';
+    if (document.getElementById('cfgStreamBitrate')) document.getElementById('cfgStreamBitrate').value = cfg.streamBitrate || '96';
 }
 
 // ========== NAVIGATION ==========
@@ -448,10 +548,11 @@ function switchTab(tabName) {
     var nav = document.querySelector('.nav-item[data-tab="' + tabName + '"]');
     if (nav) nav.classList.add('active');
 
-    var titles = { dashboard: 'Dashboard', playlist: 'Playlist', locucoes: 'Locuções', config: 'Configurações', logs: 'Logs' };
+    var titles = { dashboard: 'Dashboard', playlist: 'Playlist', locucoes: 'Locuções', config: 'Configurações', pedidos: 'Pedidos', logs: 'Logs' };
     document.getElementById('pageTitle').textContent = titles[tabName] || tabName;
 
     if (tabName === 'logs') renderLogs();
+    if (tabName === 'pedidos') renderPedidos();
 }
 
 // ========== INIT ==========
@@ -517,8 +618,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('resetConfigBtn').addEventListener('click', resetConfig);
     document.getElementById('changePassBtn').addEventListener('click', changePassword);
 
+    // Stream config
+    loadStreamConfig();
+
     // Logs
     document.getElementById('clearLogsBtn').addEventListener('click', clearLogs);
+
+    // Pedidos
+    renderPedidos();
 
     // Initial renders
     renderManagePlaylist();

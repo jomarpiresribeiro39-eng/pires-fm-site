@@ -402,7 +402,7 @@ function buscarNoticias() {
     if (newsCache && (agora - newsCacheTime) < newsCacheDuracao) {
         return Promise.resolve(newsCache);
     }
-    var rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://g1.globo.com/rss/g1/';
+    var rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss/search?q=Rio+de+Janeiro&hl=pt-BR&gl=BR';
     return fetch(rssUrl)
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -895,6 +895,78 @@ document.addEventListener('keydown', function(e) {
 buildShuffledOrder();
 renderPlaylist();
 updateCounter();
+
+// ========== SONG REQUESTS ==========
+var REQUESTS_KEY = 'piresfm_requests';
+var REQUESTS_PUBLIC_KEY = 'piresfm_requests_public';
+
+function getRequests() {
+    try { return JSON.parse(localStorage.getItem(REQUESTS_KEY)) || []; } catch(e) { return []; }
+}
+
+function saveRequests(reqs) {
+    localStorage.setItem(REQUESTS_KEY, JSON.stringify(reqs));
+    var publicReqs = reqs.filter(function(r) { return r.approved; }).slice(-5);
+    localStorage.setItem(REQUESTS_PUBLIC_KEY, JSON.stringify(publicReqs));
+    updateRequestCounts();
+}
+
+function updateRequestCounts() {
+    var reqs = getRequests();
+    var totalEl = document.getElementById('reqCountTotal');
+    var playedEl = document.getElementById('reqCountPlayed');
+    if (totalEl) totalEl.textContent = reqs.length;
+    if (playedEl) playedEl.textContent = reqs.filter(function(r) { return r.played; }).length;
+    renderRequestQueue();
+}
+
+function renderRequestQueue() {
+    var container = document.getElementById('requestList');
+    var queue = document.getElementById('requestQueue');
+    if (!container) return;
+    var publicReqs = [];
+    try { publicReqs = JSON.parse(localStorage.getItem(REQUESTS_PUBLIC_KEY)) || []; } catch(e) {}
+    if (publicReqs.length === 0) { queue.style.display = 'none'; return; }
+    queue.style.display = 'block';
+    var html = '';
+    for (var i = 0; i < publicReqs.length; i++) {
+        var r = publicReqs[i];
+        html += '<div class="request-item">' +
+            '<div class="req-song">' + r.song + '</div>' +
+            '<div class="req-artist">' + r.artist + ' <span class="req-by">por ' + r.name + '</span></div>' +
+            (r.message ? '<div class="req-msg">"' + r.message + '"</div>' : '') +
+            '</div>';
+    }
+    container.innerHTML = html;
+}
+
+var reqForm = document.getElementById('requestForm');
+if (reqForm) {
+    reqForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var name = document.getElementById('reqName').value.trim();
+        var song = document.getElementById('reqSong').value.trim();
+        var artist = document.getElementById('reqArtist').value.trim();
+        var message = document.getElementById('reqMessage').value.trim();
+        if (!name || !song || !artist) { alert('Preencha nome, música e artista!'); return; }
+        var reqs = getRequests();
+        reqs.push({
+            id: Date.now(),
+            name: name,
+            song: song,
+            artist: artist,
+            message: message,
+            date: new Date().toLocaleString('pt-BR'),
+            played: false,
+            approved: false
+        });
+        saveRequests(reqs);
+        reqForm.reset();
+        alert('Pedido enviado com sucesso! Obrigado por participar da Pires FM.');
+    });
+}
+
+updateRequestCounts();
 
 // AUTOPLAY
 var autoplayOverlay = document.getElementById('autoplayOverlay');

@@ -1,4 +1,4 @@
-var CACHE_NAME = "piresfm-v3";
+var CACHE_NAME = "piresfm-v4";
 var urlsToCache = [
     "/pires-fm-site/ouvir.html",
     "/pires-fm-site/index.html",

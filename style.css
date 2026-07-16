@@ -710,6 +710,42 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     color: var(--primary);
 }
 
+/* STREAM TOGGLE */
+.stream-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-stream {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-muted);
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.btn-stream:hover {
+    color: white;
+    border-color: rgba(76,175,80,0.3);
+    background: rgba(76,175,80,0.1);
+}
+
+.stream-mode-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
 .social-links {
     display: flex;
     justify-content: center;
@@ -1371,6 +1407,145 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
+}
+
+/* SONG REQUESTS */
+.request-section {
+    background: linear-gradient(180deg, transparent, rgba(230, 57, 70, 0.03), transparent);
+}
+
+.request-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.request-form-card {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 30px;
+}
+
+.request-info-card {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 40px 30px;
+    text-align: center;
+}
+
+.request-info-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, rgba(230,57,70,0.15), rgba(244,162,97,0.1));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: var(--primary);
+}
+
+.request-info-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.request-info-card p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.request-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.request-stat {
+    text-align: center;
+}
+
+.request-stat .stat-num {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+}
+
+.request-stat .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.request-btn {
+    margin-top: 10px;
+}
+
+.request-queue {
+    margin-top: 30px;
+}
+
+.request-queue h3 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.request-queue h3 i {
+    color: var(--primary);
+}
+
+#requestList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.request-item {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 15px 20px;
+}
+
+.request-item .req-song {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.request-item .req-artist {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.request-item .req-by {
+    font-size: 0.75rem;
+    color: var(--accent);
+}
+
+.request-item .req-msg {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 4px;
+    padding-left: 10px;
+    border-left: 2px solid var(--primary);
+}
+
+@media (max-width: 700px) {
+    .request-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* AUTOPLAY OVERLAY */

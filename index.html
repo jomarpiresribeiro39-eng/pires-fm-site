@@ -45,6 +45,7 @@
             <nav class="nav">
                 <a href="#player" class="nav-link active"><i class="fas fa-play"></i> Ouça Ao Vivo</a>
                 <a href="#programacao" class="nav-link"><i class="fas fa-calendar-alt"></i> Programação</a>
+                <a href="#pedidos" class="nav-link"><i class="fas fa-music"></i> Pedidos</a>
                 <a href="#sobre" class="nav-link"><i class="fas fa-info-circle"></i> Sobre</a>
                 <a href="#contato" class="nav-link"><i class="fas fa-envelope"></i> Contato</a>
             </nav>
@@ -57,6 +58,7 @@
     <nav class="mobile-nav" id="mobileNav">
         <a href="#player" class="mobile-link"><i class="fas fa-play"></i> Ouça Ao Vivo</a>
         <a href="#programacao" class="mobile-link"><i class="fas fa-calendar-alt"></i> Programação</a>
+        <a href="#pedidos" class="mobile-link"><i class="fas fa-music"></i> Pedidos</a>
         <a href="#sobre" class="mobile-link"><i class="fas fa-info-circle"></i> Sobre</a>
         <a href="#contato" class="mobile-link"><i class="fas fa-envelope"></i> Contato</a>
     </nav>
@@ -179,6 +181,55 @@
                 <p>Acompanhe nossa grade de programas</p>
             </div>
             <div class="schedule-grid" id="scheduleGrid">
+            </div>
+        </div>
+    </section>
+
+    <section class="section request-section" id="pedidos">
+        <div class="container">
+            <div class="section-header">
+                <h2><i class="fas fa-music"></i> Solicite sua Música</h2>
+                <p>Peça sua música favorita na Pires FM</p>
+            </div>
+            <div class="request-grid">
+                <div class="request-form-card">
+                    <form id="requestForm" class="request-form">
+                        <div class="form-group">
+                            <input type="text" id="reqName" placeholder="Seu nome" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="reqSong" placeholder="Nome da música" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="reqArtist" placeholder="Nome do artista" required>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="reqMessage" placeholder="Mensagem (opcional)" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn request-btn">
+                            <i class="fas fa-paper-plane"></i> Enviar Pedido
+                        </button>
+                    </form>
+                </div>
+                <div class="request-info-card">
+                    <div class="request-info-icon"><i class="fas fa-headphones"></i></div>
+                    <h3>Seu pedido pode ir ao ar!</h3>
+                    <p>Envie sua música favorita e ela poderá tocar na Pires FM. Nosso time avalia todos os pedidos e seleciona os melhores para nossa programação.</p>
+                    <div class="request-stats">
+                        <div class="request-stat">
+                            <span class="stat-num" id="reqCountTotal">0</span>
+                            <span class="stat-label">Pedidos</span>
+                        </div>
+                        <div class="request-stat">
+                            <span class="stat-num" id="reqCountPlayed">0</span>
+                            <span class="stat-label">Tocadas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="request-queue" id="requestQueue" style="display:none;">
+                <h3><i class="fas fa-list"></i> Pedidos Recentes</h3>
+                <div id="requestList"></div>
             </div>
         </div>
     </section>

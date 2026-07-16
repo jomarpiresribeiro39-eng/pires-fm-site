@@ -822,6 +822,53 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
+/* ========== PEDIDOS ========== */
+.pedidos-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.pedidos-table {
+    overflow-x: auto;
+}
+
+.pedidos-table .manage-table td {
+    font-size: 0.85rem;
+}
+
+.pedido-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.pedido-badge.pedido-pending {
+    background: rgba(255,152,0,0.15);
+    color: #ff9800;
+}
+
+.pedido-badge.pedido-approved {
+    background: rgba(76,175,80,0.15);
+    color: #4caf50;
+}
+
+.pedido-badge.pedido-played {
+    background: rgba(100,100,100,0.15);
+    color: #888;
+}
+
+tr.pedido-pending {
+    background: rgba(255,152,0,0.03);
+}
+
+tr.pedido-pending:hover {
+    background: rgba(255,152,0,0.08) !important;
+}
+
 /* ========== SCROLLBAR ========== */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

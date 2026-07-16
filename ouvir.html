@@ -104,6 +104,13 @@
                 <span>Clique no play para ouvir</span>
             </div>
 
+            <div class="stream-toggle" id="streamToggle" style="display:none;">
+                <button class="btn-stream" id="streamModeBtn" onclick="toggleStreamMode()">
+                    <i class="fas fa-broadcast-tower"></i> Mudar para Stream
+                </button>
+                <span class="stream-mode-label" id="streamModeLabel">Modo: Arquivos</span>
+            </div>
+
             <div class="social-links">
                 <a href="#" class="social-link" title="Facebook"><i class="fab fa-facebook-f"></i></a>
                 <a href="#" class="social-link" title="Instagram"><i class="fab fa-instagram"></i></a>
@@ -618,6 +625,44 @@
         });
 
         audio.volume = 0.8;
+
+        // ========== STREAM MODE (Caster.fm) ==========
+        var streamMode = false;
+        var streamUrl = '';
+        (function() {
+            try {
+                var data = JSON.parse(localStorage.getItem('piresfm_admin')) || {};
+                var cfg = data.config || {};
+                if (cfg.streamUrl) {
+                    streamUrl = cfg.streamUrl + (cfg.streamMount || '/piresfm');
+                    document.getElementById('streamToggle').style.display = 'flex';
+                    document.getElementById('streamModeLabel').textContent = 'Modo: Arquivos';
+                }
+            } catch(e) {}
+        })();
+
+        window.toggleStreamMode = function() {
+            streamMode = !streamMode;
+            var btn = document.getElementById('streamModeBtn');
+            var label = document.getElementById('streamModeLabel');
+            if (streamMode) {
+                btn.innerHTML = '<i class="fas fa-file-audio"></i> Mudar para Arquivos';
+                label.textContent = 'Modo: Stream 24/7';
+                label.style.color = '#4caf50';
+                if (streamUrl && !audio.paused) {
+                    audio.src = streamUrl;
+                    audio.play();
+                }
+            } else {
+                btn.innerHTML = '<i class="fas fa-broadcast-tower"></i> Mudar para Stream';
+                label.textContent = 'Modo: Arquivos';
+                label.style.color = '';
+                if (isPlaying) {
+                    var now = getCurrentTrack();
+                    loadTrack(now.index, now.offset);
+                }
+            }
+        };
 
         // ========== VISUALIZER ==========
         (function animVis() {
