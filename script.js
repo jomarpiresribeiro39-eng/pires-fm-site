@@ -735,11 +735,11 @@ function goNext() {
     if (songsPlayed >= 3) {
         songsPlayed = 0;
         doLocucao(function() {
-            currentTrackIndex = (currentTrackIndex + 1) % PLAYLIST.length;
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
             loadTrack();
         });
     } else {
-        currentTrackIndex = (currentTrackIndex + 1) % PLAYLIST.length;
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
         loadTrack();
     }
 }
