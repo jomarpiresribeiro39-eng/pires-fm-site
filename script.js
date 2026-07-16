@@ -628,14 +628,12 @@ function loadTrack() {
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
     var seekTo = getRadioTrackOffset();
 
-    audio.oncanplay = null;
-    audio.onerror = null;
-
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
 
     if (audio.src === url && !audio.ended) return;
 
-    audio.src = url;
+    audio.muted = false;
+    audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
 
     audio.oncanplay = function() {
         audio.oncanplay = null;
@@ -655,7 +653,12 @@ function loadTrack() {
                     goNext();
                 }
             }, AVG_SONG * 1000);
-        }).catch(function() {});
+        }).catch(function(err) {
+            console.warn('[Pires FM] play falhou, tentando novamente...', err);
+            setTimeout(function() {
+                audio.play().catch(function() {});
+            }, 500);
+        });
     };
 
     audio.onerror = function() {
@@ -671,6 +674,8 @@ function loadTrack() {
             goNext();
         }
     };
+
+    audio.src = url;
 
     streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
     streamStatus.className = 'stream-status';
