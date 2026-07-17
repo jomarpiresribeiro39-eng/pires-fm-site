@@ -1067,20 +1067,21 @@ function setNickname() {
 }
 
 function sendChat() {
-    if (!chatInitialized || !chatUser) return;
-    if (Date.now() - chatLastMsg < 3000) { return; }
+    if (!chatInitialized || !chatUser) { console.log("Pires FM Chat: nao iniciado"); return; }
+    if (Date.now() - chatLastMsg < 3000) { console.log("Pires FM Chat: muito rapido"); return; }
     var input = document.getElementById('chatInput');
     var text = input.value.trim();
     if (!text) return;
     chatLastMsg = Date.now();
     input.value = '';
     var nick = getChatNick() || 'Ouvinte';
+    console.log("Pires FM Chat: enviando...", text);
     firebase.firestore().collection('chat').add({
         text: text,
         nick: nick,
         uid: chatUser.uid,
         time: firebase.firestore.FieldValue.serverTimestamp()
-    }).catch(function(){});
+    }).then(function() { console.log("Pires FM Chat: enviado!"); }).catch(function(e) { console.error("Pires FM Chat: send error", e); });
 }
 
 function initChat() {
@@ -1091,15 +1092,18 @@ function initChat() {
         var ni = document.getElementById('chatNickInput');
         if (ni) ni.value = nick;
     }
+    console.log("Pires FM Chat: iniciando...");
     firebase.auth().signInAnonymously().then(function(result) {
         chatUser = result.user;
-        if (nick) chatUser.updateProfile({ displayName: nick }).catch(function(){});
+        console.log("Pires FM Chat: auth OK", chatUser.uid);
+        if (nick) chatUser.updateProfile({ displayName: nick }).catch(function(e){ console.error("Pires FM Chat: profile error", e); });
         var msgs = document.getElementById('chatMessages');
         chatUnsub = firebase.firestore().collection('chat')
             .orderBy('time', 'asc')
             .limit(50)
             .onSnapshot(function(snapshot) {
                 if (!msgs) return;
+                console.log("Pires FM Chat: snapshot", snapshot.size, "msgs");
                 var autoScroll = msgs.scrollTop + msgs.clientHeight >= msgs.scrollHeight - 30;
                 msgs.innerHTML = '<div class="chat-welcome">Bem-vindo ao chat da Pires FM! \uD83C\uDFB5</div>';
                 snapshot.forEach(function(doc) {
@@ -1112,8 +1116,8 @@ function initChat() {
                     msgs.appendChild(div);
                 });
                 if (autoScroll) msgs.scrollTop = msgs.scrollHeight;
-            });
-    }).catch(function() {});
+            }, function(e) { console.error("Pires FM Chat: snapshot error", e); });
+    }).catch(function(e) { console.error("Pires FM Chat: auth error", e); });
 }
 
 function hashCode(s) {
