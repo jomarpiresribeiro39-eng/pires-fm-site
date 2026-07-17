@@ -1,6 +1,6 @@
 var MODE = "cloud";
 var ARCHIVE_ITEM = "pires-fm-musicas";
-var LOCUCOES_ARCHIVE = "locucoes-piresfm";
+var LOCUCOES_URL = "locucoes_finais";
 
 // ========== BACKGROUND SLIDESHOW ==========
 (function() {
@@ -304,11 +304,11 @@ function doHoraCerta(callback) {
 
     var introFile = horaIntros[Math.floor(Math.random() * horaIntros.length)];
     var outroFile = horaOutros[Math.floor(Math.random() * horaOutros.length)];
-    var introUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(introFile);
-    var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
+    var introUrl = LOCUCOES_URL + '/' + encodeURIComponent(introFile);
+    var outroUrl = LOCUCOES_URL + '/' + encodeURIComponent(outroFile);
     var horario = getHorarioRio();
     var horaFile = 'hora_' + String(horario.hora).padStart(2, '0') + '_' + String(horario.minuto).padStart(2, '0') + '.mp3';
-    var horaUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(horaFile);
+    var horaUrl = LOCUCOES_URL + '/' + encodeURIComponent(horaFile);
 
     playAudio(introUrl)
         .then(function() { return playAudio(horaUrl); })
@@ -395,8 +395,8 @@ function doClima(callback) {
     var outros = ['Pires FM, a voz do Rio de Janeiro!', 'Fique ligado na Pires FM!', 'Continuamos com a melhor musica!', 'Pires FM, sempre com voce!'];
     var introFile = 'hora_intro_' + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0') + '.mp3';
     var outroFile = 'hora_outro_' + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0') + '.mp3';
-    var introUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(introFile);
-    var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
+    var introUrl = LOCUCOES_URL + '/' + encodeURIComponent(introFile);
+    var outroUrl = LOCUCOES_URL + '/' + encodeURIComponent(outroFile);
 
     buscarClima().then(function(c) {
         if (!c) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} renderPlaylist(); if (callback) callback(); return; }
@@ -462,7 +462,7 @@ function doNoticias(callback) {
     renderPlaylist();
 
     var outroFile = 'hora_outro_' + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0') + '.mp3';
-    var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
+    var outroUrl = LOCUCOES_URL + '/' + encodeURIComponent(outroFile);
 
     buscarNoticias().then(function(noticias) {
         if (!noticias || noticias.length === 0) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} renderPlaylist(); if (callback) callback(); return; }
@@ -520,7 +520,7 @@ function doIdent(callback) {
     ];
     var texto = frases[Math.floor(Math.random() * frases.length)];
     var outroFile = 'hora_outro_' + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0') + '.mp3';
-    var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
+    var outroUrl = LOCUCOES_URL + '/' + encodeURIComponent(outroFile);
 
     falarComVoz(texto)
         .then(function() { return playAudio(outroUrl); })
@@ -549,7 +549,7 @@ function doLocucao(callback) {
     if (isAnnouncing) { if (callback) callback(); return; }
     isAnnouncing = true;
     var loc = pickLocucao();
-    var url = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(loc.arquivo);
+    var url = LOCUCOES_URL + '/' + encodeURIComponent(loc.arquivo);
 
     locucaoAudio = new Audio();
     locucaoAudio.preload = 'auto';
