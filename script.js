@@ -731,6 +731,9 @@ function loadTrack() {
         audio.oncanplay = null;
         errorRetryCount = 0;
         var seekTo = getRadioTrackOffset();
+        if (seekTo > 0 && seekTo < audio.duration) {
+            audio.currentTime = seekTo;
+        }
         audio.play().then(function() {
             setPlayingState(true);
             trackNameEl.textContent = track.song;
