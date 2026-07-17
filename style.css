@@ -1212,7 +1212,7 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     align-items: center;
     justify-content: center;
     gap: 18px;
-    background: linear-gradient(135deg, rgba(5,5,16,0.3), rgba(5,5,16,0.15)), url('img/flower_bg_3.jpg') center / cover;
+    background: linear-gradient(135deg, rgba(5,5,16,0.3), rgba(5,5,16,0.15)), url('img/flower_bg_1.jpg') center / cover;
     border: 1px solid rgba(255,255,255,0.06);
     border-radius: 16px;
     padding: 24px 32px;
@@ -1220,7 +1220,7 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
 }
 .banner-sponsor:hover {
     border-color: rgba(230,57,70,0.2);
-    background: linear-gradient(135deg, rgba(5,5,16,0.2), rgba(5,5,16,0.1)), url('img/flower_bg_3.jpg') center / cover;
+    background: linear-gradient(135deg, rgba(5,5,16,0.2), rgba(5,5,16,0.1)), url('img/flower_bg_1.jpg') center / cover;
 }
 .banner-deco {
     position: absolute;
