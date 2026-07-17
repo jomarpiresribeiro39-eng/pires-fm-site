@@ -334,12 +334,12 @@ function renderNextTracks() {
     var pl = getPlaylist();
     var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
     var AVG_SONG = 240;
-    var LOC_DUR = 30;
-    var LOC_EACH = 3;
-    var cycle = AVG_SONG + (LOC_DUR / LOC_EACH);
+    var SONGS_PER_BLOCO = 3;
+    var BLOCO_DURATION = 120;
+    var CYCLE_DURATION = AVG_SONG * SONGS_PER_BLOCO + BLOCO_DURATION;
     var elapsed = (Date.now() - EPOCH) / 1000;
-    var songNum = Math.floor(elapsed / cycle);
-    var idx = songNum % pl.length;
+    var fullCycles = Math.floor(elapsed / CYCLE_DURATION);
+    var idx = (fullCycles * SONGS_PER_BLOCO) % pl.length;
 
     var container = document.getElementById('nextTracks');
     var html = '';

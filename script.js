@@ -30,7 +30,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 function getRioHour() {
-    return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getHours();
+    return new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false }).formatToParts(new Date()).find(function(p) { return p.type === 'hour'; }).value | 0;
 }
 
 var schedule = [
@@ -181,28 +181,31 @@ function loadPlaylist(callback) {
 var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
 var AVG_SONG = 240;
 var LOCUCAO_DURATION = 30;
+var SONGS_PER_BLOCO = 3;
+var BLOCO_DURATION = 120;
+var CYCLE_DURATION = AVG_SONG * SONGS_PER_BLOCO + BLOCO_DURATION;
 
 function getElapsedSeconds() {
     return (Date.now() - EPOCH) / 1000;
 }
 
 function getRadioTrackIndex() {
-    var totalCycle = AVG_SONG + (LOCUCAO_DURATION / 3);
     var elapsed = getElapsedSeconds();
-    var songNum = Math.floor(elapsed / totalCycle);
-    var timeInCycle = elapsed - (songNum * totalCycle);
-    var index = songNum % playlist.length;
+    var fullCycles = Math.floor(elapsed / CYCLE_DURATION);
+    var timeInCycle = elapsed - (fullCycles * CYCLE_DURATION);
+    var songInCycle = Math.floor(timeInCycle / AVG_SONG);
+    if (songInCycle >= SONGS_PER_BLOCO) songInCycle = SONGS_PER_BLOCO - 1;
+    var index = (fullCycles * SONGS_PER_BLOCO + songInCycle) % playlist.length;
     return index;
 }
 
 function getRadioTrackOffset() {
-    var totalCycle = AVG_SONG + (LOCUCAO_DURATION / 3);
     var elapsed = getElapsedSeconds();
-    var timeInCycle = elapsed % totalCycle;
-    if (timeInCycle < AVG_SONG) {
-        return Math.min(timeInCycle, AVG_SONG - 1);
-    }
-    return 0;
+    var timeInCycle = elapsed % CYCLE_DURATION;
+    var songInCycle = Math.floor(timeInCycle / AVG_SONG);
+    if (songInCycle >= SONGS_PER_BLOCO) return 0;
+    var offset = timeInCycle - (songInCycle * AVG_SONG);
+    return Math.min(offset, AVG_SONG - 1);
 }
 
 // ========== LOCUCAO ==========
@@ -271,6 +274,13 @@ function playAudio(url) {
     });
 }
 
+var voicesLoaded = false;
+if ('speechSynthesis' in window) {
+    if (speechSynthesis.getVoices().length) { voicesLoaded = true; }
+    speechSynthesis.addEventListener('voiceschanged', function() { voicesLoaded = true; });
+    if (!voicesLoaded) setTimeout(function() { speechSynthesis.getVoices(); voicesLoaded = true; }, 1000);
+}
+
 function falarComVoz(texto) {
     return new Promise(function(resolve) {
         if (!('speechSynthesis' in window)) { resolve(); return; }
@@ -280,9 +290,11 @@ function falarComVoz(texto) {
         u.rate = 0.95;
         u.pitch = 1.0;
         u.volume = 1.0;
-        var voices = window.speechSynthesis.getVoices();
-        var ptBr = voices.find(function(v) { return v.lang === 'pt-BR' && v.name.indexOf('Google') === -1; }) || voices.find(function(v) { return v.lang === 'pt-BR'; });
-        if (ptBr) u.voice = ptBr;
+        if (voicesLoaded) {
+            var voices = window.speechSynthesis.getVoices();
+            var ptBr = voices.find(function(v) { return v.lang === 'pt-BR' && v.name.indexOf('Google') === -1; }) || voices.find(function(v) { return v.lang === 'pt-BR'; });
+            if (ptBr) u.voice = ptBr;
+        }
         u.onend = function() { setTimeout(resolve, 200); };
         u.onerror = function() { resolve(); };
         window.speechSynthesis.speak(u);
@@ -983,7 +995,7 @@ var autoplayBtn = document.getElementById('autoplayBtn');
 function startRadio() {
     if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
     currentTrackIndex = getRadioTrackIndex();
-    songsPlayed = 0;
+    songsPlayed = 2;
     loadTrack();
 }
 
