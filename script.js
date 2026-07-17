@@ -1006,6 +1006,7 @@ function startRadio() {
     currentTrackIndex = getRadioTrackIndex();
     songsPlayed = 2;
     loadTrack();
+    audio.play().catch(function() {});
 }
 
 console.log('%c Pires FM %c Iniciando...',
