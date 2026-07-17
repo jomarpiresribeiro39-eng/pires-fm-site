@@ -1,5 +1,5 @@
 // ========== ADMIN PANEL ==========
-var ADMIN_PASSWORD = localStorage.getItem('piresfm_admin_pass') || '13237620';
+var ADMIN_EMAIL = 'jomarpiresribeiro39@gmail.com';
 var STORAGE_KEY = 'piresfm_admin';
 var LOG_KEY = 'piresfm_logs';
 var REQUESTS_KEY = 'piresfm_requests';
@@ -90,6 +90,8 @@ function escHtml(s) {
 
 // ========== AUTH ==========
 var dashboardInterval = null;
+var authChecked = false;
+
 function getStoredData() {
     try {
         var d = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -107,24 +109,45 @@ function isLoggedIn() {
 }
 
 function login() {
+    var email = document.getElementById('loginEmail').value.trim();
     var pass = document.getElementById('loginPassword').value;
-    if (pass === ADMIN_PASSWORD) {
+    if (!email || !pass) {
+        document.getElementById('loginError').textContent = 'Preencha email e senha!';
+        return;
+    }
+    if (email !== ADMIN_EMAIL) {
+        document.getElementById('loginError').textContent = 'Email nao autorizado!';
+        return;
+    }
+    document.getElementById('loginBtn').disabled = true;
+    document.getElementById('loginBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+    firebase.auth().signInWithEmailAndPassword(email, pass).then(function() {
+        document.getElementById('loginBtn').disabled = false;
+        document.getElementById('loginBtn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
         var data = getStoredData();
         data.loggedIn = true;
         data.loginTime = new Date().toISOString();
         saveData(data);
         addLog('Admin fez login', 'info');
         showAdminPanel();
-    } else {
-        document.getElementById('loginError').textContent = 'Senha incorreta!';
+    }).catch(function(err) {
+        document.getElementById('loginBtn').disabled = false;
+        document.getElementById('loginBtn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
+        var msg = 'Erro ao entrar!';
+        if (err.code === 'auth/user-not-found') msg = 'Usuario nao encontrado!';
+        else if (err.code === 'auth/wrong-password') msg = 'Senha incorreta!';
+        else if (err.code === 'auth/invalid-email') msg = 'Email invalido!';
+        else if (err.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde!';
+        document.getElementById('loginError').textContent = msg;
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginPassword').focus();
-        addLog('Tentativa de login com senha errada', 'error');
-    }
+        addLog('Tentativa de login falhou: ' + err.code, 'error');
+    });
 }
 
 function logout() {
     if (dashboardInterval) { clearInterval(dashboardInterval); dashboardInterval = null; }
+    firebase.auth().signOut().catch(function(){});
     var data = getStoredData();
     data.loggedIn = false;
     saveData(data);
@@ -477,29 +500,31 @@ function resetConfig() {
 }
 
 function changePassword() {
-    var oldPass = document.getElementById('cfgOldPass').value;
     var newPass = document.getElementById('cfgNewPass').value;
     var confirmPass = document.getElementById('cfgConfirmPass').value;
 
-    if (oldPass !== ADMIN_PASSWORD) {
-        alert('Senha atual incorreta!');
-        return;
-    }
-    if (newPass.length < 4) {
-        alert('A nova senha deve ter pelo menos 4 caracteres!');
+    if (newPass.length < 6) {
+        alert('A nova senha deve ter pelo menos 6 caracteres!');
         return;
     }
     if (newPass !== confirmPass) {
         alert('As senhas não conferem!');
         return;
     }
-    ADMIN_PASSWORD = newPass;
-    try { localStorage.setItem('piresfm_admin_pass', newPass); } catch(e) {}
-    document.getElementById('cfgOldPass').value = '';
-    document.getElementById('cfgNewPass').value = '';
-    document.getElementById('cfgConfirmPass').value = '';
-    addLog('Senha do admin alterada', 'warning');
-    alert('Senha alterada com sucesso!');
+    var user = firebase.auth().currentUser;
+    if (!user) {
+        alert('Voce precisa estar logado para alterar a senha!');
+        return;
+    }
+    user.updatePassword(newPass).then(function() {
+        document.getElementById('cfgOldPass').value = '';
+        document.getElementById('cfgNewPass').value = '';
+        document.getElementById('cfgConfirmPass').value = '';
+        addLog('Senha do admin alterada', 'warning');
+        alert('Senha alterada com sucesso!');
+    }).catch(function(err) {
+        alert('Erro ao alterar senha: ' + err.message);
+    });
 }
 
 // ========== PEDIDOS ==========
@@ -627,20 +652,32 @@ function switchTab(tabName) {
 // ========== INIT ==========
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (isLoggedIn()) {
-        showAdminPanel();
-    }
-
     // Login
     document.getElementById('loginBtn').addEventListener('click', login);
     document.getElementById('loginPassword').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') login();
+    });
+    document.getElementById('loginEmail').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('loginPassword').focus();
     });
 
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', function(e) {
         e.preventDefault();
         logout();
+    });
+
+    // Auth state
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user && user.email === ADMIN_EMAIL && isLoggedIn()) {
+            showAdminPanel();
+        } else if (user && user.email === ADMIN_EMAIL) {
+            var data = getStoredData();
+            data.loggedIn = true;
+            data.loginTime = new Date().toISOString();
+            saveData(data);
+            showAdminPanel();
+        }
     });
 
     // Nav

@@ -20,8 +20,12 @@
             <p>Pires FM</p>
             <div class="login-form">
                 <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="loginEmail" placeholder="Seu email" value="jomarpiresribeiro39@gmail.com" autocomplete="email">
+                </div>
+                <div class="input-group">
                     <i class="fas fa-lock"></i>
-                    <input type="password" id="loginPassword" placeholder="Digite a senha" autocomplete="off">
+                    <input type="password" id="loginPassword" placeholder="Digite a senha" autocomplete="current-password">
                 </div>
                 <button id="loginBtn" class="login-btn">
                     <i class="fas fa-sign-in-alt"></i> Entrar
@@ -511,6 +515,19 @@
         </main>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
+    <script>
+    var firebaseConfig = {
+        apiKey: "AIzaSyDhqHYrKn_4M-tOEuNhblI0gkyPXWrYsw0",
+        authDomain: "pires-fm-chat.firebaseapp.com",
+        projectId: "pires-fm-chat",
+        storageBucket: "pires-fm-chat.firebasestorage.app",
+        messagingSenderId: "495364682509",
+        appId: "1:495364682509:web:5a40861808b010e1953644"
+    };
+    firebase.initializeApp(firebaseConfig);
+    </script>
     <script src="admin.js"></script>
 </body>
 </html>
