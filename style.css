@@ -692,6 +692,27 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     min-width: 35px;
 }
 
+.download-apk-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #3ddc84, #1a8c4a);
+    color: white;
+    text-decoration: none;
+    padding: 10px 24px;
+    border-radius: 50px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(61, 220, 132, 0.3);
+}
+.download-apk-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 30px rgba(61, 220, 132, 0.5);
+    color: white;
+}
 .stream-status {
     font-size: 0.8rem;
     color: var(--text-muted);
