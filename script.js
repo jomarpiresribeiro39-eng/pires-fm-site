@@ -793,11 +793,11 @@ function goNext() {
     if (songsPlayed >= 3) {
         songsPlayed = 0;
         doBlocoLocucao(function() {
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            currentTrackIndex = getRadioTrackIndex();
             loadTrack();
         });
     } else {
-        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        currentTrackIndex = getRadioTrackIndex();
         loadTrack();
     }
 }
@@ -1012,7 +1012,7 @@ var autoplayBtn = document.getElementById('autoplayBtn');
 function startRadio() {
     if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
     currentTrackIndex = getRadioTrackIndex();
-    songsPlayed = 2;
+    songsPlayed = Math.floor((getElapsedSeconds() % CYCLE_DURATION) / AVG_SONG) % SONGS_PER_BLOCO;
     loadTrack();
     audio.play().catch(function() {});
 }
