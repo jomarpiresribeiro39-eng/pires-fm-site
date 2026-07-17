@@ -39,7 +39,7 @@ self.addEventListener("activate", function(e) {
 });
 
 self.addEventListener("fetch", function(e) {
-    if (e.request.url.indexOf("archive.org") !== -1 || e.request.url.indexOf("open-meteo.com") !== -1 || e.request.url.indexOf("rss2json") !== -1) {
+    if (e.request.url.indexOf("open-meteo.com") !== -1 || e.request.url.indexOf("rss2json") !== -1) {
         e.respondWith(
             fetch(e.request).catch(function() {
                 return caches.match(e.request);
