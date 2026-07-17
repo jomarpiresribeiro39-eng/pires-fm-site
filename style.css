@@ -1218,10 +1218,47 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     padding: 24px 32px;
     text-align: center;
     transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+.banner-sponsor::before {
+    content: "\f004 \f004 \f004";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    top: -10px;
+    left: -5px;
+    font-size: 5rem;
+    color: rgba(102,187,106,0.06);
+    letter-spacing: 20px;
+    pointer-events: none;
+    transform: rotate(-15deg);
+    white-space: nowrap;
+    width: 120%;
+}
+.banner-sponsor::after {
+    content: "\f06c \f06c \f06c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    bottom: -15px;
+    right: -5px;
+    font-size: 4rem;
+    color: rgba(46,125,50,0.06);
+    letter-spacing: 25px;
+    pointer-events: none;
+    transform: rotate(10deg);
+    white-space: nowrap;
+    width: 120%;
 }
 .banner-sponsor:hover {
     border-color: rgba(230,57,70,0.2);
     background: linear-gradient(135deg, rgba(230,57,70,0.12), rgba(244,162,97,0.12));
+}
+.banner-deco {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
 }
 .banner-sponsor-icon {
     width: 52px;
