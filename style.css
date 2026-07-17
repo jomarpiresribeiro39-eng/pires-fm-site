@@ -1229,8 +1229,8 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
 }
 
 @keyframes swapFlowers {
-    0%, 45% { background-image: linear-gradient(135deg, rgba(5,5,16,0.5), rgba(5,5,16,0.3)), url('img/flower_bg_1.jpg'); }
-    50%, 95% { background-image: linear-gradient(135deg, rgba(5,5,16,0.5), rgba(5,5,16,0.3)), url('img/flower_bg_2.jpg'); }
+    0%, 45% { background-image: linear-gradient(135deg, rgba(5,5,16,0.5), rgba(5,5,16,0.3)), url('img/flower_bg_1.jpg'); background-size: contain; background-position: center; }
+    50%, 95% { background-image: linear-gradient(135deg, rgba(5,5,16,0.5), rgba(5,5,16,0.3)), url('img/flower_bg_2.jpg'); background-size: contain; background-position: center; }
 }
 .banner-deco {
     position: absolute;
