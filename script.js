@@ -729,19 +729,20 @@ function loadTrack() {
     audio.muted = false;
     audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
     audio.preload = 'auto';
-    audio.src = url;
 
     function onReady() {
+        audio.removeEventListener('loadedmetadata', onReady);
+        audio.removeEventListener('canplay', onReady);
         errorRetryCount = 0;
+        setPlayingState(true);
+        trackNameEl.textContent = track.song;
+        trackArtistEl.textContent = track.artist;
+        renderPlaylist();
         var seekTo = getRadioTrackOffset();
         if (seekTo > 0 && seekTo < audio.duration) {
             audio.currentTime = seekTo;
         }
         audio.play().then(function() {
-            setPlayingState(true);
-            trackNameEl.textContent = track.song;
-            trackArtistEl.textContent = track.artist;
-            renderPlaylist();
             var remaining = AVG_SONG;
             if (seekTo > 0 && seekTo < audio.duration) {
                 remaining = AVG_SONG - seekTo;
@@ -762,8 +763,9 @@ function loadTrack() {
         });
     }
 
-    audio.addEventListener('loadedmetadata', onReady, { once: true });
-    audio.addEventListener('canplay', onReady, { once: true });
+    audio.addEventListener('loadedmetadata', onReady);
+    audio.addEventListener('canplay', onReady);
+    audio.src = url;
     audio.onerror = function() {
         audio.onerror = null;
         errorRetryCount++;
