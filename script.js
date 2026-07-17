@@ -729,13 +729,12 @@ function loadTrack() {
     audio.muted = false;
     audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
     audio.preload = 'auto';
+    audio.src = url;
 
-    audio.oncanplay = function() {
-        audio.oncanplay = null;
+    function onReady() {
         errorRetryCount = 0;
         var seekTo = getRadioTrackOffset();
-        console.log("Pires FM: seekTo=" + seekTo + " duration=" + audio.duration + " track=" + currentTrackIndex);
-        if (seekTo > 1 && seekTo < audio.duration) {
+        if (seekTo > 0 && seekTo < audio.duration) {
             audio.currentTime = seekTo;
         }
         audio.play().then(function() {
@@ -757,16 +756,15 @@ function loadTrack() {
                     goNext();
                 }
             }, timeout * 1000);
-        }).catch(function(err) {
+        }).catch(function() {
             audio.load();
-            setTimeout(function() {
-                audio.play().catch(function() {});
-            }, 1000);
+            setTimeout(function() { audio.play().catch(function() {}); }, 1000);
         });
-    };
+    }
 
+    audio.addEventListener('loadedmetadata', onReady, { once: true });
+    audio.addEventListener('canplay', onReady, { once: true });
     audio.onerror = function() {
-        audio.oncanplay = null;
         audio.onerror = null;
         errorRetryCount++;
         if (errorRetryCount < MAX_RETRIES) {
@@ -778,13 +776,11 @@ function loadTrack() {
             goNext();
         }
     };
-
     audio.onended = function() {
         audio.onended = null;
         if (!isAnnouncing) goNext();
     };
 
-    audio.src = url;
     streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
     streamStatus.className = 'stream-status';
 }
