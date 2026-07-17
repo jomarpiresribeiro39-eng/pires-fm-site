@@ -1,6 +1,6 @@
 var MODE = "cloud";
 var ARCHIVE_ITEM = "pires-fm-musicas";
-var LOCUCOES_ARCHIVE = "locucoes-finais";
+var LOCUCOES_ARCHIVE = "locucoes-piresfm";
 
 // ========== BACKGROUND SLIDESHOW ==========
 (function() {
