@@ -1,5 +1,5 @@
 // ========== ADMIN PANEL ==========
-var ADMIN_PASSWORD = '13237620';
+var ADMIN_PASSWORD = localStorage.getItem('piresfm_admin_pass') || '13237620';
 var STORAGE_KEY = 'piresfm_admin';
 var LOG_KEY = 'piresfm_logs';
 var REQUESTS_KEY = 'piresfm_requests';
@@ -81,6 +81,12 @@ var LOCUCAO_FILES = {
     dica: ['dica_01.mp3','dica_02.mp3','dica_03.mp3','dica_04.mp3','dica_05.mp3','dica_06.mp3','dica_07.mp3'],
     programacao: ['programacao_01.mp3','programacao_02.mp3','programacao_03.mp3','programacao_04.mp3','programacao_05.mp3']
 };
+
+function escHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
 
 // ========== AUTH ==========
 var dashboardInterval = null;
@@ -190,9 +196,9 @@ function renderManagePlaylist() {
     for (var i = 0; i < pl.length; i++) {
         html += '<tr>' +
             '<td><span class="file-badge">' + (i+1) + '</span></td>' +
-            '<td><span class="file-badge">' + pl[i].file + '</span></td>' +
-            '<td>' + pl[i].song + '</td>' +
-            '<td style="color:var(--text-muted);">' + pl[i].artist + '</td>' +
+            '<td><span class="file-badge">' + escHtml(pl[i].file) + '</span></td>' +
+            '<td>' + escHtml(pl[i].song) + '</td>' +
+            '<td style="color:var(--text-muted);">' + escHtml(pl[i].artist) + '</td>' +
             '<td class="actions">' +
             '<button class="btn btn-secondary btn-sm" onclick="editTrack(' + i + ')"><i class="fas fa-edit"></i></button>' +
             '<button class="btn btn-danger btn-sm" onclick="removeTrack(' + i + ')"><i class="fas fa-trash"></i></button>' +
@@ -333,6 +339,11 @@ function updateDashboardStats() {
 
 function renderNextTracks() {
     var pl = getPlaylist();
+    if (!pl || pl.length === 0) {
+        var c = document.getElementById('nextTracks');
+        if (c) c.innerHTML = '<p style="color:var(--text-muted);padding:10px;">Nenhuma musica na playlist.</p>';
+        return;
+    }
     var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
     var AVG_SONG = 240;
     var SONGS_PER_BLOCO = 3;
@@ -347,12 +358,13 @@ function renderNextTracks() {
     for (var i = 0; i < 10; i++) {
         var trackIdx = (idx + i) % pl.length;
         var t = pl[trackIdx];
+        if (!t) continue;
         var isCurrent = i === 0;
         html += '<div class="track-item' + (isCurrent ? ' current' : '') + '">' +
             '<div class="track-num">' + (i + 1) + '</div>' +
             '<div class="track-details">' +
-            '<div class="track-song">' + t.song + '</div>' +
-            '<div class="track-artist">' + t.artist + '</div>' +
+            '<div class="track-song">' + escHtml(t.song) + '</div>' +
+            '<div class="track-artist">' + escHtml(t.artist) + '</div>' +
             '</div>' +
             (isCurrent ? '<div class="track-live"><i class="fas fa-volume-up"></i> AO VIVO</div>' : '') +
             '</div>';
@@ -482,6 +494,7 @@ function changePassword() {
         return;
     }
     ADMIN_PASSWORD = newPass;
+    localStorage.setItem('piresfm_admin_pass', newPass);
     document.getElementById('cfgOldPass').value = '';
     document.getElementById('cfgNewPass').value = '';
     document.getElementById('cfgConfirmPass').value = '';
@@ -507,17 +520,17 @@ function renderPedidos() {
         container.innerHTML = '<p class="empty-logs">Nenhum pedido recebido ainda.</p>';
         return;
     }
-    var html = '<div class="pedidos-table"><table class="manage-table"><thead><tr><th>Data</th><th>Nome</th><th>Música</th><th>Artista</th><th>Mensagem</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+    var html = '<div class="pedidos-table"><table class="manage-table"><thead><tr><th>Data</th><th>Nome</th><th>Musica</th><th>Artista</th><th>Mensagem</th><th>Status</th><th>Acoes</th></tr></thead><tbody>';
     for (var i = reqs.length - 1; i >= 0; i--) {
         var r = reqs[i];
         var statusClass = r.played ? 'pedido-played' : r.approved ? 'pedido-approved' : 'pedido-pending';
         var statusText = r.played ? 'Tocada' : r.approved ? 'Aprovada' : 'Pendente';
         html += '<tr class="' + statusClass + '">' +
-            '<td style="font-size:0.78rem;color:var(--text-muted);">' + r.date + '</td>' +
-            '<td><strong>' + r.name + '</strong></td>' +
-            '<td>' + r.song + '</td>' +
-            '<td>' + r.artist + '</td>' +
-            '<td style="font-size:0.78rem;color:var(--text-muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.message || '-') + '</td>' +
+            '<td style="font-size:0.78rem;color:var(--text-muted);">' + escHtml(r.date) + '</td>' +
+            '<td><strong>' + escHtml(r.name) + '</strong></td>' +
+            '<td>' + escHtml(r.song) + '</td>' +
+            '<td>' + escHtml(r.artist) + '</td>' +
+            '<td style="font-size:0.78rem;color:var(--text-muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(r.message || '-') + '</td>' +
             '<td><span class="pedido-badge ' + statusClass + '">' + statusText + '</span></td>' +
             '<td class="actions">' +
             (!r.played ? '<button class="btn btn-sm btn-primary" onclick="approveRequest(' + i + ')"><i class="fas fa-check"></i></button>' : '') +
@@ -612,7 +625,6 @@ function switchTab(tabName) {
 }
 
 // ========== INIT ==========
-var dashboardInterval = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     if (isLoggedIn()) {

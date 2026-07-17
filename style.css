@@ -78,6 +78,7 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     right: 0;
     z-index: 1000;
     background: rgba(5, 5, 16, 0.92);
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(230, 57, 70, 0.15);
     transition: all 0.3s ease;
@@ -201,6 +202,7 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     left: 0;
     right: 0;
     background: rgba(5, 5, 16, 0.98);
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     padding: 20px;
     z-index: 999;
@@ -263,7 +265,7 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     background: var(--primary);
     border-radius: 50%;
     opacity: 0.3;
-    animation: float linear infinite;
+    animation: float 15s linear infinite;
 }
 
 @keyframes float {
@@ -351,15 +353,12 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     align-items: center;
     justify-content: center;
     gap: 25px;
-    margin-bottom: 30px;
+    margin: 0 auto 30px;
     background: var(--card);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 20px;
     padding: 25px 35px;
     max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 30px;
     position: relative;
     overflow: hidden;
 }
@@ -377,6 +376,7 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     right: 0;
     bottom: 0;
     background: rgba(10, 10, 26, 0.92);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     z-index: 5;
     align-items: center;
@@ -419,6 +419,7 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     width: 80px;
     height: 80px;
     border-radius: 50%;
+    background: #1a1a2e;
     background: conic-gradient(from 0deg, #111, #222, #111, #222, #111, #222, #111);
     display: flex;
     align-items: center;
@@ -659,12 +660,16 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
 
 .volume-slider {
     -webkit-appearance: none;
+    appearance: none;
     width: 120px;
     height: 4px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 2px;
-    outline: none;
     cursor: pointer;
+}
+.volume-slider:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 .volume-slider::-webkit-slider-thumb {
@@ -809,14 +814,16 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     overflow-y: auto;
 }
 
+.playlist-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--secondary) var(--card);
+}
 .playlist-container::-webkit-scrollbar {
     width: 6px;
 }
-
 .playlist-container::-webkit-scrollbar-track {
     background: var(--card);
 }
-
 .playlist-container::-webkit-scrollbar-thumb {
     background: var(--secondary);
     border-radius: 3px;
@@ -1208,6 +1215,7 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     padding: 30px 0 10px;
 }
 .banner-sponsor {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1502,14 +1510,16 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
 }
 
 /* SCROLLBAR */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--secondary) var(--darker);
+}
 ::-webkit-scrollbar {
     width: 8px;
 }
-
 ::-webkit-scrollbar-track {
     background: var(--darker);
 }
-
 ::-webkit-scrollbar-thumb {
     background: var(--secondary);
     border-radius: 4px;
