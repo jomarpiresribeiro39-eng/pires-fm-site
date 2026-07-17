@@ -196,7 +196,10 @@ function getRadioTrackIndex() {
     var fullCycles = Math.floor(elapsed / CYCLE_DURATION);
     var timeInCycle = elapsed - (fullCycles * CYCLE_DURATION);
     var songInCycle = Math.floor(timeInCycle / AVG_SONG);
-    if (songInCycle >= SONGS_PER_BLOCO) songInCycle = SONGS_PER_BLOCO - 1;
+    if (songInCycle >= SONGS_PER_BLOCO) {
+        songInCycle = 0;
+        fullCycles++;
+    }
     var index = (fullCycles * SONGS_PER_BLOCO + songInCycle) % playlist.length;
     return index;
 }
@@ -793,11 +796,11 @@ function goNext() {
     if (songsPlayed >= 3) {
         songsPlayed = 0;
         doBlocoLocucao(function() {
-            currentTrackIndex = getRadioTrackIndex();
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
             loadTrack();
         });
     } else {
-        currentTrackIndex = getRadioTrackIndex();
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
         loadTrack();
     }
 }
@@ -1012,7 +1015,9 @@ var autoplayBtn = document.getElementById('autoplayBtn');
 function startRadio() {
     if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
     currentTrackIndex = getRadioTrackIndex();
-    songsPlayed = Math.floor((getElapsedSeconds() % CYCLE_DURATION) / AVG_SONG) % SONGS_PER_BLOCO;
+    var tic = getElapsedSeconds() % CYCLE_DURATION;
+    var sic = Math.floor(tic / AVG_SONG);
+    songsPlayed = (sic >= SONGS_PER_BLOCO ? 0 : sic);
     loadTrack();
     audio.play().catch(function() {});
 }
