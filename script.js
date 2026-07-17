@@ -1033,29 +1033,32 @@ loadPlaylist(function() {
 
 // ========== CHAT PIRES FM ==========
 var chatInitialized = false;
-var chatUser = null;
-var chatUnsub = null;
 var chatLastMsg = 0;
+var chatKnownIds = {};
+var chatPollTimer = null;
+
+var CHAT_API = "https://jsonblob.com/api/jsonBlob/019f705e-ba0f-799c-814f-2f0aae65b773";
 
 var chatColors = ['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#a855f7','#06b6d4','#f97316','#84cc16','#ec4899','#14b8a6','#f43f5e'];
 
 function getChatNick() {
     return localStorage.getItem('piresfm_chat_nick') || '';
 }
+function getChatId() {
+    var id = localStorage.getItem('piresfm_chat_id');
+    if (!id) { id = Date.now().toString(36) + Math.random().toString(36).slice(2,6); localStorage.setItem('piresfm_chat_id', id); }
+    return id;
+}
 
 function toggleChat() {
-    console.log("Pires FM Chat: toggleChat() chamado");
     var box = document.getElementById('chatBox');
     var fab = document.getElementById('chatFab');
-    if (!box || !fab) { console.log("Pires FM Chat: box/fab nao encontrado"); return; }
+    if (!box || !fab) return;
     var open = box.classList.toggle('open');
     fab.style.display = open ? 'none' : 'flex';
     if (open) {
         document.getElementById('chatInput').focus();
-        if (!chatInitialized) {
-            if (typeof firebase !== 'undefined') { initChat(); }
-            else { console.log("Pires FM Chat: firebase nao definido"); }
-        }
+        if (!chatInitialized) initChat();
     }
 }
 
@@ -1065,27 +1068,23 @@ function setNickname() {
     if (!nick) return;
     localStorage.setItem('piresfm_chat_nick', nick);
     input.blur();
-    if (chatUser) {
-        chatUser.updateProfile({ displayName: nick }).catch(function(){});
-    }
 }
 
 function sendChat() {
-    if (!chatInitialized || !chatUser) { console.log("Pires FM Chat: nao iniciado"); return; }
-    if (Date.now() - chatLastMsg < 3000) { console.log("Pires FM Chat: muito rapido"); return; }
+    if (!chatInitialized) return;
+    if (Date.now() - chatLastMsg < 3000) return;
     var input = document.getElementById('chatInput');
     var text = input.value.trim();
     if (!text) return;
     chatLastMsg = Date.now();
     input.value = '';
     var nick = getChatNick() || 'Ouvinte';
-    console.log("Pires FM Chat: enviando...", text);
-    firebase.firestore().collection('chat').add({
-        text: text,
-        nick: nick,
-        uid: chatUser.uid,
-        time: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(function() { console.log("Pires FM Chat: enviado!"); }).catch(function(e) { console.error("Pires FM Chat: send error", e); });
+    var msg = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), text: text, nick: nick, uid: getChatId(), time: Date.now() };
+    fetch(CHAT_API, { method: "GET" }).then(function(r){ return r.json(); }).then(function(data){
+        var msgs = data.messages || [];
+        msgs.push(msg);
+        return fetch(CHAT_API, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({messages: msgs}) });
+    }).catch(function(){});
 }
 
 function initChat() {
@@ -1096,32 +1095,28 @@ function initChat() {
         var ni = document.getElementById('chatNickInput');
         if (ni) ni.value = nick;
     }
-    console.log("Pires FM Chat: iniciando...");
-    firebase.auth().signInAnonymously().then(function(result) {
-        chatUser = result.user;
-        console.log("Pires FM Chat: auth OK", chatUser.uid);
-        if (nick) chatUser.updateProfile({ displayName: nick }).catch(function(e){ console.error("Pires FM Chat: profile error", e); });
-        var msgs = document.getElementById('chatMessages');
-        chatUnsub = firebase.firestore().collection('chat')
-            .orderBy('time', 'asc')
-            .limit(50)
-            .onSnapshot(function(snapshot) {
-                if (!msgs) return;
-                console.log("Pires FM Chat: snapshot", snapshot.size, "msgs");
+    var msgs = document.getElementById('chatMessages');
+    chatPollTimer = setInterval(function(){
+        fetch(CHAT_API).then(function(r){ return r.json(); }).then(function(data){
+            if (!msgs) return;
+            var list = data.messages || [];
+            var newMsg = false;
+            list.forEach(function(d){
+                if (!d.text || chatKnownIds[d.id]) return;
+                chatKnownIds[d.id] = true;
+                newMsg = true;
                 var autoScroll = msgs.scrollTop + msgs.clientHeight >= msgs.scrollHeight - 30;
-                msgs.innerHTML = '<div class="chat-welcome">Bem-vindo ao chat da Pires FM! \uD83C\uDFB5</div>';
-                snapshot.forEach(function(doc) {
-                    var d = doc.data();
-                    if (!d.text) return;
-                    var div = document.createElement('div');
-                    div.className = 'chat-msg';
-                    var color = chatColors[Math.abs(hashCode(d.uid)) % chatColors.length];
-                    div.innerHTML = '<span class="chat-msg-nick" style="color:' + color + '">' + escHtml(d.nick || 'Ouvinte') + '</span> <span class="chat-msg-text">' + escHtml(d.text) + '</span>';
-                    msgs.appendChild(div);
-                });
+                if (msgs.querySelector('.chat-welcome')) msgs.innerHTML = '';
+                var div = document.createElement('div');
+                div.className = 'chat-msg';
+                var color = chatColors[Math.abs(hashCode(d.uid || '')) % chatColors.length];
+                div.innerHTML = '<span class="chat-msg-nick" style="color:' + color + '">' + escHtml(d.nick || 'Ouvinte') + '</span> <span class="chat-msg-text">' + escHtml(d.text) + '</span>';
+                msgs.appendChild(div);
                 if (autoScroll) msgs.scrollTop = msgs.scrollHeight;
-            }, function(e) { console.error("Pires FM Chat: snapshot error", e); });
-    }).catch(function(e) { console.error("Pires FM Chat: auth error", e); });
+            });
+            if (!newMsg && !msgs.querySelector('.chat-msg')) msgs.innerHTML = '<div class="chat-welcome">Bem-vindo ao chat da Pires FM! \uD83C\uDFB5</div>';
+        }).catch(function(){});
+    }, 3000);
 }
 
 function hashCode(s) {
