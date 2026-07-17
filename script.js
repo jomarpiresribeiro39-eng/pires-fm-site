@@ -207,7 +207,6 @@ function getRadioTrackOffset() {
 
 // ========== LOCUCAO ==========
 var songsPlayed = 0;
-var LOCUCAO_INTERVAL = 120000; // 2 minutos
 var isAnnouncing = false;
 var savedVolume = 0.8;
 var locucaoAudio = null;
@@ -594,6 +593,57 @@ function doLocucao(callback) {
     });
 }
 
+function doBlocoLocucao(callback) {
+    if (isAnnouncing) { if (callback) callback(); return; }
+    isAnnouncing = true;
+    var np = document.getElementById('nowPlaying');
+    var ss = document.getElementById('streamStatus');
+    var volOriginal = audio.volume;
+    try { audio.volume = 0.03; } catch(e) {}
+    if (np) np.classList.add('announcing');
+    document.getElementById('trackName').textContent = 'Pires FM - Informacao e Musica';
+    document.getElementById('trackArtist').textContent = 'Pires FM - Bloco de Programacao';
+    if (ss) { ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Bloco - Pires FM</span>'; ss.className = 'stream-status connected'; }
+    renderPlaylist();
+    function stepHora() {
+        isAnnouncing = false;
+        doHoraCerta(function() {
+            isAnnouncing = false;
+            stepClima();
+        });
+    }
+    function stepClima() {
+        doClima(function() {
+            isAnnouncing = false;
+            stepNoticia();
+        });
+    }
+    function stepNoticia() {
+        doNoticias(function() {
+            isAnnouncing = false;
+            stepExtra();
+        });
+    }
+    function stepExtra() {
+        var loc = pickLocucao();
+        var url = LOCUCOES_URL + '/' + encodeURIComponent(loc.arquivo);
+        playAudio(url).then(function() {
+            isAnnouncing = false; locucaoAudio = null;
+            if (np) np.classList.remove('announcing');
+            try { audio.volume = volOriginal; } catch(e) {}
+            renderPlaylist();
+            setTimeout(function() { if (callback) callback(); }, 500);
+        }).catch(function() {
+            isAnnouncing = false; locucaoAudio = null;
+            if (np) np.classList.remove('announcing');
+            try { audio.volume = volOriginal; } catch(e) {}
+            renderPlaylist();
+            if (callback) callback();
+        });
+    }
+    stepHora();
+}
+
 // ========== PLAYER ==========
 var audio = document.getElementById('radioAudio') || new Audio();
 audio.id = 'radioAudio';
@@ -721,8 +771,17 @@ function loadTrack(fromStart) {
 function goNext() {
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
     if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
-    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-    loadTrack(true);
+    songsPlayed++;
+    if (songsPlayed >= 3) {
+        songsPlayed = 0;
+        doBlocoLocucao(function() {
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            loadTrack(true);
+        });
+    } else {
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        loadTrack(true);
+    }
 }
 
 function setPlayingState(playing) {
@@ -760,17 +819,11 @@ playBtn.addEventListener('click', function(e) {
     if (isPlaying) {
         audio.muted = true;
         setPlayingState(false);
-        if (locucaoTimer) { clearInterval(locucaoTimer); locucaoTimer = null; }
         return;
     }
 
     audio.muted = false;
     setPlayingState(true);
-    if (!locucaoTimer) {
-        locucaoTimer = setInterval(function() {
-            if (!isAnnouncing) doLocucao(function() {});
-        }, LOCUCAO_INTERVAL);
-    }
 });
 
 audio.addEventListener('timeupdate', function() {
@@ -927,17 +980,11 @@ if (reqForm) {
 var autoplayOverlay = document.getElementById('autoplayOverlay');
 var autoplayBtn = document.getElementById('autoplayBtn');
 
-var locucaoTimer = null;
-
 function startRadio() {
     if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
     currentTrackIndex = getRadioTrackIndex();
     songsPlayed = 0;
     loadTrack();
-    if (locucaoTimer) clearInterval(locucaoTimer);
-    locucaoTimer = setInterval(function() {
-        if (!isAnnouncing) doLocucao(function() {});
-    }, LOCUCAO_INTERVAL);
 }
 
 console.log('%c Pires FM %c Iniciando...',
