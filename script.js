@@ -1,5 +1,5 @@
 var MODE = "cloud";
-var ARCHIVE_ITEM = "pires-fm-musicas";
+var ARCHIVE_ITEM = "music";
 var LOCUCOES_URL = "locucoes_finais";
 
 // ========== BACKGROUND SLIDESHOW ==========
@@ -719,7 +719,7 @@ function scrollToCurrent() {
 function loadTrack() {
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
-    var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
+    var url = ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
 
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
 
