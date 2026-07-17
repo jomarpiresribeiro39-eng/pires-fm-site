@@ -344,7 +344,7 @@
         }
 
         // ========== LOAD MUSIC TRACK ==========
-        function loadTrack(idx, seekTo) {
+        function loadTrack(idx, fromUserClick) {
             if (idx < 0 || idx >= PLAYLIST.length) return;
             loading = true;
             var track = PLAYLIST[idx];
@@ -357,36 +357,35 @@
             audio.volume = userVolume;
             audio.preload = "auto";
 
+            function onPlayStart() {
+                document.getElementById("trackName").textContent = track.song;
+                document.getElementById("trackArtist").textContent = track.artist;
+                currentTrackIdx = idx;
+                isPlaying = true;
+                setUI("playing");
+                var dur = audio.duration;
+                var timeout = AVG;
+                if (dur && isFinite(dur) && dur < 600) {
+                    timeout = Math.ceil(dur) + 10;
+                }
+                megaMixTimer = setTimeout(function() {
+                    if (isPlaying && !isAnnouncing) {
+                        console.log("timeout avancando", idx);
+                        goNext();
+                    }
+                }, timeout * 1000);
+                audio.onended = function() {
+                    audio.onended = null;
+                    console.log("ended", idx);
+                    if (!isAnnouncing) goNext();
+                };
+            }
+
             audio.oncanplay = function() {
                 audio.oncanplay = null;
                 audio.onerror = null;
                 loading = false;
-                console.log("canplay", idx);
-                if (seekTo > 0 && seekTo < audio.duration) audio.currentTime = seekTo;
-                audio.play().then(function() {
-                    console.log("play OK", idx);
-                    document.getElementById("trackName").textContent = track.song;
-                    document.getElementById("trackArtist").textContent = track.artist;
-                    currentTrackIdx = idx;
-                    isPlaying = true;
-                    setUI("playing");
-                    var dur = audio.duration;
-                    var timeout = AVG;
-                    if (dur && isFinite(dur) && dur < 600) {
-                        timeout = Math.ceil(dur) + 10;
-                    }
-                    megaMixTimer = setTimeout(function() {
-                        if (isPlaying && !isAnnouncing) {
-                            console.log("timeout avancando", idx);
-                            goNext();
-                        }
-                    }, timeout * 1000);
-                    audio.onended = function() {
-                        audio.onended = null;
-                        console.log("ended", idx);
-                        if (!isAnnouncing) goNext();
-                    };
-                }).catch(function(err) {
+                audio.play().then(onPlayStart).catch(function(err) {
                     loading = false;
                     console.log("play ERRO", idx, err);
                     audio.load();
@@ -401,10 +400,13 @@
                 audio.oncanplay = null;
                 audio.onerror = null;
                 loading = false;
-                setTimeout(function() { loading = false; loadTrack(idx, seekTo); }, 3000);
+                setTimeout(function() { loading = false; loadTrack(idx); }, 3000);
             };
 
             audio.src = url;
+            if (fromUserClick) {
+                audio.play().then(onPlayStart).catch(function() {});
+            }
             audio.load();
             setUI("loading");
         }
@@ -594,9 +596,7 @@
             if (!hasStarted || isAnnouncing || loading) return;
             var now = getCurrentTrack();
             if (now.index !== currentTrackIdx) {
-                loadTrack(now.index, now.offset);
-            } else if (audio.duration && audio.currentTime < now.offset - 30) {
-                audio.currentTime = now.offset;
+                loadTrack(now.index);
             }
         }
 
@@ -608,7 +608,7 @@
                 songsPlayed = 0;
                 audio.muted = false;
                 var now = getCurrentTrack();
-                loadTrack(now.index, now.offset);
+                loadTrack(now.index, true);
                 setInterval(syncToLive, 10000);
             });
         });
@@ -626,7 +626,7 @@
                 hasStarted = true;
                 var now = getCurrentTrack();
                 if (now.index !== currentTrackIdx) {
-                    loadTrack(now.index, now.offset);
+                    loadTrack(now.index, true);
                 } else {
                     audio.play().then(function() { setUI("playing"); }).catch(function() {});
                 }
@@ -699,7 +699,7 @@
                 label.style.color = '';
                 if (isPlaying) {
                     var now = getCurrentTrack();
-                    loadTrack(now.index, now.offset);
+                    loadTrack(now.index, true);
                 }
             }
         };
