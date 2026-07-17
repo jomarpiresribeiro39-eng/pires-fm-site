@@ -1,4 +1,3 @@
-var MODE = "cloud";
 var ARCHIVE_ITEM = "music";
 var LOCUCOES_URL = "locucoes_finais";
 

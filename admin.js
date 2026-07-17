@@ -660,6 +660,22 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('exportPlaylistBtn').addEventListener('click', exportPlaylist);
     document.getElementById('importPlaylistBtn').addEventListener('click', importPlaylist);
 
+    // Test locucao
+    document.getElementById('testLocucaoBtn').addEventListener('click', function() {
+        var tipos = Object.keys(LOCUCAO_FILES);
+        var tipo = tipos[Math.floor(Math.random() * tipos.length)];
+        var arquivos = LOCUCAO_FILES[tipo];
+        if (!arquivos || arquivos.length === 0) { alert('Nenhum arquivo de locucao encontrado para ' + tipo); return; }
+        var arquivo = arquivos[Math.floor(Math.random() * arquivos.length)];
+        var url = 'locucoes_finais/' + encodeURIComponent(arquivo);
+        var a = new Audio(url);
+        a.play().then(function() {
+            addLog('Testando locucao: ' + tipo + '/' + arquivo, 'info');
+        }).catch(function(e) {
+            alert('Erro ao reproduzir: ' + e.message);
+        });
+    });
+
     // Edit track
     document.getElementById('closeEditModal').addEventListener('click', function() {
         document.getElementById('editTrackModal').classList.add('hidden');

@@ -20,6 +20,7 @@
     --success: #4caf50;
     --warning: #ff9800;
     --danger: #e63946;
+    --error: #e63946;
 }
 
 body {
