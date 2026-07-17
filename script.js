@@ -30,7 +30,9 @@ setInterval(updateClock, 1000);
 updateClock();
 
 function getRioHour() {
-    return new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false }).formatToParts(new Date()).find(function(p) { return p.type === 'hour'; }).value | 0;
+    var parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false }).formatToParts(new Date());
+    var found = parts.find(function(p) { return p.type === 'hour'; });
+    return found ? parseInt(found.value, 10) : new Date().getHours();
 }
 
 var schedule = [
@@ -55,7 +57,7 @@ function renderSchedule() {
     grid.innerHTML = schedule.map(function(item) {
         var s = parseInt(item.time.split(' - ')[0].split(':')[0]);
         var e = parseInt(item.time.split(' - ')[1].split(':')[0]);
-        var cur = ch >= s && ch < e;
+        var cur = e > s ? (ch >= s && ch < e) : (ch >= s || ch < e);
         return '<div class="schedule-item ' + (cur ? 'current' : '') + '">' +
             '<div class="schedule-time">' + item.time + '</div>' +
             '<div class="schedule-details"><h4>' + item.icon + ' ' + item.name + '</h4><p>' + item.desc + '</p></div>' +
@@ -819,24 +821,26 @@ function setPlayingState(playing) {
 }
 
 // ========== EVENTS ==========
-playBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
+if (playBtn) {
+    playBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-    if (isAnnouncing && locucaoAudio) {
-        var np = document.getElementById('nowPlaying');
-        if (np) np.classList.remove('announcing');
-    }
+        if (isAnnouncing && locucaoAudio) {
+            var np = document.getElementById('nowPlaying');
+            if (np) np.classList.remove('announcing');
+        }
 
-    if (isPlaying) {
-        audio.muted = true;
-        setPlayingState(false);
-        return;
-    }
+        if (isPlaying) {
+            audio.muted = true;
+            setPlayingState(false);
+            return;
+        }
 
-    audio.muted = false;
-    setPlayingState(true);
-});
+        audio.muted = false;
+        setPlayingState(true);
+    });
+}
 
 audio.addEventListener('timeupdate', function() {
     if (audio.duration && isFinite(audio.duration) && progressBar) {
@@ -853,25 +857,29 @@ if (progressContainer) {
     });
 }
 
-volumeSlider.addEventListener('input', function(e) {
-    var v = e.target.value;
-    audio.volume = v / 100;
-    volumeValue.textContent = v + '%';
-    volumeIcon.className = v == 0 ? 'fas fa-volume-mute' : v < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
-});
+if (volumeSlider) {
+    volumeSlider.addEventListener('input', function(e) {
+        var v = e.target.value;
+        audio.volume = v / 100;
+        volumeValue.textContent = v + '%';
+        volumeIcon.className = v == 0 ? 'fas fa-volume-mute' : v < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
+    });
+}
 
-volumeIcon.addEventListener('click', function() {
-    if (audio.volume > 0) {
-        audio.dataset.pv = volumeSlider.value;
-        volumeSlider.value = 0; audio.volume = 0;
-        volumeValue.textContent = '0%'; volumeIcon.className = 'fas fa-volume-mute';
-    } else {
-        var p = audio.dataset.pv || 80;
-        volumeSlider.value = p; audio.volume = p / 100;
-        volumeValue.textContent = p + '%';
-        volumeIcon.className = p < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
-    }
-});
+if (volumeIcon) {
+    volumeIcon.addEventListener('click', function() {
+        if (audio.volume > 0) {
+            audio.dataset.pv = volumeSlider.value;
+            volumeSlider.value = 0; audio.volume = 0;
+            volumeValue.textContent = '0%'; volumeIcon.className = 'fas fa-volume-mute';
+        } else {
+            var p = audio.dataset.pv || 80;
+            volumeSlider.value = p; audio.volume = p / 100;
+            volumeValue.textContent = p + '%';
+            volumeIcon.className = p < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
+        }
+    });
+}
 
 (function animVis() {
     if (isPlaying && !isAnnouncing) {
@@ -881,20 +889,25 @@ volumeIcon.addEventListener('click', function() {
     requestAnimationFrame(function() { setTimeout(animVis, 100); });
 })();
 
-document.getElementById('menuToggle').addEventListener('click', function() {
-    this.classList.toggle('active');
-    document.getElementById('mobileNav').classList.toggle('active');
-});
-var mobileLinks = document.querySelectorAll('.mobile-link');
-for (var i = 0; i < mobileLinks.length; i++) {
-    mobileLinks[i].addEventListener('click', function() {
-        document.getElementById('menuToggle').classList.remove('active');
-        document.getElementById('mobileNav').classList.remove('active');
+var menuToggle = document.getElementById('menuToggle');
+var mobileNav = document.getElementById('mobileNav');
+if (menuToggle && mobileNav) {
+    menuToggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+        mobileNav.classList.toggle('active');
     });
+    var mobileLinks = document.querySelectorAll('.mobile-link');
+    for (var i = 0; i < mobileLinks.length; i++) {
+        mobileLinks[i].addEventListener('click', function() {
+            menuToggle.classList.remove('active');
+            mobileNav.classList.remove('active');
+        });
+    }
 }
 
 window.addEventListener('scroll', function() {
-    document.querySelector('.header').classList.toggle('scrolled', window.scrollY > 50);
+    var header = document.querySelector('.header');
+    if (header) header.classList.toggle('scrolled', window.scrollY > 50);
 });
 
 window.addEventListener('scroll', function() {
@@ -912,7 +925,7 @@ window.addEventListener('scroll', function() {
 });
 
 document.addEventListener('keydown', function(e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || !playBtn) return;
     if (e.code === 'Space') { e.preventDefault(); playBtn.click(); }
 });
 
