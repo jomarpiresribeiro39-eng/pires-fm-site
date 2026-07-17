@@ -731,14 +731,14 @@ function loadTrack() {
         audio.oncanplay = null;
         errorRetryCount = 0;
         var seekTo = getRadioTrackOffset();
-        if (seekTo > 0 && seekTo < audio.duration) {
-            audio.currentTime = seekTo;
-        }
         audio.play().then(function() {
             setPlayingState(true);
             trackNameEl.textContent = track.song;
             trackArtistEl.textContent = track.artist;
             renderPlaylist();
+            if (seekTo > 1 && seekTo < audio.duration) {
+                audio.currentTime = seekTo;
+            }
             var remaining = AVG_SONG;
             if (seekTo > 0 && seekTo < audio.duration) {
                 remaining = AVG_SONG - seekTo;
