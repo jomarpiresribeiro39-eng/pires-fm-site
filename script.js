@@ -207,6 +207,7 @@ function getRadioTrackOffset() {
 
 // ========== LOCUCAO ==========
 var songsPlayed = 0;
+var LOCUCAO_INTERVAL = 120000; // 2 minutos
 var isAnnouncing = false;
 var savedVolume = 0.8;
 var locucaoAudio = null;
@@ -720,17 +721,8 @@ function loadTrack(fromStart) {
 function goNext() {
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
     if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
-    songsPlayed++;
-    if (songsPlayed >= 3) {
-        songsPlayed = 0;
-        doLocucao(function() {
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            loadTrack(true);
-        });
-    } else {
-        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        loadTrack(true);
-    }
+    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+    loadTrack(true);
 }
 
 function setPlayingState(playing) {
@@ -768,11 +760,17 @@ playBtn.addEventListener('click', function(e) {
     if (isPlaying) {
         audio.muted = true;
         setPlayingState(false);
+        if (locucaoTimer) { clearInterval(locucaoTimer); locucaoTimer = null; }
         return;
     }
 
     audio.muted = false;
     setPlayingState(true);
+    if (!locucaoTimer) {
+        locucaoTimer = setInterval(function() {
+            if (!isAnnouncing) doLocucao(function() {});
+        }, LOCUCAO_INTERVAL);
+    }
 });
 
 audio.addEventListener('timeupdate', function() {
@@ -929,11 +927,17 @@ if (reqForm) {
 var autoplayOverlay = document.getElementById('autoplayOverlay');
 var autoplayBtn = document.getElementById('autoplayBtn');
 
+var locucaoTimer = null;
+
 function startRadio() {
     if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
     currentTrackIndex = getRadioTrackIndex();
     songsPlayed = 0;
     loadTrack();
+    if (locucaoTimer) clearInterval(locucaoTimer);
+    locucaoTimer = setInterval(function() {
+        if (!isAnnouncing) doLocucao(function() {});
+    }, LOCUCAO_INTERVAL);
 }
 
 console.log('%c Pires FM %c Iniciando...',
