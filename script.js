@@ -1044,14 +1044,18 @@ function getChatNick() {
 }
 
 function toggleChat() {
+    console.log("Pires FM Chat: toggleChat() chamado");
     var box = document.getElementById('chatBox');
     var fab = document.getElementById('chatFab');
-    if (!box || !fab) return;
+    if (!box || !fab) { console.log("Pires FM Chat: box/fab nao encontrado"); return; }
     var open = box.classList.toggle('open');
     fab.style.display = open ? 'none' : 'flex';
     if (open) {
         document.getElementById('chatInput').focus();
-        if (!chatInitialized && typeof firebase !== 'undefined') initChat();
+        if (!chatInitialized) {
+            if (typeof firebase !== 'undefined') { initChat(); }
+            else { console.log("Pires FM Chat: firebase nao definido"); }
+        }
     }
 }
 
