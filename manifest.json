@@ -3,6 +3,8 @@
     "short_name": "Pires FM",
     "description": "Radio ao vivo 24h com as melhores musicas do Brasil. Pires FM, a voz do Rio de Janeiro.",
     "start_url": "/pires-fm-site/ouvir.html",
+    "scope": "/pires-fm-site/",
+    "id": "/pires-fm-site/",
     "display": "standalone",
     "orientation": "portrait",
     "background_color": "#050510",
