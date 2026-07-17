@@ -1,6 +1,6 @@
 var MODE = "cloud";
 var ARCHIVE_ITEM = "pires-fm-musicas";
-var LOCUCOES_ARCHIVE = "pires-fm-locucoes";
+var LOCUCOES_ARCHIVE = "locucoes-finais";
 
 // ========== BACKGROUND SLIDESHOW ==========
 (function() {
@@ -307,10 +307,11 @@ function doHoraCerta(callback) {
     var introUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(introFile);
     var outroUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(outroFile);
     var horario = getHorarioRio();
-    var textoHora = falarHorario(horario.hora, horario.minuto);
+    var horaFile = 'hora_' + String(horario.hora).padStart(2, '0') + '_' + String(horario.minuto).padStart(2, '0') + '.mp3';
+    var horaUrl = 'https://archive.org/download/' + LOCUCOES_ARCHIVE + '/' + encodeURIComponent(horaFile);
 
     playAudio(introUrl)
-        .then(function() { return falarComVoz(textoHora); })
+        .then(function() { return playAudio(horaUrl); })
         .then(function() { return playAudio(outroUrl); })
         .then(function() {
             isAnnouncing = false; locucaoAudio = null;
