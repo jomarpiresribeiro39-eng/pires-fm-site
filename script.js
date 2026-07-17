@@ -703,7 +703,7 @@ function renderPlaylist() {
         rows[r].addEventListener('click', function() {
             currentTrackIndex = parseInt(this.dataset.index);
             songsPlayed = 0;
-            loadTrack(true);
+            loadTrack();
         });
     }
     scrollToCurrent();
@@ -716,11 +716,10 @@ function scrollToCurrent() {
     }
 }
 
-function loadTrack(fromStart) {
+function loadTrack() {
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
     var url = 'https://archive.org/download/' + ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
-    var seekTo = fromStart ? 0 : getRadioTrackOffset();
 
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
 
@@ -731,9 +730,6 @@ function loadTrack(fromStart) {
     audio.oncanplay = function() {
         audio.oncanplay = null;
         errorRetryCount = 0;
-        if (seekTo > 0 && seekTo < audio.duration) {
-            audio.currentTime = seekTo;
-        }
         audio.play().then(function() {
             setPlayingState(true);
             trackNameEl.textContent = track.song;
@@ -764,7 +760,7 @@ function loadTrack(fromStart) {
         if (errorRetryCount < MAX_RETRIES) {
             streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + ')</span>';
             streamStatus.className = 'stream-status error';
-            setTimeout(function() { loadTrack(true); }, 2000);
+            setTimeout(function() { loadTrack(); }, 2000);
         } else {
             errorRetryCount = 0;
             goNext();
@@ -790,11 +786,11 @@ function goNext() {
         songsPlayed = 0;
         doBlocoLocucao(function() {
             currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            loadTrack(true);
+            loadTrack();
         });
     } else {
         currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        loadTrack(true);
+        loadTrack();
     }
 }
 
