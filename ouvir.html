@@ -114,6 +114,46 @@
         </div>
     </section>
 
+    <div id="chatFab" class="chat-fab" onclick="toggleChat()">
+        <i class="fas fa-comment"></i>
+    </div>
+
+    <div id="chatBox" class="chat-box">
+        <div class="chat-header">
+            <span><i class="fas fa-comments"></i> Chat Pires FM</span>
+            <div class="chat-header-actions">
+                <span id="chatOnline" class="chat-online">0 online</span>
+                <button onclick="toggleChat()" class="chat-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div class="chat-nickbar" id="chatNickBar">
+            <i class="fas fa-user-edit"></i>
+            <input type="text" id="chatNickInput" placeholder="Seu nome..." maxlength="20">
+            <button onclick="setNickname()" class="chat-nick-btn"><i class="fas fa-check"></i></button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-welcome">Bem-vindo ao chat da Pires FM! 🎵</div>
+        </div>
+        <div class="chat-input-bar">
+            <input type="text" id="chatInput" placeholder="Digite sua mensagem..." maxlength="200">
+            <button onclick="sendChat()" class="chat-send-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
+    <script>
+    var firebaseConfig = {
+        apiKey: "AIzaSyDhqHYrKn_4M-tOEuNhblI0gkyPXWrYsw0",
+        authDomain: "pires-fm-chat.firebaseapp.com",
+        projectId: "pires-fm-chat",
+        storageBucket: "pires-fm-chat.firebasestorage.app",
+        messagingSenderId: "495364682509",
+        appId: "1:495364682509:web:5a40861808b010e1953644"
+    };
+    firebase.initializeApp(firebaseConfig);
+    </script>
     <script src="script.js"></script>
     <script>
     if ("serviceWorker" in navigator) {
