@@ -50,8 +50,11 @@ self.addEventListener("fetch", function(e) {
     if (e.request.url.indexOf("github.io") !== -1 || e.request.url.indexOf(".js") !== -1 || e.request.url.indexOf(".html") !== -1 || e.request.url.indexOf(".css") !== -1) {
         e.respondWith(
             fetch(e.request).then(function(fetchResponse) {
+                if (fetchResponse.status === 206) { return fetchResponse; }
                 return caches.open(CACHE_NAME).then(function(cache) {
-                    cache.put(e.request, fetchResponse.clone());
+                    try {
+                        cache.put(e.request, fetchResponse.clone());
+                    } catch(_) {}
                     return fetchResponse;
                 });
             }).catch(function() {
@@ -62,7 +65,7 @@ self.addEventListener("fetch", function(e) {
     }
     e.respondWith(
         caches.match(e.request).then(function(response) {
-            return response || fetch(e.request);
+            return response || fetch(e.request).catch(function(){return null;});
         })
     );
 });
