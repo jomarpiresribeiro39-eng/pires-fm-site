@@ -730,14 +730,19 @@ function loadTrack() {
     audio.oncanplay = function() {
         audio.oncanplay = null;
         errorRetryCount = 0;
+        var seekTo = getRadioTrackOffset();
         audio.play().then(function() {
             setPlayingState(true);
             trackNameEl.textContent = track.song;
             trackArtistEl.textContent = track.artist;
             renderPlaylist();
+            var remaining = AVG_SONG;
+            if (seekTo > 0 && seekTo < audio.duration) {
+                remaining = AVG_SONG - seekTo;
+            }
             var dur = audio.duration;
-            var timeout = AVG_SONG;
-            if (dur && isFinite(dur) && dur < 600) {
+            var timeout = Math.max(remaining, 10) + 10;
+            if (dur && isFinite(dur) && dur < 600 && Math.ceil(dur) + 10 > timeout) {
                 timeout = Math.ceil(dur) + 10;
             }
             maxDurationTimer = setTimeout(function() {
