@@ -731,8 +731,6 @@ function loadTrack() {
     audio.preload = 'auto';
 
     function onReady() {
-        audio.removeEventListener('loadedmetadata', onReady);
-        audio.removeEventListener('canplay', onReady);
         errorRetryCount = 0;
         setPlayingState(true);
         trackNameEl.textContent = track.song;
@@ -763,8 +761,7 @@ function loadTrack() {
         });
     }
 
-    audio.addEventListener('loadedmetadata', onReady);
-    audio.addEventListener('canplay', onReady);
+    audio.addEventListener('canplay', onReady, { once: true });
     audio.src = url;
     audio.onerror = function() {
         audio.onerror = null;
@@ -913,9 +910,6 @@ if (menuToggle && mobileNav) {
 window.addEventListener('scroll', function() {
     var header = document.querySelector('.header');
     if (header) header.classList.toggle('scrolled', window.scrollY > 50);
-});
-
-window.addEventListener('scroll', function() {
     var sp = window.scrollY + 100;
     var secs = document.querySelectorAll('section[id]');
     for (var i = 0; i < secs.length; i++) {

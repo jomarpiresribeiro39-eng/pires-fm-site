@@ -4,7 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pires FM - Ao Vivo</title>
+    <meta name="theme-color" content="#e63946">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pires FM">
+    <meta name="description" content="Pires FM - Radio ao vivo 24h. A voz do Rio de Janeiro.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="img/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="img/icon-512.png">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -298,5 +307,14 @@
     firebase.initializeApp(firebaseConfig);
     </script>
     <script src="script.js"></script>
+    <script>
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("service-worker.js").then(function(reg) {
+            console.log("Pires FM: Service Worker registrado", reg.scope);
+        }).catch(function(err) {
+            console.log("Pires FM: Erro no SW:", err);
+        });
+    }
+    </script>
 </body>
 </html>

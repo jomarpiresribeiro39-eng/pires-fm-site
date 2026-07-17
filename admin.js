@@ -83,6 +83,7 @@ var LOCUCAO_FILES = {
 };
 
 // ========== AUTH ==========
+var dashboardInterval = null;
 function getStoredData() {
     try {
         var d = JSON.parse(localStorage.getItem(STORAGE_KEY));
