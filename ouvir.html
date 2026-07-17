@@ -22,6 +22,7 @@
     <link rel="icon" type="image/png" sizes="512x512" href="img/icon-512.png">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -100,7 +101,7 @@
                 </div>
                 <div class="volume-control">
                     <i class="fas fa-volume-up" id="volumeIcon"></i>
-                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80" aria-label="Volume">
                     <span class="volume-value" id="volumeValue">80%</span>
                 </div>
             </div>
@@ -123,24 +124,54 @@
         </div>
     </section>
 
-    <div class="container banner-footer" style="padding-bottom:0;">
-        <div class="banner-sponsor">
-            <i class="fas fa-leaf banner-deco" style="top:10%;left:5%;font-size:1.2rem;color:rgba(102,187,106,0.12);"></i>
-            <i class="fas fa-leaf banner-deco" style="bottom:10%;right:5%;font-size:1.5rem;color:rgba(46,125,50,0.1);transform:rotate(45deg);"></i>
-            <i class="fas fa-spa banner-deco" style="top:15%;right:12%;font-size:0.9rem;color:rgba(102,187,106,0.08);"></i>
-            <i class="fas fa-spa banner-deco" style="bottom:20%;left:10%;font-size:1rem;color:rgba(46,125,50,0.08);"></i>
-            <div class="banner-sponsor-icon"><i class="fas fa-seedling"></i></div>
-            <div class="banner-sponsor-text">
-                <p class="banner-sponsor-label">Apoio</p>
-                <h3>Calhau <span>Flores Artificiais</span></h3>
-                <p class="banner-sponsor-desc">Flores artificiais que trazem vida ao seu lar</p>
-                <div class="banner-sponsor-contacts">
-                    <a class="banner-sponsor-whatsapp" href="https://wa.me/5521967837271" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> (21) 96783-7271</a>
-                    <a class="banner-sponsor-instagram" href="https://instagram.com/calhaufloresartificiaisoficial" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> @calhaufloresartificiaisoficial</a>
+    <footer class="footer">
+        <div class="container banner-footer">
+            <div class="banner-sponsor">
+                <i class="fas fa-leaf banner-deco" style="top:10%;left:5%;font-size:1.2rem;color:rgba(102,187,106,0.12);"></i>
+                <i class="fas fa-leaf banner-deco" style="bottom:10%;right:5%;font-size:1.5rem;color:rgba(46,125,50,0.1);transform:rotate(45deg);"></i>
+                <i class="fas fa-spa banner-deco" style="top:15%;right:12%;font-size:0.9rem;color:rgba(102,187,106,0.08);"></i>
+                <i class="fas fa-spa banner-deco" style="bottom:20%;left:10%;font-size:1rem;color:rgba(46,125,50,0.08);"></i>
+                <div class="banner-sponsor-icon"><i class="fas fa-seedling"></i></div>
+                <div class="banner-sponsor-text">
+                    <p class="banner-sponsor-label">Apoio</p>
+                    <h3>Calhau <span>Flores Artificiais</span></h3>
+                    <p class="banner-sponsor-desc">Flores artificiais que trazem vida ao seu lar</p>
+                    <div class="banner-sponsor-contacts">
+                        <a class="banner-sponsor-whatsapp" href="https://wa.me/5521967837271" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> (21) 96783-7271</a>
+                        <a class="banner-sponsor-instagram" href="https://instagram.com/calhaufloresartificiaisoficial" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> @calhaufloresartificiaisoficial</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <div class="logo-icon small"><i class="fas fa-broadcast-tower"></i></div>
+                <h3>Pires <span>FM</span></h3>
+                <p>A voz do Rio de Janeiro</p>
+            </div>
+            <div class="footer-links">
+                <h4>Links Rápidos</h4>
+                <a href="#player">Ouça Ao Vivo</a>
+                <a href="index.html#programacao">Programação</a>
+                <a href="index.html#sobre">Sobre Nós</a>
+                <a href="index.html#contato">Contato</a>
+            </div>
+            <div class="footer-social">
+                <h4>Redes Sociais</h4>
+                <div class="social-links-footer">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2025 Pires FM. Todos os direitos reservados. <a href="admin.html" style="color:var(--text-muted);font-size:0.65rem;text-decoration:none;opacity:0.3;">.</a></p>
+            </div>
+        </div>
+    </footer>
 
     <div id="chatFab" class="chat-fab" onclick="toggleChat()">
         <i class="fas fa-comment"></i>
@@ -156,6 +187,7 @@
         </div>
         <div class="chat-nickbar" id="chatNickBar">
             <i class="fas fa-user-edit"></i>
+            <label for="chatNickInput" class="sr-only">Seu nome no chat</label>
             <input type="text" id="chatNickInput" placeholder="Seu nome..." maxlength="20">
             <button onclick="setNickname()" class="chat-nick-btn"><i class="fas fa-check"></i></button>
         </div>
@@ -163,6 +195,7 @@
             <div class="chat-welcome">Bem-vindo ao chat da Pires FM! 🎵</div>
         </div>
         <div class="chat-input-bar">
+            <label for="chatInput" class="sr-only">Digite sua mensagem</label>
             <input type="text" id="chatInput" placeholder="Digite sua mensagem..." maxlength="200">
             <button onclick="sendChat()" class="chat-send-btn"><i class="fas fa-paper-plane"></i></button>
         </div>

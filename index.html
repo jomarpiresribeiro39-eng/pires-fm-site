@@ -22,6 +22,7 @@
     <link rel="icon" type="image/png" sizes="512x512" href="img/icon-512.png">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -133,7 +134,7 @@
                 </div>
                 <div class="volume-control">
                     <i class="fas fa-volume-up" id="volumeIcon"></i>
-                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80" aria-label="Volume">
                     <span class="volume-value" id="volumeValue">80%</span>
                 </div>
             </div>
@@ -177,15 +178,19 @@
                 <div class="request-form-card">
                     <form id="requestForm" class="request-form">
                         <div class="form-group">
+                            <label for="reqName" class="sr-only">Seu nome</label>
                             <input type="text" id="reqName" placeholder="Seu nome" required>
                         </div>
                         <div class="form-group">
+                            <label for="reqSong" class="sr-only">Nome da música</label>
                             <input type="text" id="reqSong" placeholder="Nome da música" required>
                         </div>
                         <div class="form-group">
+                            <label for="reqArtist" class="sr-only">Nome do artista</label>
                             <input type="text" id="reqArtist" placeholder="Nome do artista" required>
                         </div>
                         <div class="form-group">
+                            <label for="reqMessage" class="sr-only">Mensagem (opcional)</label>
                             <textarea id="reqMessage" placeholder="Mensagem (opcional)" rows="3"></textarea>
                         </div>
                         <button type="submit" class="submit-btn request-btn">
@@ -303,6 +308,7 @@
         </div>
         <div class="chat-nickbar" id="chatNickBar">
             <i class="fas fa-user-edit"></i>
+            <label for="chatNickInput" class="sr-only">Seu nome no chat</label>
             <input type="text" id="chatNickInput" placeholder="Seu nome..." maxlength="20">
             <button onclick="setNickname()" class="chat-nick-btn"><i class="fas fa-check"></i></button>
         </div>
@@ -310,6 +316,7 @@
             <div class="chat-welcome">Bem-vindo ao chat da Pires FM! 🎵</div>
         </div>
         <div class="chat-input-bar">
+            <label for="chatInput" class="sr-only">Digite sua mensagem</label>
             <input type="text" id="chatInput" placeholder="Digite sua mensagem..." maxlength="200">
             <button onclick="sendChat()" class="chat-send-btn"><i class="fas fa-paper-plane"></i></button>
         </div>
