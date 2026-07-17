@@ -778,7 +778,6 @@ function loadTrack() {
     };
 
     audio.src = url;
-    audio.load();
     streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
     streamStatus.className = 'stream-status';
 }
