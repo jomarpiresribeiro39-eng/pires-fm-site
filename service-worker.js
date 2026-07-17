@@ -18,12 +18,14 @@ var urlsToCache = [
 ];
 
 self.addEventListener("install", function(e) {
+    self.skipWaiting();
     e.waitUntil(
         caches.open(CACHE_NAME).then(function(cache) {
-            return cache.addAll(urlsToCache);
+            return Promise.allSettled(urlsToCache.map(function(url) {
+                try { return cache.add(url); } catch(_) { return Promise.resolve(); }
+            }));
         })
     );
-    self.skipWaiting();
 });
 
 self.addEventListener("activate", function(e) {
@@ -47,7 +49,15 @@ self.addEventListener("fetch", function(e) {
         );
         return;
     }
-    if (e.request.url.indexOf("github.io") !== -1 || e.request.url.indexOf(".js") !== -1 || e.request.url.indexOf(".html") !== -1 || e.request.url.indexOf(".css") !== -1) {
+    if (e.request.url.indexOf(".html") !== -1) {
+        e.respondWith(
+            fetch(e.request).then(function(r) { return r; }).catch(function() {
+                return caches.match(e.request);
+            })
+        );
+        return;
+    }
+    if (e.request.url.indexOf("github.io") !== -1 || e.request.url.indexOf(".js") !== -1 || e.request.url.indexOf(".css") !== -1) {
         e.respondWith(
             fetch(e.request).then(function(fetchResponse) {
                 if (fetchResponse.status === 206) { return fetchResponse; }
