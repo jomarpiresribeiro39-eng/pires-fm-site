@@ -406,7 +406,7 @@
             audio.src = url;
             audio.load();
             if (fromUserClick) {
-                audio.play().then(onPlayStart).catch(function() {});
+                audio.play().catch(function() {});
             }
             setUI("loading");
         }
