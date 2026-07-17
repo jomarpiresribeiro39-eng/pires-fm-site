@@ -1214,9 +1214,10 @@ section, header, footer, .autoplay-overlay, .mobile-nav {
     gap: 18px;
     background-color: #0d0d1a;
     background-image: linear-gradient(135deg, rgba(5,5,16,0.5), rgba(5,5,16,0.3)), url('img/flower_bg_1.jpg');
-    background-size: cover;
-    background-position: center top;
+    background-size: contain;
+    background-position: center;
     background-repeat: no-repeat;
+    min-height: 320px;
     border: 1px solid rgba(255,255,255,0.06);
     border-radius: 16px;
     padding: 24px 32px;
