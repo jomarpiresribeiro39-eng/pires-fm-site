@@ -415,6 +415,11 @@ body {
     border-left: 3px solid var(--primary);
 }
 
+@keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.5); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 10px rgba(230, 57, 70, 0); }
+}
+
 .track-item.current .track-num {
     background: var(--primary);
     color: white;
@@ -593,6 +598,7 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
 }
 
@@ -871,6 +877,7 @@ tr.pedido-pending:hover {
 }
 
 /* ========== SCROLLBAR ========== */
+* { scrollbar-width: thin; scrollbar-color: var(--secondary) transparent; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 3px; }

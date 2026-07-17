@@ -718,7 +718,12 @@ function scrollToCurrent() {
     }
 }
 
+var loadingTrack = false;
+
 function loadTrack() {
+    goNextBusy = false;
+    if (loadingTrack) return;
+    loadingTrack = true;
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
     var url = ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
@@ -730,6 +735,7 @@ function loadTrack() {
     audio.preload = 'auto';
 
     function onReady() {
+        audio.removeEventListener('canplay', onReady);
         errorRetryCount = 0;
         setPlayingState(true);
         trackNameEl.textContent = track.song;
@@ -739,25 +745,22 @@ function loadTrack() {
         if (seekTo > 0 && seekTo < audio.duration) {
             audio.currentTime = seekTo;
         }
-        audio.play().then(function() {
-            var remaining = AVG_SONG;
-            if (seekTo > 0 && seekTo < audio.duration) {
-                remaining = AVG_SONG - seekTo;
+        var remaining = AVG_SONG;
+        if (seekTo > 0 && seekTo < audio.duration) {
+            remaining = AVG_SONG - seekTo;
+        }
+        var dur = audio.duration;
+        var timeout = Math.max(remaining, 10) + 10;
+        if (dur && isFinite(dur) && dur < 600 && Math.ceil(dur) + 10 < timeout) {
+            timeout = Math.ceil(dur) + 10;
+        }
+        audio.play().catch(function() {});
+        maxDurationTimer = setTimeout(function() {
+            if (isPlaying && !isAnnouncing) {
+                goNext();
             }
-            var dur = audio.duration;
-            var timeout = Math.max(remaining, 10) + 10;
-            if (dur && isFinite(dur) && dur < 600 && Math.ceil(dur) + 10 > timeout) {
-                timeout = Math.ceil(dur) + 10;
-            }
-            maxDurationTimer = setTimeout(function() {
-                if (isPlaying && !isAnnouncing) {
-                    goNext();
-                }
-            }, timeout * 1000);
-        }).catch(function() {
-            audio.load();
-            setTimeout(function() { audio.play().catch(function() {}); }, 1000);
-        });
+        }, timeout * 1000);
+        loadingTrack = false;
     }
 
     audio.addEventListener('canplay', onReady, { once: true });
@@ -783,7 +786,10 @@ function loadTrack() {
     streamStatus.className = 'stream-status';
 }
 
+var goNextBusy = false;
 function goNext() {
+    if (goNextBusy) return;
+    goNextBusy = true;
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
     if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
     songsPlayed++;
@@ -938,9 +944,9 @@ function getRequests() {
 }
 
 function saveRequests(reqs) {
-    localStorage.setItem(REQUESTS_KEY, JSON.stringify(reqs));
+    try { localStorage.setItem(REQUESTS_KEY, JSON.stringify(reqs)); } catch(e) {}
     var publicReqs = reqs.filter(function(r) { return r.approved; }).slice(-5);
-    localStorage.setItem(REQUESTS_PUBLIC_KEY, JSON.stringify(publicReqs));
+    try { localStorage.setItem(REQUESTS_PUBLIC_KEY, JSON.stringify(publicReqs)); } catch(e) {}
     updateRequestCounts();
 }
 
@@ -965,9 +971,9 @@ function renderRequestQueue() {
     for (var i = 0; i < publicReqs.length; i++) {
         var r = publicReqs[i];
         html += '<div class="request-item">' +
-            '<div class="req-song">' + r.song + '</div>' +
-            '<div class="req-artist">' + r.artist + ' <span class="req-by">por ' + r.name + '</span></div>' +
-            (r.message ? '<div class="req-msg">"' + r.message + '"</div>' : '') +
+            '<div class="req-song">' + escHtml(r.song) + '</div>' +
+            '<div class="req-artist">' + escHtml(r.artist) + ' <span class="req-by">por ' + escHtml(r.name) + '</span></div>' +
+            (r.message ? '<div class="req-msg">"' + escHtml(r.message) + '"</div>' : '') +
             '</div>';
     }
     container.innerHTML = html;
@@ -1010,7 +1016,6 @@ function startRadio() {
     var sic = Math.floor(tic / AVG_SONG);
     songsPlayed = (sic >= SONGS_PER_BLOCO ? 0 : sic);
     loadTrack();
-    audio.play().catch(function() {});
 }
 
 console.log('%c Pires FM %c Iniciando...',
@@ -1040,7 +1045,7 @@ var chatLastMsg = 0;
 var chatColors = ['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#a855f7','#06b6d4','#f97316','#84cc16','#ec4899','#14b8a6','#f43f5e'];
 
 function getChatNick() {
-    return localStorage.getItem('piresfm_chat_nick') || '';
+    try { return localStorage.getItem('piresfm_chat_nick') || ''; } catch(e) { return ''; }
 }
 
 function toggleChat() {
@@ -1052,6 +1057,8 @@ function toggleChat() {
     if (open) {
         document.getElementById('chatInput').focus();
         if (!chatInitialized) initChat();
+    } else {
+        if (chatUnsub) { chatUnsub(); chatUnsub = null; }
     }
 }
 
@@ -1059,7 +1066,7 @@ function setNickname() {
     var input = document.getElementById('chatNickInput');
     var nick = input.value.trim();
     if (!nick) return;
-    localStorage.setItem('piresfm_chat_nick', nick);
+    try { localStorage.setItem('piresfm_chat_nick', nick); } catch(e) {}
     input.blur();
 }
 

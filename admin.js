@@ -98,7 +98,7 @@ function getStoredData() {
 }
 
 function saveData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
 }
 
 function isLoggedIn() {
@@ -150,7 +150,7 @@ function addLog(msg, type) {
     var time = now.toLocaleTimeString('pt-BR') + ' ' + now.toLocaleDateString('pt-BR');
     logs.unshift({ time: time, msg: msg, type: type });
     if (logs.length > 200) logs = logs.slice(0, 200);
-    localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(logs)); } catch(e) {}
 }
 
 function renderLogs() {
@@ -344,12 +344,13 @@ function renderNextTracks() {
         if (c) c.innerHTML = '<p style="color:var(--text-muted);padding:10px;">Nenhuma musica na playlist.</p>';
         return;
     }
-    var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
     var AVG_SONG = 240;
     var SONGS_PER_BLOCO = 3;
     var BLOCO_DURATION = 120;
     var CYCLE_DURATION = AVG_SONG * SONGS_PER_BLOCO + BLOCO_DURATION;
+    var EPOCH = new Date('2025-01-01T00:00:00-03:00').getTime();
     var elapsed = (Date.now() - EPOCH) / 1000;
+    if (elapsed < 0) elapsed = 0;
     var fullCycles = Math.floor(elapsed / CYCLE_DURATION);
     var idx = (fullCycles * SONGS_PER_BLOCO) % pl.length;
 
@@ -456,12 +457,11 @@ function syncPlaylistToGithub() {
 
 function saveConfig() {
     var data = getStoredData();
-    data.config = {
-        avgSong: parseInt(document.getElementById('cfgAvgSong').value),
-        locEvery: parseInt(document.getElementById('cfgLocEvery').value),
-        locDuration: parseInt(document.getElementById('cfgLocDuration').value),
-        voice: document.getElementById('cfgVoice').value
-    };
+    data.config = data.config || {};
+    data.config.avgSong = parseInt(document.getElementById('cfgAvgSong').value);
+    data.config.locEvery = parseInt(document.getElementById('cfgLocEvery').value);
+    data.config.locDuration = parseInt(document.getElementById('cfgLocDuration').value);
+    data.config.voice = document.getElementById('cfgVoice').value;
     saveData(data);
     addLog('Configurações salvas', 'info');
     alert('Configurações salvas com sucesso!');
@@ -494,7 +494,7 @@ function changePassword() {
         return;
     }
     ADMIN_PASSWORD = newPass;
-    localStorage.setItem('piresfm_admin_pass', newPass);
+    try { localStorage.setItem('piresfm_admin_pass', newPass); } catch(e) {}
     document.getElementById('cfgOldPass').value = '';
     document.getElementById('cfgNewPass').value = '';
     document.getElementById('cfgConfirmPass').value = '';
@@ -508,7 +508,7 @@ function getRequests() {
 }
 
 function saveRequests(reqs) {
-    localStorage.setItem(REQUESTS_KEY, JSON.stringify(reqs));
+    try { localStorage.setItem(REQUESTS_KEY, JSON.stringify(reqs)); } catch(e) {}
     renderPedidos();
 }
 
