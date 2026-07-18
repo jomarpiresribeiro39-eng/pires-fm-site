@@ -746,7 +746,7 @@ function initWebAudio() {
     } catch(e) { console.log('Web Audio falhou:', e); return false; }
 }
 
-var waPreloadTimer = null;
+var waEndedManual = false;
 function loadTrackWA(index, offset) {
     if (loadingTrack) return;
     loadingTrack = true;
@@ -768,7 +768,7 @@ function loadTrackWA(index, offset) {
         if (safeOffset >= buffer.duration) safeOffset = 0;
         source.start(now, safeOffset);
         waSources.push(source);
-        waStartTime = now - (offset || 0);
+        waStartTime = now - (safeOffset || 0);
         waStartIndex = selfIdx;
         currentTrackIndex = selfIdx;
         trackNameEl.textContent = track.song;
@@ -776,14 +776,16 @@ function loadTrackWA(index, offset) {
         renderPlaylist();
         setPlayingState(true);
         loadingTrack = false;
-        if (waPreloadTimer) clearTimeout(waPreloadTimer);
+        trackEnding = false;
         var preloadIdx = (selfIdx + 3) % playlist.length;
         preloadTrack(preloadIdx);
-        if (waTimer) clearTimeout(waTimer);
-        var remaining = Math.max((buffer.duration - (offset || 0) - 1) * 1000, 1000);
-        waTimer = setTimeout(function() {
-            if (!isAnnouncing && !trackEnding) goNext();
-        }, remaining);
+        waEndedManual = false;
+        source.onended = function() {
+            if (!waEndedManual && !isAnnouncing && !trackEnding) {
+                trackEnding = true;
+                goNext();
+            }
+        };
     }).catch(function() {
         loadingTrack = false;
         consecutiveFailures++;
@@ -798,6 +800,8 @@ function loadTrackWA(index, offset) {
         }
     });
 }
+    });
+}
 
 var cycleStartTrack = 0;
 function checkTriggerBloco() {
@@ -810,6 +814,7 @@ function resetBlocoCycle() {
 }
 
 function stopWA() {
+    waEndedManual = true;
     if (waTimer) { clearTimeout(waTimer); waTimer = null; }
     for (var i = 0; i < waSources.length; i++) { try { waSources[i].stop(); } catch(e) {} }
     waSources = [];
