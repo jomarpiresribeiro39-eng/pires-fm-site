@@ -734,10 +734,13 @@ function initWebAudio() {
     } catch(e) { return false; }
 }
 
+var waPreloadTimer = null;
 function loadTrackWA(index, offset) {
+    if (loadingTrack) return;
+    loadingTrack = true;
     var idx = ((index % playlist.length) + playlist.length) % playlist.length;
     var track = playlist[idx];
-    if (!track) return;
+    if (!track) { loadingTrack = false; return; }
     var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
     var selfIdx = idx;
     fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
@@ -753,38 +756,21 @@ function loadTrackWA(index, offset) {
         waSources.push(source);
         waStartTime = now - (offset || 0);
         waStartIndex = selfIdx;
-        if (currentTrackIndex !== selfIdx) {
-            currentTrackIndex = selfIdx;
-            trackNameEl.textContent = track.song;
-            trackArtistEl.textContent = track.artist;
-            renderPlaylist();
-        }
+        currentTrackIndex = selfIdx;
+        trackNameEl.textContent = track.song;
+        trackArtistEl.textContent = track.artist;
+        renderPlaylist();
         setPlayingState(true);
-        scheduleNextWA(selfIdx + 1, now + buffer.duration - (offset || 0));
+        loadingTrack = false;
+        if (waPreloadTimer) clearTimeout(waPreloadTimer);
+        var preloadIdx = (selfIdx + 3) % playlist.length;
+        preloadTrack(preloadIdx);
         if (waTimer) clearTimeout(waTimer);
-        var remaining = (buffer.duration - (offset || 0) - 1) * 1000;
+        var remaining = Math.max((buffer.duration - (offset || 0) - 1) * 1000, 1000);
         waTimer = setTimeout(function() {
             if (!isAnnouncing && !trackEnding) goNext();
-        }, Math.max(remaining, 1000));
-    }).catch(function() {});
-}
-
-function scheduleNextWA(nextIndex, startTime) {
-    var idx = ((nextIndex % playlist.length) + playlist.length) % playlist.length;
-    var track = playlist[idx];
-    if (!track) return;
-    var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
-    fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
-        return waCtx.decodeAudioData(buf);
-    }).then(function(buffer) {
-        var source = waCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(waGain);
-        var schedTime = Math.max(startTime, waCtx.currentTime);
-        source.start(schedTime);
-        waSources.push(source);
-        scheduleNextWA(idx + 1, schedTime + buffer.duration);
-    }).catch(function(){});
+        }, remaining);
+    }).catch(function() { loadingTrack = false; });
 }
 
 function stopWA() {
@@ -945,20 +931,19 @@ function goNext() {
     songsPlayed++;
 
     if (waMode) {
-        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        var trk = playlist[currentTrackIndex];
-        goNextBusy = false;
-        trackNameEl.textContent = trk.song;
-        trackArtistEl.textContent = trk.artist;
-        renderPlaylist();
+        songsPlayed++;
         if (songsPlayed >= 3) {
             songsPlayed = 0;
+            goNextBusy = false;
             stopWA();
             doBlocoLocucao(function() {
                 setPlayingState(true);
+                currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
                 loadTrackWA(currentTrackIndex, 0);
             });
         } else {
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            goNextBusy = false;
             loadTrackWA(currentTrackIndex, 0);
         }
         return;
