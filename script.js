@@ -726,12 +726,14 @@ var waStartIndex = 0;
 function initWebAudio() {
     try {
         waCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (waCtx.state === 'suspended') waCtx.resume();
         waGain = waCtx.createGain();
         waGain.gain.value = 0.8;
         waGain.connect(waCtx.destination);
         waMode = true;
+        console.log('%c Pires FM %c Web Audio ATIVADO', 'background:#e63946;color:white;padding:5px 10px;border-radius:4px 0 0 4px;font-weight:bold', 'background:#2a9d8f;color:white;padding:5px 10px;border-radius:0 4px 4px 0');
         return true;
-    } catch(e) { return false; }
+    } catch(e) { console.log('Web Audio falhou:', e); return false; }
 }
 
 var waPreloadTimer = null;
@@ -771,6 +773,24 @@ function loadTrackWA(index, offset) {
             if (!isAnnouncing && !trackEnding) goNext();
         }, remaining);
     }).catch(function() { loadingTrack = false; });
+}
+
+var lastBlocoTime = Date.now();
+var blocoWatchdog = null;
+function startBlocoWatchdog() {
+    if (blocoWatchdog) clearInterval(blocoWatchdog);
+    blocoWatchdog = setInterval(function() {
+        if (!isPlaying || isAnnouncing) return;
+        var elapsed = (Date.now() - lastBlocoTime) / 1000;
+        if (elapsed > AVG_SONG * 4) {
+            songsPlayed = 3;
+            goNext();
+        }
+    }, 10000);
+}
+
+function stopBlocoWatchdog() {
+    if (blocoWatchdog) { clearInterval(blocoWatchdog); blocoWatchdog = null; }
 }
 
 function stopWA() {
@@ -931,13 +951,13 @@ function goNext() {
     songsPlayed++;
 
     if (waMode) {
-        songsPlayed++;
         if (songsPlayed >= 3) {
             songsPlayed = 0;
-            goNextBusy = false;
             stopWA();
             doBlocoLocucao(function() {
                 setPlayingState(true);
+                goNextBusy = false;
+                lastBlocoTime = Date.now();
                 currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
                 loadTrackWA(currentTrackIndex, 0);
             });
@@ -1191,6 +1211,8 @@ function startRadio() {
     var badge = document.getElementById('modeBadge');
     if (initWebAudio()) {
         if (badge) badge.textContent = 'Modo: Web Audio (stream contínuo)';
+        lastBlocoTime = Date.now();
+        startBlocoWatchdog();
         loadTrackWA(currentTrackIndex, getRadioTrackOffset());
     } else {
         if (badge) badge.textContent = 'Modo: Legado (troca de src)';
