@@ -1171,14 +1171,14 @@ function startRadio() {
     initMSE(function(ok) {
         if (ok) {
             loadTrack();
+            startHealthCheck();
         } else {
             USE_MSE = false;
             audio.src = '';
             audio.load();
-            setTimeout(function() { loadTrack(); }, 100);
+            setTimeout(function() { loadTrack(); startHealthCheck(); }, 100);
         }
     });
-    startHealthCheck();
 }
 
 // Mobile recovery: when screen turns back on, resume playback
