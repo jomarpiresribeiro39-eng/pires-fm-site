@@ -1006,12 +1006,23 @@ if (playBtn) {
         }
 
         if (isPlaying) {
-            audio.muted = true;
+            if (waMode) {
+                try { waCtx.suspend(); } catch(ex) {}
+            } else {
+                audio.muted = true;
+                audio.pause();
+            }
             setPlayingState(false);
             return;
         }
 
-        audio.muted = false;
+        if (waMode) {
+            try { waCtx.resume(); } catch(ex) {}
+            loadTrackWA(currentTrackIndex, 0);
+        } else {
+            audio.muted = false;
+            audio.play().catch(function() { loadTrack(); });
+        }
         setPlayingState(true);
     });
 }
