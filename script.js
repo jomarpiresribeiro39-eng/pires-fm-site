@@ -730,6 +730,15 @@ var waGain = null;
 var waMode = false;
 var waSrc = null;
 var waLoading = false;
+var debugLog = [];
+function dbg(msg) {
+    var t = new Date().toISOString().slice(11,23);
+    debugLog.push(t + ' ' + msg);
+    if (debugLog.length > 100) debugLog.shift();
+    console.log('[DBG]', msg);
+    var pre = document.getElementById('debugPre');
+    if (pre) pre.textContent = debugLog.join('\n');
+}
 
 function initWebAudio() {
     try {
@@ -744,7 +753,7 @@ function initWebAudio() {
 }
 
 function stopWA() {
-    if (waSrc) { try { waSrc.stop(); } catch(e) {} waSrc = null; }
+    if (waSrc) { dbg('stopWA: parando source'); try { waSrc.stop(); } catch(e) { dbg('stopWA: erro ao parar: ' + e); } waSrc = null; } else { dbg('stopWA: waSrc ja nulo'); }
 }
 
 function setWAGain(v) {
@@ -752,21 +761,23 @@ function setWAGain(v) {
 }
 
 function loadTrackWA(idx, off) {
-    if (waLoading) return;
+    if (waLoading) { dbg('loadTrackWA: waLoading true, ignorando'); return; }
+    dbg('loadTrackWA: carregando idx=' + idx + ' off=' + off + ' ctxState=' + (waCtx ? waCtx.state : 'null'));
     waLoading = true;
     stopWA();
     var index = ((idx % playlist.length) + playlist.length) % playlist.length;
     var track = playlist[index];
-    if (!track) { waLoading = false; return; }
+    if (!track) { waLoading = false; dbg('loadTrackWA: track invalido'); return; }
     currentTrackIndex = index;
     trackNameEl.textContent = track.song;
     trackArtistEl.textContent = track.artist;
     renderPlaylist();
     setPlayingState(true);
     var url = trackCache[index] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
-    fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
+    fetch(url).then(function(r) { if (!r.ok) throw Error('fetch status ' + r.status); return r.arrayBuffer(); }).then(function(buf) {
         return waCtx.decodeAudioData(buf);
     }).then(function(buffer) {
+        dbg('loadTrackWA: decodificado, duracao=' + buffer.duration.toFixed(1));
         var offset = Math.min(off || 0, buffer.duration - 1);
         if (offset < 0) offset = 0;
         waSrc = waCtx.createBufferSource();
@@ -776,14 +787,16 @@ function loadTrackWA(idx, off) {
         waLoading = false;
         goNextBusy = false;
         waSrc.onended = function() {
+            dbg('onended disparado, isAnnouncing=' + isAnnouncing + ' goNextBusy=' + goNextBusy);
             if (!isAnnouncing) goNext();
         };
-    }).catch(function() {
+    }).catch(function(err) {
+        dbg('loadTrackWA: ERRO ' + (err && err.message ? err.message : err));
         waLoading = false;
         goNextBusy = false;
         consecutiveFailures++;
-        if (consecutiveFailures > 3) { consecutiveFailures = 0; stopWA(); setTimeout(startRadio, 5000); }
-        else { setTimeout(function() { goNext(); }, 2000); }
+        if (consecutiveFailures > 3) { consecutiveFailures = 0; dbg('loadTrackWA: 3 falhas, restart'); stopWA(); setTimeout(startRadio, 5000); }
+        else { dbg('loadTrackWA: tentando prox em 2s'); setTimeout(function() { goNext(); }, 2000); }
     });
 }
 
@@ -800,8 +813,12 @@ var recoveryCheck = null;
 function startRecovery() {
     if (recoveryCheck) clearInterval(recoveryCheck);
     recoveryCheck = setInterval(function() {
-        if (!waMode || !isPlaying || isAnnouncing || waLoading) return;
+        if (!waMode) return;
+        if (!isPlaying) { dbg('recovery: isPlaying false'); return; }
+        if (isAnnouncing) { dbg('recovery: isAnnouncing true'); return; }
+        if (waLoading) { dbg('recovery: waLoading true'); return; }
         if (checkTriggerBloco()) {
+            dbg('recovery: BLOCO songs=' + songsPlayed);
             resetBlocoCycle();
             stopWA();
             doBlocoLocucao(function() {
@@ -813,6 +830,7 @@ function startRecovery() {
             return;
         }
         if (!waSrc) {
+            dbg('recovery: waSrc nulo, recarregando');
             loadTrackWA(currentTrackIndex, 0);
         }
     }, 3000);
@@ -959,7 +977,8 @@ function startHealthCheck() {
 
 var goNextBusy = false;
 function goNext() {
-    if (goNextBusy) return;
+    dbg('goNext: songsPlayed=' + songsPlayed + ' goNextBusy=' + goNextBusy + ' isAnnouncing=' + isAnnouncing);
+    if (goNextBusy) { dbg('goNext: bloqueado por goNextBusy'); return; }
     goNextBusy = true;
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
     if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
@@ -967,6 +986,7 @@ function goNext() {
 
     if (waMode) {
         if (checkTriggerBloco()) {
+            dbg('goNext: BLOCO disparado songsPlayed=' + songsPlayed);
             resetBlocoCycle();
             stopWA();
             doBlocoLocucao(function() {
@@ -1242,12 +1262,16 @@ function startRadio() {
 
 // Mobile recovery: when screen turns back on, resume playback
 document.addEventListener('visibilitychange', function() {
+    dbg('visibilitychange: hidden=' + document.hidden + ' isPlaying=' + isPlaying + ' waMode=' + waMode + ' waSrc=' + (waSrc ? 'ok' : 'null') + ' waCtxState=' + (waCtx ? waCtx.state : 'null'));
     if (document.hidden) return;
     if (!isPlaying || isAnnouncing) return;
     if (waMode) {
-        waCtx.resume().catch(function(){});
+        waCtx.resume().catch(function(e){ dbg('visibilitychange: resume erro ' + e); });
         if (!waSrc) {
+            dbg('visibilitychange: waSrc nulo, carregando track');
             loadTrackWA(currentTrackIndex, 0);
+        } else {
+            dbg('visibilitychange: waSrc existe, apenas resume');
         }
         return;
     }
@@ -1387,3 +1411,30 @@ document.addEventListener('keydown', function(e) {
         if (nickInput && document.activeElement === nickInput) { setNickname(); return; }
     }
 });
+
+// ========== DEBUG PANEL ==========
+setTimeout(function() {
+    var dbgBtn = document.createElement('button');
+    dbgBtn.id = 'debugBtn';
+    dbgBtn.textContent = 'DBG';
+    dbgBtn.style.cssText = 'position:fixed;bottom:80px;right:10px;z-index:9999;background:#e63946;color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.4);opacity:0.7';
+    dbgBtn.onclick = function() {
+        var box = document.getElementById('debugBox');
+        if (box) { box.style.display = box.style.display === 'none' ? 'block' : 'none'; return; }
+        box = document.createElement('div');
+        box.id = 'debugBox';
+        box.style.cssText = 'position:fixed;top:60px;right:10px;width:320px;max-height:70vh;overflow:auto;z-index:9998;background:#1a1a2e;color:#0f0;border:1px solid #e63946;border-radius:8px;padding:10px;font:11px monospace;white-space:pre-wrap;word-break:break-all';
+        var close = document.createElement('button');
+        close.textContent = 'X';
+        close.style.cssText = 'float:right;background:transparent;color:#e63946;border:none;font-size:16px;cursor:pointer';
+        close.onclick = function() { box.style.display = 'none'; };
+        box.appendChild(close);
+        var pre = document.createElement('pre');
+        pre.id = 'debugPre';
+        pre.style.margin = '20px 0 0 0';
+        pre.textContent = debugLog.join('\n');
+        box.appendChild(pre);
+        document.body.appendChild(box);
+    };
+    document.body.appendChild(dbgBtn);
+}, 2000);
