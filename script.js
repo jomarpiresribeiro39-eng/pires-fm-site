@@ -977,6 +977,7 @@ function goNext() {
             });
         } else {
             currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            goNextBusy = false;
             loadTrackWA(currentTrackIndex, 0);
         }
         return;
