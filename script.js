@@ -774,11 +774,13 @@ function loadTrackWA(idx, off) {
         waSrc.connect(waGain);
         waSrc.start(0, offset);
         waLoading = false;
+        goNextBusy = false;
         waSrc.onended = function() {
             if (!isAnnouncing) goNext();
         };
     }).catch(function() {
         waLoading = false;
+        goNextBusy = false;
         consecutiveFailures++;
         if (consecutiveFailures > 3) { consecutiveFailures = 0; stopWA(); setTimeout(startRadio, 5000); }
         else { setTimeout(function() { goNext(); }, 2000); }
@@ -975,7 +977,6 @@ function goNext() {
             });
         } else {
             currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            goNextBusy = false;
             loadTrackWA(currentTrackIndex, 0);
         }
         return;
@@ -1244,7 +1245,9 @@ document.addEventListener('visibilitychange', function() {
     if (!isPlaying || isAnnouncing) return;
     if (waMode) {
         waCtx.resume().catch(function(){});
-        loadTrackWA(currentTrackIndex, 0);
+        if (!waSrc) {
+            loadTrackWA(currentTrackIndex, 0);
+        }
         return;
     }
     if (audio.ended || (audio.duration && audio.currentTime >= audio.duration - 0.8)) {
