@@ -218,6 +218,9 @@ var isAnnouncing = false;
 var savedVolume = 0.8;
 var locucaoAudio = null;
 var lastLocucaoType = '';
+var waSavedGain = 0.8;
+function muteVolume() { if (waMode) { waSavedGain = waGain.gain.value; setWAGain(0.03); } else { savedVolume = audio.volume; audio.volume = 0.03; } }
+function restoreVolume() { if (waMode) { setWAGain(waSavedGain); } else { audio.volume = savedVolume; } }
 
 var locucoesArquivos = {
     ident: ['ident_01.mp3','ident_02.mp3','ident_03.mp3','ident_04.mp3','ident_05.mp3','ident_06.mp3','ident_07.mp3','ident_08.mp3'],
@@ -311,7 +314,7 @@ function doHoraCerta(callback) {
     var np = document.getElementById('nowPlaying');
     var ss = document.getElementById('streamStatus');
 
-    try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+    muteVolume();
     if (np) np.classList.add('announcing');
     document.getElementById('trackName').textContent = 'Hora Certa - Rio de Janeiro';
     document.getElementById('trackArtist').textContent = 'Pires FM - A hora certa do Rio!';
@@ -332,14 +335,14 @@ function doHoraCerta(callback) {
         .then(function() {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
-            try { audio.volume = savedVolume; } catch(e) {}
+            restoreVolume();
             renderPlaylist();
             setTimeout(function() { if (callback) callback(); }, 500);
         })
         .catch(function() {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
-            try { audio.volume = savedVolume; } catch(e) {}
+            restoreVolume();
             renderPlaylist();
             if (callback) callback();
         });
@@ -400,7 +403,7 @@ function doClima(callback) {
     var np = document.getElementById('nowPlaying');
     var ss = document.getElementById('streamStatus');
 
-    try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+    muteVolume();
     if (np) np.classList.add('announcing');
     document.getElementById('trackName').textContent = 'Tempo no Rio de Janeiro';
     document.getElementById('trackArtist').textContent = 'Pires FM - Informacoes do tempo...';
@@ -415,7 +418,7 @@ function doClima(callback) {
     var outroUrl = LOCUCOES_URL + '/' + encodeURIComponent(outroFile);
 
     buscarClima().then(function(c) {
-        if (!c) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} renderPlaylist(); if (callback) callback(); return; }
+        if (!c) { isAnnouncing = false; if (np) np.classList.remove('announcing'); restoreVolume(); renderPlaylist(); if (callback) callback(); return; }
         var textoClima = textosClima(c);
         playAudio(introUrl)
             .then(function() { return falarComVoz(textoClima); })
@@ -423,14 +426,14 @@ function doClima(callback) {
             .then(function() {
                 isAnnouncing = false; locucaoAudio = null;
                 if (np) np.classList.remove('announcing');
-                try { audio.volume = savedVolume; } catch(e) {}
+                restoreVolume();
                 renderPlaylist();
                 setTimeout(function() { if (callback) callback(); }, 500);
             })
             .catch(function() {
                 isAnnouncing = false; locucaoAudio = null;
                 if (np) np.classList.remove('announcing');
-                try { audio.volume = savedVolume; } catch(e) {}
+                restoreVolume();
                 renderPlaylist();
                 if (callback) callback();
             });
@@ -470,7 +473,7 @@ function doNoticias(callback) {
     var np = document.getElementById('nowPlaying');
     var ss = document.getElementById('streamStatus');
 
-    try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+    muteVolume();
     if (np) np.classList.add('announcing');
     document.getElementById('trackName').textContent = 'Noticias em Tempo Real';
     document.getElementById('trackArtist').textContent = 'Pires FM - Ultimas noticias...';
@@ -481,7 +484,7 @@ function doNoticias(callback) {
     var outroUrl = LOCUCOES_URL + '/' + encodeURIComponent(outroFile);
 
     buscarNoticias().then(function(noticias) {
-        if (!noticias || noticias.length === 0) { isAnnouncing = false; if (np) np.classList.remove('announcing'); try { audio.volume = savedVolume; } catch(e) {} renderPlaylist(); if (callback) callback(); return; }
+        if (!noticias || noticias.length === 0) { isAnnouncing = false; if (np) np.classList.remove('announcing'); restoreVolume(); renderPlaylist(); if (callback) callback(); return; }
         var noticia = noticias[Math.floor(Math.random() * noticias.length)];
         var introTexts = [
             'Noticia de ultima hora, trazida pela Pires FM!',
@@ -496,14 +499,14 @@ function doNoticias(callback) {
             .then(function() {
                 isAnnouncing = false; locucaoAudio = null;
                 if (np) np.classList.remove('announcing');
-                try { audio.volume = savedVolume; } catch(e) {}
+                restoreVolume();
                 renderPlaylist();
                 setTimeout(function() { if (callback) callback(); }, 500);
             })
             .catch(function() {
                 isAnnouncing = false; locucaoAudio = null;
                 if (np) np.classList.remove('announcing');
-                try { audio.volume = savedVolume; } catch(e) {}
+                restoreVolume();
                 renderPlaylist();
                 if (callback) callback();
             });
@@ -517,7 +520,7 @@ function doIdent(callback) {
     var np = document.getElementById('nowPlaying');
     var ss = document.getElementById('streamStatus');
 
-    try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+    muteVolume();
     if (np) np.classList.add('announcing');
     document.getElementById('trackName').textContent = 'Identificacao Pires FM';
     document.getElementById('trackArtist').textContent = 'Pires FM - A voz do Rio de Janeiro!';
@@ -543,14 +546,14 @@ function doIdent(callback) {
         .then(function() {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
-            try { audio.volume = savedVolume; } catch(e) {}
+            restoreVolume();
             renderPlaylist();
             setTimeout(function() { if (callback) callback(); }, 500);
         })
         .catch(function() {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
-            try { audio.volume = savedVolume; } catch(e) {}
+            restoreVolume();
             renderPlaylist();
             if (callback) callback();
         });
@@ -578,14 +581,14 @@ function doLocucao(callback) {
         document.getElementById('trackName').textContent = nomes[loc.tipo] || 'Locucao Pires FM';
         document.getElementById('trackArtist').textContent = 'Pires FM - Locucao profissional...';
         if (ss) { ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Locucao - Pires FM</span>'; ss.className = 'stream-status connected'; }
-        try { savedVolume = audio.volume; audio.volume = 0.03; } catch(e) {}
+        muteVolume();
         renderPlaylist();
     };
 
     locucaoAudio.onended = function() {
         isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
-        try { audio.volume = savedVolume; } catch(e) {}
+        restoreVolume();
         renderPlaylist();
         setTimeout(function() { if (callback) callback(); }, 500);
     };
@@ -593,7 +596,7 @@ function doLocucao(callback) {
     locucaoAudio.onerror = function() {
         isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
-        try { audio.volume = savedVolume; } catch(e) {}
+        restoreVolume();
         renderPlaylist();
         if (callback) callback();
     };
@@ -603,7 +606,7 @@ function doLocucao(callback) {
     locucaoAudio.play().catch(function() {
         isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
-        try { audio.volume = savedVolume; } catch(e) {}
+        restoreVolume();
         renderPlaylist();
         if (callback) callback();
     });
@@ -614,8 +617,8 @@ function doBlocoLocucao(callback) {
     isAnnouncing = true;
     var np = document.getElementById('nowPlaying');
     var ss = document.getElementById('streamStatus');
-    var volOriginal = audio.volume;
-    try { audio.volume = 0.03; } catch(e) {}
+    var volOriginal = waMode ? waGain.gain.value : audio.volume;
+    muteVolume();
     if (np) np.classList.add('announcing');
     document.getElementById('trackName').textContent = 'Pires FM - Informacao e Musica';
     document.getElementById('trackArtist').textContent = 'Pires FM - Bloco de Programacao';
@@ -646,13 +649,13 @@ function doBlocoLocucao(callback) {
         playAudio(url).then(function() {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
-            try { audio.volume = volOriginal; } catch(e) {}
+            if (waMode) { setWAGain(volOriginal); } else { audio.volume = volOriginal; }
             renderPlaylist();
             setTimeout(function() { if (callback) callback(); }, 500);
         }).catch(function() {
             isAnnouncing = false; locucaoAudio = null;
             if (np) np.classList.remove('announcing');
-            try { audio.volume = volOriginal; } catch(e) {}
+            if (waMode) { setWAGain(volOriginal); } else { audio.volume = volOriginal; }
             renderPlaylist();
             if (callback) callback();
         });
@@ -711,53 +714,87 @@ var playlistBody = document.getElementById('playlistBody');
 
 audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
 
-// ========== MSE PSEUDO-STREAM ==========
-var USE_MSE = false;
-var mseMediaSource = null;
-var mseSourceBuffer = null;
-var mseReady = false;
-var mseAppendQueue = [];
-var mseProcessing = false;
-var mseStartTime = 0;
-var mseStartIndex = 0;
+// ========== WEB AUDIO PLAYER ==========
+var waCtx = null;
+var waGain = null;
+var waMode = false;
+var waTimer = null;
+var waSources = [];
+var waStartTime = 0;
+var waStartIndex = 0;
 
-function initMSE(callback) {
-    if (!('MediaSource' in window)) { if (callback) callback(false); return; }
-    try { if (!MediaSource.isTypeSupported('audio/mpeg')) { if (callback) callback(false); return; } } catch(e) { if (callback) callback(false); return; }
-    USE_MSE = true;
-    mseMediaSource = new MediaSource();
-    audio.src = URL.createObjectURL(mseMediaSource);
-    audio.load();
-    mseMediaSource.addEventListener('sourceopen', function() {
-        try { mseSourceBuffer = mseMediaSource.addSourceBuffer('audio/mpeg'); } catch(e) { USE_MSE = false; mseReady = false; if (callback) callback(false); return; }
-        mseReady = true;
-        mseSourceBuffer.onerror = function() { };
-        mseSourceBuffer.onupdateend = function() { mseProcessing = false; processMSEQueue(); };
-        if (callback) callback(true);
-    });
-    setTimeout(function() {
-        if (!mseReady) { USE_MSE = false; if (callback) callback(false); }
-    }, 1000);
+function initWebAudio() {
+    try {
+        waCtx = new (window.AudioContext || window.webkitAudioContext)();
+        waGain = waCtx.createGain();
+        waGain.gain.value = 0.8;
+        waGain.connect(waCtx.destination);
+        waMode = true;
+        return true;
+    } catch(e) { return false; }
 }
 
-function processMSEQueue() {
-    if (!mseReady || !mseSourceBuffer || mseSourceBuffer.updating || mseProcessing) return;
-    if (mseAppendQueue.length === 0) return;
-    mseProcessing = true;
-    var data = mseAppendQueue.shift();
-    try { mseSourceBuffer.appendBuffer(data); } catch(e) { mseProcessing = false; }
+function loadTrackWA(index, offset) {
+    var idx = ((index % playlist.length) + playlist.length) % playlist.length;
+    var track = playlist[idx];
+    if (!track) return;
+    var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
+    var selfIdx = idx;
+    fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
+        return waCtx.decodeAudioData(buf);
+    }).then(function(buffer) {
+        for (var i = 0; i < waSources.length; i++) { try { waSources[i].stop(); } catch(e) {} }
+        waSources = [];
+        var source = waCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(waGain);
+        var now = waCtx.currentTime;
+        source.start(now, offset || 0);
+        waSources.push(source);
+        waStartTime = now - (offset || 0);
+        waStartIndex = selfIdx;
+        if (currentTrackIndex !== selfIdx) {
+            currentTrackIndex = selfIdx;
+            trackNameEl.textContent = track.song;
+            trackArtistEl.textContent = track.artist;
+            renderPlaylist();
+        }
+        setPlayingState(true);
+        scheduleNextWA(selfIdx + 1, now + buffer.duration - (offset || 0));
+        if (waTimer) clearTimeout(waTimer);
+        var remaining = (buffer.duration - (offset || 0) - 1) * 1000;
+        waTimer = setTimeout(function() {
+            if (!isAnnouncing && !trackEnding) goNext();
+        }, Math.max(remaining, 1000));
+    }).catch(function() {});
 }
 
-function appendMSE(trackIndex) {
-    if (!USE_MSE) return;
-    var idx = ((trackIndex % playlist.length) + playlist.length) % playlist.length;
+function scheduleNextWA(nextIndex, startTime) {
+    var idx = ((nextIndex % playlist.length) + playlist.length) % playlist.length;
     var track = playlist[idx];
     if (!track) return;
     var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
     fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
-        mseAppendQueue.push(buf);
-        processMSEQueue();
+        return waCtx.decodeAudioData(buf);
+    }).then(function(buffer) {
+        var source = waCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(waGain);
+        var schedTime = Math.max(startTime, waCtx.currentTime);
+        source.start(schedTime);
+        waSources.push(source);
+        scheduleNextWA(idx + 1, schedTime + buffer.duration);
     }).catch(function(){});
+}
+
+function stopWA() {
+    if (waTimer) { clearTimeout(waTimer); waTimer = null; }
+    for (var i = 0; i < waSources.length; i++) { try { waSources[i].stop(); } catch(e) {} }
+    waSources = [];
+}
+
+function setWAGain(v) {
+    if (waGain) waGain.gain.value = v;
 }
 
 function renderPlaylist() {
@@ -806,22 +843,8 @@ function loadTrack() {
 
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
 
-    if (USE_MSE && mseReady) {
-        errorRetryCount = 0;
-        consecutiveFailures = 0;
-        setPlayingState(true);
-        trackNameEl.textContent = track.song;
-        trackArtistEl.textContent = track.artist;
-        renderPlaylist();
+    if (waMode) {
         loadingTrack = false;
-        mseStartTime = audio.currentTime || 0;
-        mseStartIndex = currentTrackIndex;
-        appendMSE(currentTrackIndex);
-        for (var pi = 1; pi <= 7; pi++) appendMSE(currentTrackIndex + pi);
-        audio.play().catch(function() {});
-        maxDurationTimer = setTimeout(function() {
-            if (isPlaying && !isAnnouncing && !trackEnding) goNext();
-        }, AVG_SONG * 1000);
         return;
     }
 
@@ -901,7 +924,7 @@ function loadTrack() {
 
 function startHealthCheck() {
     if (healthCheckInterval) clearInterval(healthCheckInterval);
-    if (USE_MSE) return;
+    if (waMode) return;
     healthCheckInterval = setInterval(function() {
         if (!isPlaying || isAnnouncing) return;
         if (audio.ended || (audio.duration && audio.currentTime >= audio.duration - 0.8)) {
@@ -921,27 +944,22 @@ function goNext() {
     if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
     songsPlayed++;
 
-    if (USE_MSE && mseReady) {
+    if (waMode) {
         currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
         var trk = playlist[currentTrackIndex];
         goNextBusy = false;
         trackNameEl.textContent = trk.song;
         trackArtistEl.textContent = trk.artist;
         renderPlaylist();
-        appendMSE(currentTrackIndex + 5);
-        appendMSE(currentTrackIndex + 6);
         if (songsPlayed >= 3) {
             songsPlayed = 0;
+            stopWA();
             doBlocoLocucao(function() {
                 setPlayingState(true);
-                maxDurationTimer = setTimeout(function() {
-                    if (isPlaying && !isAnnouncing && !trackEnding) goNext();
-                }, AVG_SONG * 1000);
+                loadTrackWA(currentTrackIndex, 0);
             });
         } else {
-            maxDurationTimer = setTimeout(function() {
-                if (isPlaying && !isAnnouncing && !trackEnding) goNext();
-            }, AVG_SONG * 1000);
+            loadTrackWA(currentTrackIndex, 0);
         }
         return;
     }
@@ -1003,11 +1021,11 @@ if (playBtn) {
 }
 
 audio.addEventListener('timeupdate', function() {
-    if (USE_MSE && mseReady && isPlaying && mseStartTime > 0) {
-        var totalElapsed = audio.currentTime - mseStartTime;
-        if (totalElapsed < 0) totalElapsed = 0;
-        var trackNum = Math.floor(totalElapsed / AVG_SONG);
-        var newIndex = (mseStartIndex + trackNum) % playlist.length;
+    if (waMode && isPlaying && waStartTime > 0) {
+        var elapsed = waCtx.currentTime - waStartTime;
+        if (elapsed < 0) elapsed = 0;
+        var trackNum = Math.floor(elapsed / AVG_SONG);
+        var newIndex = (waStartIndex + trackNum) % playlist.length;
         if (newIndex !== currentTrackIndex) {
             currentTrackIndex = newIndex;
             var t = playlist[currentTrackIndex];
@@ -1033,7 +1051,7 @@ if (progressContainer) {
 if (volumeSlider) {
     volumeSlider.addEventListener('input', function(e) {
         var v = e.target.value;
-        audio.volume = v / 100;
+        if (waMode) { setWAGain(v / 100); } else { audio.volume = v / 100; }
         volumeValue.textContent = v + '%';
         volumeIcon.className = v == 0 ? 'fas fa-volume-mute' : v < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
     });
@@ -1185,28 +1203,24 @@ function startRadio() {
     for (var pi = 1; pi <= TRACK_CACHE_MAX; pi++) {
         preloadTrack(currentTrackIndex + pi);
     }
-    initMSE(function(ok) {
-        var badge = document.getElementById('modeBadge');
-        if (ok) {
-            if (badge) badge.textContent = 'Modo: MSE (stream contínuo)';
-            loadTrack();
-            startHealthCheck();
-        } else {
-            USE_MSE = false;
-            audio.src = '';
-            audio.load();
-            if (badge) badge.textContent = 'Modo: Legado (troca de src)';
-            setTimeout(function() { loadTrack(); startHealthCheck(); }, 100);
-        }
-    });
+    var badge = document.getElementById('modeBadge');
+    if (initWebAudio()) {
+        if (badge) badge.textContent = 'Modo: Web Audio (stream contínuo)';
+        loadTrackWA(currentTrackIndex, getRadioTrackOffset());
+    } else {
+        if (badge) badge.textContent = 'Modo: Legado (troca de src)';
+        loadTrack();
+        startHealthCheck();
+    }
 }
 
 // Mobile recovery: when screen turns back on, resume playback
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) return;
     if (!isPlaying || isAnnouncing) return;
-    if (USE_MSE && mseReady) {
-        if (audio.paused) audio.play().catch(function() {});
+    if (waMode) {
+        waCtx.resume().catch(function(){});
+        loadTrackWA(currentTrackIndex, 0);
         return;
     }
     if (audio.ended || (audio.duration && audio.currentTime >= audio.duration - 0.8)) {
