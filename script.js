@@ -718,6 +718,8 @@ var mseSourceBuffer = null;
 var mseReady = false;
 var mseAppendQueue = [];
 var mseProcessing = false;
+var mseStartTime = 0;
+var mseStartIndex = 0;
 
 function initMSE(callback) {
     if (!('MediaSource' in window)) { if (callback) callback(false); return; }
@@ -812,6 +814,8 @@ function loadTrack() {
         trackArtistEl.textContent = track.artist;
         renderPlaylist();
         loadingTrack = false;
+        mseStartTime = audio.currentTime || 0;
+        mseStartIndex = currentTrackIndex;
         appendMSE(currentTrackIndex);
         for (var pi = 1; pi <= 7; pi++) appendMSE(currentTrackIndex + pi);
         audio.play().catch(function() {});
@@ -999,6 +1003,19 @@ if (playBtn) {
 }
 
 audio.addEventListener('timeupdate', function() {
+    if (USE_MSE && mseReady && isPlaying && mseStartTime > 0) {
+        var totalElapsed = audio.currentTime - mseStartTime;
+        if (totalElapsed < 0) totalElapsed = 0;
+        var trackNum = Math.floor(totalElapsed / AVG_SONG);
+        var newIndex = (mseStartIndex + trackNum) % playlist.length;
+        if (newIndex !== currentTrackIndex) {
+            currentTrackIndex = newIndex;
+            var t = playlist[currentTrackIndex];
+            trackNameEl.textContent = t.song;
+            trackArtistEl.textContent = t.artist;
+            renderPlaylist();
+        }
+    }
     if (audio.duration && isFinite(audio.duration) && progressBar) {
         progressBar.style.width = (audio.currentTime / audio.duration * 100) + '%';
     }
