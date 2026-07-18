@@ -741,6 +741,7 @@ function loadTrack() {
     function onReady() {
         audio.removeEventListener('canplay', onReady);
         errorRetryCount = 0;
+        consecutiveFailures = 0;
         setPlayingState(true);
         trackNameEl.textContent = track.song;
         trackArtistEl.textContent = track.artist;
@@ -767,6 +768,14 @@ function loadTrack() {
             }
         }, timeout * 1000);
         loadingTrack = false;
+        // Preload next track
+        var nextIdx = (currentTrackIndex + 1) % playlist.length;
+        var nextTrack = playlist[nextIdx];
+        if (nextTrack) {
+            var nextUrl = ARCHIVE_ITEM + '/' + encodeURIComponent(nextTrack.file);
+            var na = document.getElementById('radioNext');
+            if (na) { na.src = nextUrl; na.load(); }
+        }
     }
 
     audio.addEventListener('canplay', onReady, { once: true });
@@ -1055,7 +1064,15 @@ document.addEventListener('visibilitychange', function() {
         goNext();
     } else if (audio.paused && !audio.ended) {
         audio.play().catch(function() {
-            loadTrack();
+            // Try to recover from preloaded audio
+            var na = document.getElementById('radioNext');
+            if (na && na.readyState >= 2) {
+                var tmp = audio.src;
+                audio.src = na.src;
+                audio.play().catch(function() { audio.src = tmp; loadTrack(); });
+            } else {
+                loadTrack();
+            }
         });
     }
 });
