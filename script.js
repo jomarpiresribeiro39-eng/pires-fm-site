@@ -1186,13 +1186,16 @@ function startRadio() {
         preloadTrack(currentTrackIndex + pi);
     }
     initMSE(function(ok) {
+        var badge = document.getElementById('modeBadge');
         if (ok) {
+            if (badge) badge.textContent = 'Modo: MSE (stream contínuo)';
             loadTrack();
             startHealthCheck();
         } else {
             USE_MSE = false;
             audio.src = '';
             audio.load();
+            if (badge) badge.textContent = 'Modo: Legado (troca de src)';
             setTimeout(function() { loadTrack(); startHealthCheck(); }, 100);
         }
     });
