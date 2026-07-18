@@ -719,9 +719,13 @@ function scrollToCurrent() {
 }
 
 var loadingTrack = false;
+var trackEnding = false;
+var healthCheckInterval = null;
+var consecutiveFailures = 0;
 
 function loadTrack() {
     goNextBusy = false;
+    trackEnding = false;
     if (loadingTrack) return;
     loadingTrack = true;
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
@@ -754,9 +758,11 @@ function loadTrack() {
         if (dur && isFinite(dur) && dur < 600 && Math.ceil(dur) + 10 < timeout) {
             timeout = Math.ceil(dur) + 10;
         }
-        audio.play().catch(function() {});
+        audio.play().catch(function() {
+            setTimeout(function() { audio.play().catch(function() {}); }, 500);
+        });
         maxDurationTimer = setTimeout(function() {
-            if (isPlaying && !isAnnouncing) {
+            if (isPlaying && !isAnnouncing && !trackEnding) {
                 goNext();
             }
         }, timeout * 1000);
@@ -768,6 +774,15 @@ function loadTrack() {
     audio.onerror = function() {
         audio.onerror = null;
         errorRetryCount++;
+        consecutiveFailures++;
+        if (consecutiveFailures > 6) {
+            consecutiveFailures = 0;
+            errorRetryCount = 0;
+            streamStatus.innerHTML = '<i class="fas fa-sync"></i> <span>Reiniciando radio...</span>';
+            streamStatus.className = 'stream-status';
+            setTimeout(function() { startRadio(); }, 3000);
+            return;
+        }
         if (errorRetryCount < MAX_RETRIES) {
             streamStatus.innerHTML = '<i class="fas fa-redo"></i> <span>Reconectando... (' + errorRetryCount + ')</span>';
             streamStatus.className = 'stream-status error';
@@ -784,6 +799,19 @@ function loadTrack() {
 
     streamStatus.innerHTML = '<i class="fas fa-cloud"></i> <span>Carregando...</span>';
     streamStatus.className = 'stream-status';
+}
+
+function startHealthCheck() {
+    if (healthCheckInterval) clearInterval(healthCheckInterval);
+    healthCheckInterval = setInterval(function() {
+        if (!isPlaying || isAnnouncing) return;
+        if (audio.ended || (audio.duration && audio.currentTime >= audio.duration - 0.8)) {
+            if (!trackEnding) {
+                trackEnding = true;
+                goNext();
+            }
+        }
+    }, 2000);
 }
 
 var goNextBusy = false;
@@ -1016,7 +1044,21 @@ function startRadio() {
     var sic = Math.floor(tic / AVG_SONG);
     songsPlayed = (sic >= SONGS_PER_BLOCO ? 0 : sic);
     loadTrack();
+    startHealthCheck();
 }
+
+// Mobile recovery: when screen turns back on, resume playback
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) return;
+    if (!isPlaying || isAnnouncing) return;
+    if (audio.ended || (audio.duration && audio.currentTime >= audio.duration - 0.8)) {
+        goNext();
+    } else if (audio.paused && !audio.ended) {
+        audio.play().catch(function() {
+            loadTrack();
+        });
+    }
+});
 
 console.log('%c Pires FM %c Iniciando...',
     'background:#e63946;color:white;padding:5px 10px;border-radius:4px 0 0 4px;font-weight:bold',
