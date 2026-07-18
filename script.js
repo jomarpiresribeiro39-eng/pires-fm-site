@@ -754,7 +754,9 @@ function loadTrackWA(index, offset) {
         source.buffer = buffer;
         source.connect(waGain);
         var now = waCtx.currentTime;
-        source.start(now, offset || 0);
+        var safeOffset = offset || 0;
+        if (safeOffset >= buffer.duration) safeOffset = 0;
+        source.start(now, safeOffset);
         waSources.push(source);
         waStartTime = now - (offset || 0);
         waStartIndex = selfIdx;
@@ -1019,7 +1021,7 @@ if (playBtn) {
 
         if (waMode) {
             try { waCtx.resume(); } catch(ex) {}
-            loadTrackWA(currentTrackIndex, getRadioTrackOffset());
+            loadTrackWA(currentTrackIndex, 0);
         } else {
             audio.muted = false;
             audio.play().catch(function() { loadTrack(); });
