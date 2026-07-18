@@ -794,13 +794,28 @@ function playSource(buffer, startTime, offset) {
     source.buffer = buffer;
     source.connect(waGain);
     source.start(startTime, offset || 0);
+    var srcIdx = waSources.length;
     waSources.push(source);
     waEndedManual = false;
+    source.onended = function() {
+        if (waEndedManual) return;
+        var nextIdx = (waStartIndex + srcIdx + 1) % playlist.length;
+        if (nextIdx !== currentTrackIndex) {
+            currentTrackIndex = nextIdx;
+            var t = playlist[currentTrackIndex];
+            if (t) {
+                trackNameEl.textContent = t.song;
+                trackArtistEl.textContent = t.artist;
+                renderPlaylist();
+            }
+        }
+    };
 }
 
 function preScheduleTrack(nextIndex, startTime) {
     if (!waMode || loadingTrack) return;
     var idx = ((nextIndex % playlist.length) + playlist.length) % playlist.length;
+    if (!playlist[idx]) return;
     var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(playlist[idx].file));
     fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
         return waCtx.decodeAudioData(buf);
@@ -813,31 +828,12 @@ function preScheduleTrack(nextIndex, startTime) {
     }).catch(function() {});
 }
 
-function updateTrackUI() {
-    var now = waCtx.currentTime;
-    if (waStartTime > 0 && now > waStartTime) {
-        var elapsed = now - waStartTime;
-        var trackNum = Math.floor(elapsed / AVG_SONG);
-        var newIdx = (waStartIndex + trackNum) % playlist.length;
-        if (newIdx !== currentTrackIndex) {
-            currentTrackIndex = newIdx;
-            var t = playlist[currentTrackIndex];
-            if (t) {
-                trackNameEl.textContent = t.song;
-                trackArtistEl.textContent = t.artist;
-                renderPlaylist();
-            }
-        }
-    }
-}
-
 var uiTimer = null;
 function startUITimer() {
     if (uiTimer) clearInterval(uiTimer);
     uiTimer = setInterval(function() {
-        if (!waMode || !isPlaying) return;
-        updateTrackUI();
-        if (checkTriggerBloco() && !isAnnouncing) {
+        if (!waMode || !isPlaying || isAnnouncing) return;
+        if (checkTriggerBloco()) {
             resetBlocoCycle();
             stopWA();
             var nextIdx = (currentTrackIndex + 1) % playlist.length;
