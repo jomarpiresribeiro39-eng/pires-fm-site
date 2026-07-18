@@ -271,13 +271,25 @@ function pickLocucao() {
 
 function playAudio(url) {
     return new Promise(function(resolve, reject) {
-        var a = new Audio();
-        a.preload = 'auto';
-        a.onended = function() { resolve(); };
-        a.onerror = function() { reject(); };
-        a.src = url;
-        a.load();
-        a.play().catch(reject);
+        if (waMode && waCtx) {
+            fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
+                return waCtx.decodeAudioData(buf);
+            }).then(function(buffer) {
+                var src = waCtx.createBufferSource();
+                src.buffer = buffer;
+                src.connect(waCtx.destination);
+                src.start(0);
+                src.onended = function() { resolve(); };
+            }).catch(function() { reject(); });
+        } else {
+            var a = new Audio();
+            a.preload = 'auto';
+            a.onended = function() { resolve(); };
+            a.onerror = function() { reject(); };
+            a.src = url;
+            a.load();
+            a.play().catch(reject);
+        }
     });
 }
 
@@ -570,46 +582,44 @@ function doLocucao(callback) {
     var loc = pickLocucao();
     var url = LOCUCOES_URL + '/' + encodeURIComponent(loc.arquivo);
 
-    locucaoAudio = new Audio();
-    locucaoAudio.preload = 'auto';
     var np = document.getElementById('nowPlaying');
     var ss = document.getElementById('streamStatus');
 
-    locucaoAudio.onplay = function() {
-        if (np) np.classList.add('announcing');
-        var nomes = { ident: 'Identificacao Pires FM', curiosidade: 'Curiosidade do Rio', noticia: 'Noticia do Rio', dica: 'Dica do Dia', programacao: 'Programacao', hora: 'Hora Certa', clima: 'Tempo no Rio', noticias: 'Noticias em Tempo Real' };
-        document.getElementById('trackName').textContent = nomes[loc.tipo] || 'Locucao Pires FM';
-        document.getElementById('trackArtist').textContent = 'Pires FM - Locucao profissional...';
-        if (ss) { ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Locucao - Pires FM</span>'; ss.className = 'stream-status connected'; }
-        muteVolume();
-        renderPlaylist();
-    };
+    var locNomes = { ident: 'Identificacao Pires FM', curiosidade: 'Curiosidade do Rio', noticia: 'Noticia do Rio', dica: 'Dica do Dia', programacao: 'Programacao', hora: 'Hora Certa', clima: 'Tempo no Rio', noticias: 'Noticias em Tempo Real' };
+    document.getElementById('trackName').textContent = locNomes[loc.tipo] || 'Locucao Pires FM';
+    document.getElementById('trackArtist').textContent = 'Pires FM - Locucao profissional...';
+    if (ss) { ss.innerHTML = '<i class="fas fa-microphone"></i> <span>Locucao - Pires FM</span>'; ss.className = 'stream-status connected'; }
+    if (np) np.classList.add('announcing');
+    renderPlaylist();
 
-    locucaoAudio.onended = function() {
+    function locEnd() {
         isAnnouncing = false; locucaoAudio = null;
         if (np) np.classList.remove('announcing');
         restoreVolume();
         renderPlaylist();
         setTimeout(function() { if (callback) callback(); }, 500);
-    };
+    }
 
-    locucaoAudio.onerror = function() {
-        isAnnouncing = false; locucaoAudio = null;
-        if (np) np.classList.remove('announcing');
-        restoreVolume();
-        renderPlaylist();
-        if (callback) callback();
-    };
-
-    locucaoAudio.src = url;
-    locucaoAudio.load();
-    locucaoAudio.play().catch(function() {
-        isAnnouncing = false; locucaoAudio = null;
-        if (np) np.classList.remove('announcing');
-        restoreVolume();
-        renderPlaylist();
-        if (callback) callback();
-    });
+    if (waMode && waCtx) {
+        fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
+            return waCtx.decodeAudioData(buf);
+        }).then(function(buffer) {
+            var src = waCtx.createBufferSource();
+            src.buffer = buffer;
+            src.connect(waCtx.destination);
+            src.start(0);
+            src.onended = locEnd;
+            locucaoAudio = { stop: function() { try { src.stop(); } catch(e) {} src.onended = null; locEnd(); }, pause: function() { try { src.stop(); } catch(e) {} } };
+        }).catch(function() { locEnd(); });
+    } else {
+        locucaoAudio = new Audio();
+        locucaoAudio.preload = 'auto';
+        locucaoAudio.onended = locEnd;
+        locucaoAudio.onerror = function() { isAnnouncing = false; locucaoAudio = null; if (np) np.classList.remove('announcing'); restoreVolume(); renderPlaylist(); if (callback) callback(); };
+        locucaoAudio.src = url;
+        locucaoAudio.load();
+        locucaoAudio.play().catch(function() { isAnnouncing = false; locucaoAudio = null; if (np) np.classList.remove('announcing'); restoreVolume(); renderPlaylist(); if (callback) callback(); });
+    }
 }
 
 function doBlocoLocucao(callback) {
