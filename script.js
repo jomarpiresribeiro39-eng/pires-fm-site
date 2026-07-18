@@ -1082,12 +1082,15 @@ if (volumeIcon) {
     });
 }
 
+var visBars = null;
 (function animVis() {
     if (isPlaying && !isAnnouncing) {
-        var bars = document.querySelectorAll('.visualizer .bar');
-        for (var i = 0; i < bars.length; i++) bars[i].style.height = (Math.random() * 50 + 5) + 'px';
+        if (!visBars) visBars = document.querySelectorAll('.visualizer .bar');
+        for (var i = 0; i < visBars.length; i++) visBars[i].style.height = (Math.random() * 50 + 5) + 'px';
+        requestAnimationFrame(function() { setTimeout(animVis, 100); });
+    } else {
+        setTimeout(animVis, 500);
     }
-    requestAnimationFrame(function() { setTimeout(animVis, 100); });
 })();
 
 var menuToggle = document.getElementById('menuToggle');
