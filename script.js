@@ -1007,6 +1007,7 @@ if (playBtn) {
 
         if (isPlaying) {
             if (waMode) {
+                stopWA();
                 try { waCtx.suspend(); } catch(ex) {}
             } else {
                 audio.muted = true;
@@ -1018,7 +1019,7 @@ if (playBtn) {
 
         if (waMode) {
             try { waCtx.resume(); } catch(ex) {}
-            loadTrackWA(currentTrackIndex, 0);
+            loadTrackWA(currentTrackIndex, getRadioTrackOffset());
         } else {
             audio.muted = false;
             audio.play().catch(function() { loadTrack(); });
