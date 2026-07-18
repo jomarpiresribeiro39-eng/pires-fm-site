@@ -711,6 +711,49 @@ var playlistBody = document.getElementById('playlistBody');
 
 audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
 
+// ========== MSE PSEUDO-STREAM ==========
+var USE_MSE = false;
+var mseMediaSource = null;
+var mseSourceBuffer = null;
+var mseReady = false;
+var mseAppendQueue = [];
+var mseProcessing = false;
+
+function initMSE() {
+    if (!('MediaSource' in window)) return false;
+    try { if (!MediaSource.isTypeSupported('audio/mpeg')) return false; } catch(e) { return false; }
+    USE_MSE = true;
+    mseMediaSource = new MediaSource();
+    audio.src = URL.createObjectURL(mseMediaSource);
+    mseMediaSource.addEventListener('sourceopen', function() {
+        try { mseSourceBuffer = mseMediaSource.addSourceBuffer('audio/mpeg'); } catch(e) { USE_MSE = false; return; }
+        mseReady = true;
+        mseSourceBuffer.onerror = function() { USE_MSE = false; };
+        mseSourceBuffer.onupdateend = function() { mseProcessing = false; processMSEQueue(); };
+    });
+    return true;
+}
+
+function processMSEQueue() {
+    if (!mseReady || !mseSourceBuffer || mseSourceBuffer.updating || mseProcessing) return;
+    if (mseAppendQueue.length === 0) return;
+    mseProcessing = true;
+    var data = mseAppendQueue.shift();
+    try { mseSourceBuffer.appendBuffer(data); } catch(e) { mseProcessing = false; USE_MSE = false; }
+}
+
+function appendMSE(trackIndex) {
+    if (!USE_MSE) return;
+    var idx = ((trackIndex % playlist.length) + playlist.length) % playlist.length;
+    var track = playlist[idx];
+    if (!track) return;
+    var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
+    fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
+        mseAppendQueue.push(buf);
+        processMSEQueue();
+    }).catch(function(){});
+}
+
 function renderPlaylist() {
     if (!playlistBody) return;
     var html = '';
@@ -754,9 +797,30 @@ function loadTrack() {
     loadingTrack = true;
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
-    var url = trackCache[currentTrackIndex] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
 
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
+
+    if (USE_MSE && mseReady) {
+        errorRetryCount = 0;
+        consecutiveFailures = 0;
+        setPlayingState(true);
+        trackNameEl.textContent = track.song;
+        trackArtistEl.textContent = track.artist;
+        renderPlaylist();
+        var seekTo = getRadioTrackOffset();
+        loadingTrack = false;
+        appendMSE(currentTrackIndex);
+        for (var pi = 1; pi <= 7; pi++) appendMSE(currentTrackIndex + pi);
+        audio.play().catch(function() {});
+        var remaining = AVG_SONG;
+        if (seekTo > 0) remaining = AVG_SONG - seekTo;
+        maxDurationTimer = setTimeout(function() {
+            if (isPlaying && !isAnnouncing && !trackEnding) goNext();
+        }, Math.max(remaining, 10) * 1000);
+        return;
+    }
+
+    var url = trackCache[currentTrackIndex] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
 
     audio.muted = false;
     audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
@@ -832,6 +896,7 @@ function loadTrack() {
 
 function startHealthCheck() {
     if (healthCheckInterval) clearInterval(healthCheckInterval);
+    if (USE_MSE) return;
     healthCheckInterval = setInterval(function() {
         if (!isPlaying || isAnnouncing) return;
         if (audio.ended || (audio.duration && audio.currentTime >= audio.duration - 0.8)) {
@@ -850,6 +915,39 @@ function goNext() {
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
     if (isAnnouncing && locucaoAudio) { locucaoAudio.pause(); locucaoAudio = null; isAnnouncing = false; }
     songsPlayed++;
+
+    if (USE_MSE && mseReady) {
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        var track = playlist[currentTrackIndex];
+        if (songsPlayed >= 3) {
+            songsPlayed = 0;
+            goNextBusy = false;
+            doBlocoLocucao(function() {
+                var t = playlist[currentTrackIndex];
+                trackNameEl.textContent = t.song;
+                trackArtistEl.textContent = t.artist;
+                renderPlaylist();
+                setPlayingState(true);
+                appendMSE(currentTrackIndex + 5);
+                appendMSE(currentTrackIndex + 6);
+                maxDurationTimer = setTimeout(function() {
+                    if (isPlaying && !isAnnouncing && !trackEnding) goNext();
+                }, (AVG_SONG + 5) * 1000);
+            });
+            return;
+        }
+        goNextBusy = false;
+        trackNameEl.textContent = track.song;
+        trackArtistEl.textContent = track.artist;
+        renderPlaylist();
+        appendMSE(currentTrackIndex + 5);
+        appendMSE(currentTrackIndex + 6);
+        maxDurationTimer = setTimeout(function() {
+            if (isPlaying && !isAnnouncing && !trackEnding) goNext();
+        }, AVG_SONG * 1000);
+        return;
+    }
+
     if (songsPlayed >= 3) {
         songsPlayed = 0;
         doBlocoLocucao(function() {
@@ -1073,23 +1171,40 @@ function startRadio() {
     var tic = getElapsedSeconds() % CYCLE_DURATION;
     var sic = Math.floor(tic / AVG_SONG);
     songsPlayed = (sic >= SONGS_PER_BLOCO ? 0 : sic);
-    // Preload upcoming tracks before starting
     for (var pi = 1; pi <= TRACK_CACHE_MAX; pi++) {
         preloadTrack(currentTrackIndex + pi);
     }
-    loadTrack();
-    startHealthCheck();
+    var mseInit = initMSE();
+    if (mseInit) {
+        var waitTimer = setInterval(function() {
+            if (mseReady) {
+                clearInterval(waitTimer);
+                loadTrack();
+                startHealthCheck();
+            }
+        }, 50);
+        setTimeout(function() {
+            clearInterval(waitTimer);
+            if (!mseReady) { USE_MSE = false; loadTrack(); startHealthCheck(); }
+        }, 3000);
+    } else {
+        loadTrack();
+        startHealthCheck();
+    }
 }
 
 // Mobile recovery: when screen turns back on, resume playback
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) return;
     if (!isPlaying || isAnnouncing) return;
+    if (USE_MSE && mseReady) {
+        if (audio.paused) audio.play().catch(function() {});
+        return;
+    }
     if (audio.ended || (audio.duration && audio.currentTime >= audio.duration - 0.8)) {
         goNext();
     } else if (audio.paused && !audio.ended) {
         audio.play().catch(function() {
-            // Try to recover from cached track
             var nextCached = trackCache[(currentTrackIndex + 1) % playlist.length] || trackCache[currentTrackIndex];
             if (nextCached) {
                 audio.src = nextCached;
