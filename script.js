@@ -720,12 +720,15 @@ var mseAppendQueue = [];
 var mseProcessing = false;
 
 function initMSE() {
-    if (!('MediaSource' in window)) return false;
-    try { if (!MediaSource.isTypeSupported('audio/mpeg')) return false; } catch(e) { return false; }
+    if (!('MediaSource' in window)) { console.log('Pires FM: MSE nao suportado (MediaSource)'); return false; }
+    try { if (!MediaSource.isTypeSupported('audio/mpeg')) { console.log('Pires FM: MSE audio/mpeg nao suportado'); return false; } } catch(e) { console.log('Pires FM: MSE erro isTypeSupported'); return false; }
     USE_MSE = true;
     mseMediaSource = new MediaSource();
     audio.src = URL.createObjectURL(mseMediaSource);
+    audio.load();
+    console.log('Pires FM: MSE iniciando...');
     mseMediaSource.addEventListener('sourceopen', function() {
+        console.log('Pires FM: MSE sourceopen - modo pseudo-stream ativado');
         try { mseSourceBuffer = mseMediaSource.addSourceBuffer('audio/mpeg'); } catch(e) { USE_MSE = false; return; }
         mseReady = true;
         mseSourceBuffer.onerror = function() { USE_MSE = false; };
@@ -1185,7 +1188,16 @@ function startRadio() {
         }, 50);
         setTimeout(function() {
             clearInterval(waitTimer);
-            if (!mseReady) { USE_MSE = false; loadTrack(); startHealthCheck(); }
+            if (!mseReady) {
+                console.log('Pires FM: MSE timeout - usando modo legado');
+                USE_MSE = false;
+                audio.src = '';
+                audio.load();
+                loadTrack();
+                startHealthCheck();
+            } else {
+                console.log('Pires FM: MSE pronto em menos de 3s');
+            }
         }, 3000);
     } else {
         loadTrack();
