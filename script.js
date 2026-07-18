@@ -815,8 +815,6 @@ function startUITimer() {
         }
     }, 2000);
 }
-    });
-}
 
 var cycleStartTrack = 0;
 function checkTriggerBloco() {
