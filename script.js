@@ -747,45 +747,33 @@ function initWebAudio() {
 }
 
 var waEndedManual = false;
+var waChainHead = 0;
 function loadTrackWA(index, offset) {
     if (loadingTrack) return;
     loadingTrack = true;
+    stopWA();
     var idx = ((index % playlist.length) + playlist.length) % playlist.length;
     var track = playlist[idx];
     if (!track) { loadingTrack = false; return; }
+    currentTrackIndex = idx;
     var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
-    var selfIdx = idx;
     fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
         return waCtx.decodeAudioData(buf);
     }).then(function(buffer) {
-        for (var i = 0; i < waSources.length; i++) { try { waSources[i].stop(); } catch(e) {} }
-        waSources = [];
-        var source = waCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(waGain);
         var now = waCtx.currentTime;
         var safeOffset = offset || 0;
         if (safeOffset >= buffer.duration) safeOffset = 0;
-        source.start(now, safeOffset);
-        waSources.push(source);
+        playSource(buffer, now, safeOffset);
         waStartTime = now - (safeOffset || 0);
-        waStartIndex = selfIdx;
-        currentTrackIndex = selfIdx;
+        waStartIndex = idx;
         trackNameEl.textContent = track.song;
         trackArtistEl.textContent = track.artist;
         renderPlaylist();
         setPlayingState(true);
         loadingTrack = false;
         trackEnding = false;
-        var preloadIdx = (selfIdx + 3) % playlist.length;
-        preloadTrack(preloadIdx);
-        waEndedManual = false;
-        source.onended = function() {
-            if (!waEndedManual && !isAnnouncing && !trackEnding) {
-                trackEnding = true;
-                goNext();
-            }
-        };
+        waChainHead = idx + 1;
+        preScheduleTrack(waChainHead, now + buffer.duration - (safeOffset || 0));
     }).catch(function() {
         loadingTrack = false;
         consecutiveFailures++;
@@ -799,6 +787,68 @@ function loadTrackWA(index, offset) {
             setTimeout(function() { goNext(); }, 2000);
         }
     });
+}
+
+function playSource(buffer, startTime, offset) {
+    var source = waCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(waGain);
+    source.start(startTime, offset || 0);
+    waSources.push(source);
+    waEndedManual = false;
+}
+
+function preScheduleTrack(nextIndex, startTime) {
+    if (!waMode || loadingTrack) return;
+    var idx = ((nextIndex % playlist.length) + playlist.length) % playlist.length;
+    var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(playlist[idx].file));
+    fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
+        return waCtx.decodeAudioData(buf);
+    }).then(function(buffer) {
+        var schedTime = Math.max(startTime, waCtx.currentTime);
+        if (!waMode) return;
+        playSource(buffer, schedTime, 0);
+        waChainHead = idx + 1;
+        preScheduleTrack(waChainHead, schedTime + buffer.duration);
+    }).catch(function() {});
+}
+
+function updateTrackUI() {
+    var now = waCtx.currentTime;
+    if (waStartTime > 0 && now > waStartTime) {
+        var elapsed = now - waStartTime;
+        var trackNum = Math.floor(elapsed / AVG_SONG);
+        var newIdx = (waStartIndex + trackNum) % playlist.length;
+        if (newIdx !== currentTrackIndex) {
+            currentTrackIndex = newIdx;
+            var t = playlist[currentTrackIndex];
+            if (t) {
+                trackNameEl.textContent = t.song;
+                trackArtistEl.textContent = t.artist;
+                renderPlaylist();
+            }
+        }
+    }
+}
+
+var uiTimer = null;
+function startUITimer() {
+    if (uiTimer) clearInterval(uiTimer);
+    uiTimer = setInterval(function() {
+        if (!waMode || !isPlaying) return;
+        updateTrackUI();
+        if (checkTriggerBloco() && !isAnnouncing) {
+            resetBlocoCycle();
+            stopWA();
+            var nextIdx = (currentTrackIndex + 1) % playlist.length;
+            doBlocoLocucao(function() {
+                setPlayingState(true);
+                goNextBusy = false;
+                currentTrackIndex = nextIdx;
+                loadTrackWA(currentTrackIndex, 0);
+            });
+        }
+    }, 2000);
 }
     });
 }
@@ -972,6 +1022,7 @@ function goNext() {
     songsPlayed++;
 
     if (waMode) {
+        if (uiTimer) clearInterval(uiTimer);
         if (checkTriggerBloco()) {
             resetBlocoCycle();
             stopWA();
@@ -980,11 +1031,13 @@ function goNext() {
                 goNextBusy = false;
                 currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
                 loadTrackWA(currentTrackIndex, 0);
+                startUITimer();
             });
         } else {
             currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
             goNextBusy = false;
             loadTrackWA(currentTrackIndex, 0);
+            startUITimer();
         }
         return;
     }
@@ -1058,19 +1111,6 @@ if (playBtn) {
 }
 
 audio.addEventListener('timeupdate', function() {
-    if (waMode && isPlaying && waStartTime > 0) {
-        var elapsed = waCtx.currentTime - waStartTime;
-        if (elapsed < 0) elapsed = 0;
-        var trackNum = Math.floor(elapsed / AVG_SONG);
-        var newIndex = (waStartIndex + trackNum) % playlist.length;
-        if (newIndex !== currentTrackIndex) {
-            currentTrackIndex = newIndex;
-            var t = playlist[currentTrackIndex];
-            trackNameEl.textContent = t.song;
-            trackArtistEl.textContent = t.artist;
-            renderPlaylist();
-        }
-    }
     if (audio.duration && isFinite(audio.duration) && progressBar) {
         progressBar.style.width = (audio.currentTime / audio.duration * 100) + '%';
     }
@@ -1248,6 +1288,7 @@ function startRadio() {
         if (badge) badge.textContent = 'Modo: Web Audio (stream contínuo)';
         resetBlocoCycle();
         loadTrackWA(currentTrackIndex, getRadioTrackOffset());
+        startUITimer();
     } else {
         if (badge) badge.textContent = 'Modo: Legado (troca de src)';
         loadTrack();
