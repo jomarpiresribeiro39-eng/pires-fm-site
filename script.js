@@ -728,10 +728,8 @@ audio.volume = (volumeSlider ? volumeSlider.value : 80) / 100;
 var waCtx = null;
 var waGain = null;
 var waMode = false;
-var waTimer = null;
-var waSources = [];
-var waStartTime = 0;
-var waStartIndex = 0;
+var waSrc = null;
+var waLoading = false;
 
 function initWebAudio() {
     try {
@@ -741,100 +739,81 @@ function initWebAudio() {
         waGain.gain.value = 0.8;
         waGain.connect(waCtx.destination);
         waMode = true;
-        console.log('%c Pires FM %c Web Audio ATIVADO', 'background:#e63946;color:white;padding:5px 10px;border-radius:4px 0 0 4px;font-weight:bold', 'background:#2a9d8f;color:white;padding:5px 10px;border-radius:0 4px 4px 0');
         return true;
-    } catch(e) { console.log('Web Audio falhou:', e); return false; }
-}
-
-var waEndedManual = false;
-function loadTrackWA(index, offset) {
-    if (loadingTrack) return;
-    loadingTrack = true;
-    stopWA();
-    var idx = ((index % playlist.length) + playlist.length) % playlist.length;
-    var track = playlist[idx];
-    if (!track) { loadingTrack = false; return; }
-    currentTrackIndex = idx;
-    trackNameEl.textContent = track.song;
-    trackArtistEl.textContent = track.artist;
-    renderPlaylist();
-    var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
-    fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
-        return waCtx.decodeAudioData(buf);
-    }).then(function(buffer) {
-        var now = waCtx.currentTime;
-        var safeOffset = offset || 0;
-        if (safeOffset >= buffer.duration) safeOffset = 0;
-        var source = waCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(waGain);
-        source.start(now, safeOffset);
-        waStartTime = now - (safeOffset || 0);
-        waStartIndex = idx;
-        setPlayingState(true);
-        loadingTrack = false;
-        trackEnding = false;
-        waEndedManual = false;
-        source.onended = function() {
-            if (!waEndedManual && !isAnnouncing && !trackEnding) {
-                trackEnding = true;
-                goNext();
-            }
-        };
-    }).catch(function() {
-        loadingTrack = false;
-        consecutiveFailures++;
-        if (consecutiveFailures > 3) {
-            consecutiveFailures = 0;
-            stopWA();
-            streamStatus.innerHTML = '<i class="fas fa-sync"></i> <span>Reiniciando radio...</span>';
-            streamStatus.className = 'stream-status';
-            setTimeout(startRadio, 5000);
-        } else {
-            setTimeout(function() { goNext(); }, 2000);
-        }
-    });
-}
-
-var uiTimer = null;
-function startUITimer() {
-    if (uiTimer) clearInterval(uiTimer);
-    uiTimer = setInterval(function() {
-        if (!waMode || !isPlaying || isAnnouncing) return;
-        var elapsed = (performance.now() - cycleStartTrack) / 1000;
-        if (elapsed > AVG_SONG * SONGS_PER_BLOCO + 30) {
-            resetBlocoCycle();
-            stopWA();
-            var nextIdx = (currentTrackIndex + 1) % playlist.length;
-            doBlocoLocucao(function() {
-                setPlayingState(true);
-                goNextBusy = false;
-                currentTrackIndex = nextIdx;
-                loadTrackWA(currentTrackIndex, 0);
-            });
-        }
-    }, 2000);
-}
-
-var cycleStartTrack = 0;
-function checkTriggerBloco() {
-    if (isAnnouncing) return false;
-    var elapsed = (performance.now() - cycleStartTrack) / 1000;
-    return elapsed > AVG_SONG * SONGS_PER_BLOCO;
-}
-function resetBlocoCycle() {
-    cycleStartTrack = performance.now();
+    } catch(e) { return false; }
 }
 
 function stopWA() {
-    waEndedManual = true;
-    if (waTimer) { clearTimeout(waTimer); waTimer = null; }
-    for (var i = 0; i < waSources.length; i++) { try { waSources[i].stop(); } catch(e) {} }
-    waSources = [];
+    if (waSrc) { try { waSrc.stop(); } catch(e) {} waSrc = null; }
 }
 
 function setWAGain(v) {
     if (waGain) waGain.gain.value = v;
+}
+
+function loadTrackWA(idx, off) {
+    if (waLoading) return;
+    waLoading = true;
+    stopWA();
+    var index = ((idx % playlist.length) + playlist.length) % playlist.length;
+    var track = playlist[index];
+    if (!track) { waLoading = false; return; }
+    currentTrackIndex = index;
+    trackNameEl.textContent = track.song;
+    trackArtistEl.textContent = track.artist;
+    renderPlaylist();
+    setPlayingState(true);
+    var url = trackCache[index] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
+    fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
+        return waCtx.decodeAudioData(buf);
+    }).then(function(buffer) {
+        var offset = Math.min(off || 0, buffer.duration - 1);
+        if (offset < 0) offset = 0;
+        waSrc = waCtx.createBufferSource();
+        waSrc.buffer = buffer;
+        waSrc.connect(waGain);
+        waSrc.start(0, offset);
+        waLoading = false;
+        waSrc.onended = function() {
+            if (!isAnnouncing) goNext();
+        };
+    }).catch(function() {
+        waLoading = false;
+        consecutiveFailures++;
+        if (consecutiveFailures > 3) { consecutiveFailures = 0; stopWA(); setTimeout(startRadio, 5000); }
+        else { setTimeout(function() { goNext(); }, 2000); }
+    });
+}
+
+function checkTriggerBloco() {
+    if (isAnnouncing) return false;
+    return songsPlayed >= SONGS_PER_BLOCO;
+}
+
+function resetBlocoCycle() {
+    songsPlayed = 0;
+}
+
+var recoveryCheck = null;
+function startRecovery() {
+    if (recoveryCheck) clearInterval(recoveryCheck);
+    recoveryCheck = setInterval(function() {
+        if (!waMode || !isPlaying || isAnnouncing || waLoading) return;
+        if (checkTriggerBloco()) {
+            resetBlocoCycle();
+            stopWA();
+            doBlocoLocucao(function() {
+                goNextBusy = false;
+                setPlayingState(true);
+                currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+                loadTrackWA(currentTrackIndex, 0);
+            });
+            return;
+        }
+        if (!waSrc) {
+            loadTrackWA(currentTrackIndex, 0);
+        }
+    }, 3000);
 }
 
 function renderPlaylist() {
@@ -989,8 +968,8 @@ function goNext() {
             resetBlocoCycle();
             stopWA();
             doBlocoLocucao(function() {
-                setPlayingState(true);
                 goNextBusy = false;
+                setPlayingState(true);
                 currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
                 loadTrackWA(currentTrackIndex, 0);
             });
@@ -1061,14 +1040,7 @@ if (playBtn) {
 
         if (waMode) {
             try { waCtx.resume(); } catch(ex) {}
-            if (loadingTrack) {
-                var retryIdx = currentTrackIndex;
-                var retry = setInterval(function() {
-                    if (!loadingTrack) { clearInterval(retry); loadTrackWA(retryIdx, 0); }
-                }, 500);
-            } else {
-                loadTrackWA(currentTrackIndex, 0);
-            }
+            loadTrackWA(currentTrackIndex, 0);
         } else {
             audio.muted = false;
             audio.play().catch(function() { loadTrack(); });
@@ -1252,10 +1224,10 @@ function startRadio() {
     }
     var badge = document.getElementById('modeBadge');
     if (initWebAudio()) {
-        if (badge) badge.textContent = 'Modo: Web Audio (stream contínuo)';
+        if (badge) badge.textContent = 'Modo: Web Audio';
         resetBlocoCycle();
         loadTrackWA(currentTrackIndex, getRadioTrackOffset());
-        startUITimer();
+        startRecovery();
     } else {
         if (badge) badge.textContent = 'Modo: Legado (troca de src)';
         loadTrack();
