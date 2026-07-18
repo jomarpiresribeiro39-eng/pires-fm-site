@@ -750,9 +750,7 @@ var waEndedManual = false;
 function loadTrackWA(index, offset) {
     if (loadingTrack) return;
     loadingTrack = true;
-    waEndedManual = true;
     stopWA();
-    waEndedManual = false;
     var idx = ((index % playlist.length) + playlist.length) % playlist.length;
     var track = playlist[idx];
     if (!track) { loadingTrack = false; return; }
@@ -776,6 +774,7 @@ function loadTrackWA(index, offset) {
         setPlayingState(true);
         loadingTrack = false;
         trackEnding = false;
+        waEndedManual = false;
         source.onended = function() {
             if (!waEndedManual && !isAnnouncing && !trackEnding) {
                 trackEnding = true;
