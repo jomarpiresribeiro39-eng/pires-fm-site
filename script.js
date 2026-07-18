@@ -719,22 +719,23 @@ var mseReady = false;
 var mseAppendQueue = [];
 var mseProcessing = false;
 
-function initMSE() {
-    if (!('MediaSource' in window)) { console.log('Pires FM: MSE nao suportado (MediaSource)'); return false; }
-    try { if (!MediaSource.isTypeSupported('audio/mpeg')) { console.log('Pires FM: MSE audio/mpeg nao suportado'); return false; } } catch(e) { console.log('Pires FM: MSE erro isTypeSupported'); return false; }
+function initMSE(callback) {
+    if (!('MediaSource' in window)) { if (callback) callback(false); return; }
+    try { if (!MediaSource.isTypeSupported('audio/mpeg')) { if (callback) callback(false); return; } } catch(e) { if (callback) callback(false); return; }
     USE_MSE = true;
     mseMediaSource = new MediaSource();
     audio.src = URL.createObjectURL(mseMediaSource);
     audio.load();
-    console.log('Pires FM: MSE iniciando...');
     mseMediaSource.addEventListener('sourceopen', function() {
-        console.log('Pires FM: MSE sourceopen - modo pseudo-stream ativado');
-        try { mseSourceBuffer = mseMediaSource.addSourceBuffer('audio/mpeg'); } catch(e) { USE_MSE = false; return; }
+        try { mseSourceBuffer = mseMediaSource.addSourceBuffer('audio/mpeg'); } catch(e) { USE_MSE = false; mseReady = false; if (callback) callback(false); return; }
         mseReady = true;
-        mseSourceBuffer.onerror = function() { USE_MSE = false; };
+        mseSourceBuffer.onerror = function() { };
         mseSourceBuffer.onupdateend = function() { mseProcessing = false; processMSEQueue(); };
+        if (callback) callback(true);
     });
-    return true;
+    setTimeout(function() {
+        if (!mseReady) { USE_MSE = false; if (callback) callback(false); }
+    }, 1000);
 }
 
 function processMSEQueue() {
@@ -742,7 +743,7 @@ function processMSEQueue() {
     if (mseAppendQueue.length === 0) return;
     mseProcessing = true;
     var data = mseAppendQueue.shift();
-    try { mseSourceBuffer.appendBuffer(data); } catch(e) { mseProcessing = false; USE_MSE = false; }
+    try { mseSourceBuffer.appendBuffer(data); } catch(e) { mseProcessing = false; }
 }
 
 function appendMSE(trackIndex) {
@@ -810,16 +811,13 @@ function loadTrack() {
         trackNameEl.textContent = track.song;
         trackArtistEl.textContent = track.artist;
         renderPlaylist();
-        var seekTo = getRadioTrackOffset();
         loadingTrack = false;
         appendMSE(currentTrackIndex);
         for (var pi = 1; pi <= 7; pi++) appendMSE(currentTrackIndex + pi);
         audio.play().catch(function() {});
-        var remaining = AVG_SONG;
-        if (seekTo > 0) remaining = AVG_SONG - seekTo;
         maxDurationTimer = setTimeout(function() {
             if (isPlaying && !isAnnouncing && !trackEnding) goNext();
-        }, Math.max(remaining, 10) * 1000);
+        }, AVG_SONG * 1000);
         return;
     }
 
@@ -921,33 +919,26 @@ function goNext() {
 
     if (USE_MSE && mseReady) {
         currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        var track = playlist[currentTrackIndex];
-        if (songsPlayed >= 3) {
-            songsPlayed = 0;
-            goNextBusy = false;
-            doBlocoLocucao(function() {
-                var t = playlist[currentTrackIndex];
-                trackNameEl.textContent = t.song;
-                trackArtistEl.textContent = t.artist;
-                renderPlaylist();
-                setPlayingState(true);
-                appendMSE(currentTrackIndex + 5);
-                appendMSE(currentTrackIndex + 6);
-                maxDurationTimer = setTimeout(function() {
-                    if (isPlaying && !isAnnouncing && !trackEnding) goNext();
-                }, (AVG_SONG + 5) * 1000);
-            });
-            return;
-        }
+        var trk = playlist[currentTrackIndex];
         goNextBusy = false;
-        trackNameEl.textContent = track.song;
-        trackArtistEl.textContent = track.artist;
+        trackNameEl.textContent = trk.song;
+        trackArtistEl.textContent = trk.artist;
         renderPlaylist();
         appendMSE(currentTrackIndex + 5);
         appendMSE(currentTrackIndex + 6);
-        maxDurationTimer = setTimeout(function() {
-            if (isPlaying && !isAnnouncing && !trackEnding) goNext();
-        }, AVG_SONG * 1000);
+        if (songsPlayed >= 3) {
+            songsPlayed = 0;
+            doBlocoLocucao(function() {
+                setPlayingState(true);
+                maxDurationTimer = setTimeout(function() {
+                    if (isPlaying && !isAnnouncing && !trackEnding) goNext();
+                }, AVG_SONG * 1000);
+            });
+        } else {
+            maxDurationTimer = setTimeout(function() {
+                if (isPlaying && !isAnnouncing && !trackEnding) goNext();
+            }, AVG_SONG * 1000);
+        }
         return;
     }
 
@@ -1177,32 +1168,17 @@ function startRadio() {
     for (var pi = 1; pi <= TRACK_CACHE_MAX; pi++) {
         preloadTrack(currentTrackIndex + pi);
     }
-    var mseInit = initMSE();
-    if (mseInit) {
-        var waitTimer = setInterval(function() {
-            if (mseReady) {
-                clearInterval(waitTimer);
-                loadTrack();
-                startHealthCheck();
-            }
-        }, 50);
-        setTimeout(function() {
-            clearInterval(waitTimer);
-            if (!mseReady) {
-                console.log('Pires FM: MSE timeout - usando modo legado');
-                USE_MSE = false;
-                audio.src = '';
-                audio.load();
-                loadTrack();
-                startHealthCheck();
-            } else {
-                console.log('Pires FM: MSE pronto em menos de 3s');
-            }
-        }, 3000);
-    } else {
-        loadTrack();
-        startHealthCheck();
-    }
+    initMSE(function(ok) {
+        if (ok) {
+            loadTrack();
+        } else {
+            USE_MSE = false;
+            audio.src = '';
+            audio.load();
+            setTimeout(function() { loadTrack(); }, 100);
+        }
+    });
+    startHealthCheck();
 }
 
 // Mobile recovery: when screen turns back on, resume playback
