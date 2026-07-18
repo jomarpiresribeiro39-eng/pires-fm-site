@@ -747,16 +747,19 @@ function initWebAudio() {
 }
 
 var waEndedManual = false;
-var waChainHead = 0;
 function loadTrackWA(index, offset) {
     if (loadingTrack) return;
     loadingTrack = true;
-    waEndedManual = false;
+    waEndedManual = true;
     stopWA();
+    waEndedManual = false;
     var idx = ((index % playlist.length) + playlist.length) % playlist.length;
     var track = playlist[idx];
     if (!track) { loadingTrack = false; return; }
     currentTrackIndex = idx;
+    trackNameEl.textContent = track.song;
+    trackArtistEl.textContent = track.artist;
+    renderPlaylist();
     var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
     fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
         return waCtx.decodeAudioData(buf);
@@ -764,17 +767,21 @@ function loadTrackWA(index, offset) {
         var now = waCtx.currentTime;
         var safeOffset = offset || 0;
         if (safeOffset >= buffer.duration) safeOffset = 0;
-        playSource(buffer, now, safeOffset);
+        var source = waCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(waGain);
+        source.start(now, safeOffset);
         waStartTime = now - (safeOffset || 0);
         waStartIndex = idx;
-        trackNameEl.textContent = track.song;
-        trackArtistEl.textContent = track.artist;
-        renderPlaylist();
         setPlayingState(true);
         loadingTrack = false;
         trackEnding = false;
-        waChainHead = idx + 1;
-        preScheduleTrack(waChainHead, now + buffer.duration - (safeOffset || 0));
+        source.onended = function() {
+            if (!waEndedManual && !isAnnouncing && !trackEnding) {
+                trackEnding = true;
+                goNext();
+            }
+        };
     }).catch(function() {
         loadingTrack = false;
         consecutiveFailures++;
@@ -790,51 +797,13 @@ function loadTrackWA(index, offset) {
     });
 }
 
-function playSource(buffer, startTime, offset) {
-    var source = waCtx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(waGain);
-    source.start(startTime, offset || 0);
-    var srcIdx = waSources.length;
-    waSources.push(source);
-    waEndedManual = false;
-    source.onended = function() {
-        if (waEndedManual) return;
-        var nextIdx = (waStartIndex + srcIdx + 1) % playlist.length;
-        if (nextIdx !== currentTrackIndex) {
-            currentTrackIndex = nextIdx;
-            var t = playlist[currentTrackIndex];
-            if (t) {
-                trackNameEl.textContent = t.song;
-                trackArtistEl.textContent = t.artist;
-                renderPlaylist();
-            }
-        }
-    };
-}
-
-function preScheduleTrack(nextIndex, startTime) {
-    if (!waMode || loadingTrack) return;
-    var idx = ((nextIndex % playlist.length) + playlist.length) % playlist.length;
-    if (!playlist[idx]) return;
-    var url = trackCache[idx] || (ARCHIVE_ITEM + '/' + encodeURIComponent(playlist[idx].file));
-    fetch(url).then(function(r) { if (!r.ok) throw Error(); return r.arrayBuffer(); }).then(function(buf) {
-        return waCtx.decodeAudioData(buf);
-    }).then(function(buffer) {
-        var schedTime = Math.max(startTime, waCtx.currentTime);
-        if (!waMode) return;
-        playSource(buffer, schedTime, 0);
-        waChainHead = idx + 1;
-        preScheduleTrack(waChainHead, schedTime + buffer.duration);
-    }).catch(function() {});
-}
-
 var uiTimer = null;
 function startUITimer() {
     if (uiTimer) clearInterval(uiTimer);
     uiTimer = setInterval(function() {
         if (!waMode || !isPlaying || isAnnouncing) return;
-        if (checkTriggerBloco()) {
+        var elapsed = (performance.now() - cycleStartTrack) / 1000;
+        if (elapsed > AVG_SONG * SONGS_PER_BLOCO + 30) {
             resetBlocoCycle();
             stopWA();
             var nextIdx = (currentTrackIndex + 1) % playlist.length;
@@ -1019,7 +988,6 @@ function goNext() {
     songsPlayed++;
 
     if (waMode) {
-        if (uiTimer) clearInterval(uiTimer);
         if (checkTriggerBloco()) {
             resetBlocoCycle();
             stopWA();
@@ -1028,13 +996,11 @@ function goNext() {
                 goNextBusy = false;
                 currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
                 loadTrackWA(currentTrackIndex, 0);
-                startUITimer();
             });
         } else {
             currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
             goNextBusy = false;
             loadTrackWA(currentTrackIndex, 0);
-            startUITimer();
         }
         return;
     }
