@@ -774,7 +774,19 @@ function loadTrackWA(index, offset) {
         waTimer = setTimeout(function() {
             if (!isAnnouncing && !trackEnding) goNext();
         }, remaining);
-    }).catch(function() { loadingTrack = false; });
+    }).catch(function() {
+        loadingTrack = false;
+        consecutiveFailures++;
+        if (consecutiveFailures > 3) {
+            consecutiveFailures = 0;
+            stopWA();
+            streamStatus.innerHTML = '<i class="fas fa-sync"></i> <span>Reiniciando radio...</span>';
+            streamStatus.className = 'stream-status';
+            setTimeout(startRadio, 5000);
+        } else {
+            setTimeout(function() { goNext(); }, 2000);
+        }
+    });
 }
 
 var cycleStartTrack = 0;
