@@ -69,7 +69,7 @@ setInterval(renderSchedule, 60000);
 (function() {
     var c = document.getElementById('particles');
     if (!c) return;
-    for (var i = 0; i < 30; i++) {
+    for (var i = 0; i < 8; i++) {
         var p = document.createElement('div');
         p.className = 'particle';
         p.style.left = Math.random() * 100 + '%';
@@ -1082,14 +1082,14 @@ if (volumeIcon) {
     });
 }
 
-var visBars = null;
-(function animVis() {
-    if (isPlaying && !isAnnouncing) {
-        if (!visBars) visBars = document.querySelectorAll('.visualizer .bar');
-        for (var i = 0; i < visBars.length; i++) visBars[i].style.height = (Math.random() * 50 + 5) + 'px';
-        requestAnimationFrame(function() { setTimeout(animVis, 100); });
-    } else {
-        setTimeout(animVis, 500);
+(function() {
+    var vis = document.getElementById('visualizer');
+    if (!vis) return;
+    for (var i = vis.children.length; i < 5; i++) {
+        var bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.animationDelay = (i * 0.15) + 's';
+        vis.appendChild(bar);
     }
 })();
 
