@@ -834,7 +834,7 @@ function renderPlaylist() {
         rows[r].addEventListener('click', function() {
             currentTrackIndex = parseInt(this.dataset.index);
             songsPlayed = 0;
-            loadTrack();
+            if (waMode) { loadTrackWA(currentTrackIndex, 0); } else { loadTrack(); }
         });
     }
     scrollToCurrent();
@@ -1075,13 +1075,16 @@ if (volumeSlider) {
 
 if (volumeIcon) {
     volumeIcon.addEventListener('click', function() {
-        if (audio.volume > 0) {
+        var curVol = waMode ? waGain.gain.value : audio.volume;
+        if (curVol > 0) {
             audio.dataset.pv = volumeSlider.value;
-            volumeSlider.value = 0; audio.volume = 0;
+            volumeSlider.value = 0;
+            if (waMode) { setWAGain(0); } else { audio.volume = 0; }
             volumeValue.textContent = '0%'; volumeIcon.className = 'fas fa-volume-mute';
         } else {
             var p = audio.dataset.pv || 80;
-            volumeSlider.value = p; audio.volume = p / 100;
+            volumeSlider.value = p;
+            if (waMode) { setWAGain(p / 100); } else { audio.volume = p / 100; }
             volumeValue.textContent = p + '%';
             volumeIcon.className = p < 50 ? 'fas fa-volume-down' : 'fas fa-volume-up';
         }
