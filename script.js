@@ -751,6 +751,7 @@ var waChainHead = 0;
 function loadTrackWA(index, offset) {
     if (loadingTrack) return;
     loadingTrack = true;
+    waEndedManual = false;
     stopWA();
     var idx = ((index % playlist.length) + playlist.length) % playlist.length;
     var track = playlist[idx];
@@ -1097,7 +1098,14 @@ if (playBtn) {
 
         if (waMode) {
             try { waCtx.resume(); } catch(ex) {}
-            loadTrackWA(currentTrackIndex, 0);
+            if (loadingTrack) {
+                var retryIdx = currentTrackIndex;
+                var retry = setInterval(function() {
+                    if (!loadingTrack) { clearInterval(retry); loadTrackWA(retryIdx, 0); }
+                }, 500);
+            } else {
+                loadTrackWA(currentTrackIndex, 0);
+            }
         } else {
             audio.muted = false;
             audio.play().catch(function() { loadTrack(); });
