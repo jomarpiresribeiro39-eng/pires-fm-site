@@ -775,22 +775,14 @@ function loadTrackWA(index, offset) {
     }).catch(function() { loadingTrack = false; });
 }
 
-var lastBlocoTime = Date.now();
-var blocoWatchdog = null;
-function startBlocoWatchdog() {
-    if (blocoWatchdog) clearInterval(blocoWatchdog);
-    blocoWatchdog = setInterval(function() {
-        if (!isPlaying || isAnnouncing) return;
-        var elapsed = (Date.now() - lastBlocoTime) / 1000;
-        if (elapsed > AVG_SONG * 4) {
-            songsPlayed = 3;
-            goNext();
-        }
-    }, 10000);
+var cycleStartTrack = 0;
+function checkTriggerBloco() {
+    if (isAnnouncing) return false;
+    var elapsed = (performance.now() - cycleStartTrack) / 1000;
+    return elapsed > AVG_SONG * SONGS_PER_BLOCO;
 }
-
-function stopBlocoWatchdog() {
-    if (blocoWatchdog) { clearInterval(blocoWatchdog); blocoWatchdog = null; }
+function resetBlocoCycle() {
+    cycleStartTrack = performance.now();
 }
 
 function stopWA() {
@@ -951,13 +943,12 @@ function goNext() {
     songsPlayed++;
 
     if (waMode) {
-        if (songsPlayed >= 3) {
-            songsPlayed = 0;
+        if (checkTriggerBloco()) {
+            resetBlocoCycle();
             stopWA();
             doBlocoLocucao(function() {
                 setPlayingState(true);
                 goNextBusy = false;
-                lastBlocoTime = Date.now();
                 currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
                 loadTrackWA(currentTrackIndex, 0);
             });
@@ -1211,8 +1202,7 @@ function startRadio() {
     var badge = document.getElementById('modeBadge');
     if (initWebAudio()) {
         if (badge) badge.textContent = 'Modo: Web Audio (stream contínuo)';
-        lastBlocoTime = Date.now();
-        startBlocoWatchdog();
+        resetBlocoCycle();
         loadTrackWA(currentTrackIndex, getRadioTrackOffset());
     } else {
         if (badge) badge.textContent = 'Modo: Legado (troca de src)';
