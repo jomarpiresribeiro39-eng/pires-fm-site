@@ -665,6 +665,30 @@ var audio = document.getElementById('radioAudio') || new Audio();
 audio.id = 'radioAudio';
 audio.preload = 'auto';
 
+// Track preloader (Blob cache for instant loading)
+var trackCache = {};
+var TRACK_CACHE_MAX = 4;
+function preloadTrack(idx) {
+    idx = ((idx % playlist.length) + playlist.length) % playlist.length;
+    if (trackCache[idx]) return;
+    var track = playlist[idx];
+    if (!track) return;
+    var url = ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
+    fetch(url).then(function(r) { return r.blob(); }).then(function(blob) {
+        trackCache[idx] = URL.createObjectURL(blob);
+        // Clean old cache entries
+        var keys = Object.keys(trackCache);
+        while (keys.length > TRACK_CACHE_MAX) {
+            var old = keys.shift();
+            URL.revokeObjectURL(trackCache[old]);
+            delete trackCache[old];
+        }
+    }).catch(function(){});
+}
+function clearTrackCache() {
+    for (var k in trackCache) { URL.revokeObjectURL(trackCache[k]); delete trackCache[k]; }
+}
+
 var isPlaying = false;
 var currentTrackIndex = 0;
 var errorRetryCount = 0;
@@ -730,7 +754,7 @@ function loadTrack() {
     loadingTrack = true;
     if (currentTrackIndex < 0 || currentTrackIndex >= playlist.length) currentTrackIndex = 0;
     var track = playlist[currentTrackIndex];
-    var url = ARCHIVE_ITEM + '/' + encodeURIComponent(track.file);
+    var url = trackCache[currentTrackIndex] || (ARCHIVE_ITEM + '/' + encodeURIComponent(track.file));
 
     if (maxDurationTimer) { clearTimeout(maxDurationTimer); maxDurationTimer = null; }
 
@@ -768,13 +792,9 @@ function loadTrack() {
             }
         }, timeout * 1000);
         loadingTrack = false;
-        // Preload next track
-        var nextIdx = (currentTrackIndex + 1) % playlist.length;
-        var nextTrack = playlist[nextIdx];
-        if (nextTrack) {
-            var nextUrl = ARCHIVE_ITEM + '/' + encodeURIComponent(nextTrack.file);
-            var na = document.getElementById('radioNext');
-            if (na) { na.src = nextUrl; na.load(); }
+        // Preload next tracks into Blob cache
+        for (var pi = 1; pi <= 3; pi++) {
+            preloadTrack(currentTrackIndex + pi);
         }
     }
 
@@ -1048,10 +1068,15 @@ var autoplayBtn = document.getElementById('autoplayBtn');
 
 function startRadio() {
     if (autoplayOverlay) autoplayOverlay.classList.add('hidden');
+    clearTrackCache();
     currentTrackIndex = getRadioTrackIndex();
     var tic = getElapsedSeconds() % CYCLE_DURATION;
     var sic = Math.floor(tic / AVG_SONG);
     songsPlayed = (sic >= SONGS_PER_BLOCO ? 0 : sic);
+    // Preload upcoming tracks before starting
+    for (var pi = 1; pi <= TRACK_CACHE_MAX; pi++) {
+        preloadTrack(currentTrackIndex + pi);
+    }
     loadTrack();
     startHealthCheck();
 }
@@ -1064,12 +1089,11 @@ document.addEventListener('visibilitychange', function() {
         goNext();
     } else if (audio.paused && !audio.ended) {
         audio.play().catch(function() {
-            // Try to recover from preloaded audio
-            var na = document.getElementById('radioNext');
-            if (na && na.readyState >= 2) {
-                var tmp = audio.src;
-                audio.src = na.src;
-                audio.play().catch(function() { audio.src = tmp; loadTrack(); });
+            // Try to recover from cached track
+            var nextCached = trackCache[(currentTrackIndex + 1) % playlist.length] || trackCache[currentTrackIndex];
+            if (nextCached) {
+                audio.src = nextCached;
+                audio.play().catch(function() { loadTrack(); });
             } else {
                 loadTrack();
             }
